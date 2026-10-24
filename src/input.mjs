@@ -14,6 +14,17 @@ export const INPUT_DEFAULTS = Object.freeze({
 
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 
+export function applyArcadeSteeringAssist(command, car) {
+  const cos = Math.cos(car.heading), sin = Math.sin(car.heading);
+  const forwardSpeed = car.vx * cos + car.vy * sin;
+  const lateralSpeed = -car.vx * sin + car.vy * cos;
+  const sideslip = Math.atan2(lateralSpeed, Math.max(Math.abs(forwardSpeed), 4));
+  const excessSlip = Math.sign(sideslip) * Math.max(0, Math.abs(sideslip) - 0.04);
+  const correction = clamp(excessSlip / car.config.maxSteer * 1.6, -0.9, 0.9);
+  const steer = clamp(command.steer - correction, -1, 1);
+  return { ...command, steer, brake: command.brake * (1 - 0.85 * Math.abs(command.steer)) };
+}
+
 // Deadzone with the remaining travel rescaled to 0..1, then a power curve.
 export function shapeAxis(value, deadzone, exponent = 1) {
   const a = Math.abs(value || 0);

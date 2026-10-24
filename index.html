@@ -35,7 +35,7 @@ header{position:absolute;top:0;left:0;right:0;z-index:20}main{height:100vh}.tag,
 <div class="section" id="race-section"><div class="label" id="race-label">Race order · interval to leader</div><ol id="standings" aria-label="Race order"></ol><p class="note">Four AI opponents run the same physics. Following within ~30 m gives a tow (up to 35% less drag) but dirty air (up to 25% less downforce); cars collide as rigid footprints. Illustrative values.</p></div>
 <div class="section stats"><div><div class="label">Longitudinal</div><div class="number" id="long">0.00 g</div></div><div><div class="label">Lateral</div><div class="number" id="lat">0.00 g</div></div><div><div class="label">Downforce</div><div class="number" id="aero">0.0 kN</div></div><div><div class="label">Distance</div><div class="number" id="distance">0 m</div></div><div><div class="label">Sim time</div><div class="number" id="time">0.0 s</div></div><div><div class="label">Steering</div><div class="number" id="steer">0.0°</div></div><div><div class="label">Roll / pitch</div><div class="number" id="attitude">0.00° / 0.00°</div></div><div><div class="label">Aero squat</div><div class="number" id="heave">0 mm</div></div><div><div class="label">Ride F / R</div><div class="number" id="ride">40 / 80 mm</div></div><div><div class="label">Aero balance</div><div class="number" id="balance">40.0% F</div></div><div><div class="label">ERS store</div><div class="number" id="ers">4.00 MJ</div></div><div><div class="label">ERS deployed / lap</div><div class="number" id="ers-lap">0.00 / 4.0 MJ</div></div></div><div class="section"><p class="note" style="margin-top:0">ERS: the MGU-K adds up to 120 kW on the throttle above 100 km/h, at most 4 MJ a lap from a 4 MJ store; braking harvests up to 120 kW (2 MJ a lap) and the MGU-H recharges the store from the exhaust. Illustrative values.</p></div>
 <div class="section"><div class="label">Driver input · <span id="input-source">keyboard</span></div><div class="stats" style="margin-top:10px"><div><div class="label">Throttle</div><meter id="in-throttle" min="0" max="1" value="0" style="width:100%;accent-color:#6fffc3" aria-label="Throttle command"></meter></div><div><div class="label">Brake</div><meter id="in-brake" min="0" max="1" value="0" style="width:100%;accent-color:#ff8e86" aria-label="Brake command"></meter></div></div><p class="note">Keyboard pedals ramp in ~0.17 s and release in 0.1 s; keyboard steering moves toward lock at 3/s and returns at 5/s. Gamepad (standard layout): triggers are analog pedals, left stick steers with a deadzone and progressive curve. Steering authority falls with speed for both.</p></div>
-<div class="section"><div class="label">Tire force / peak grip</div><div class="wheels" id="wheels"></div><p class="note">FL / FR / RL / RR · normal load in kN.<br>Bars: force / peak capacity, not remaining grip. SLIDE: combined demand beyond the illustrative force peak; force falls toward 75% of peak. Slip: signed longitudinal slip; + is wheelspin when moving forward. LOCK: stopped wheel above 1 m/s. α: force-producing (relaxed) / kinematic slip angle; the carcass catches up over 0.45 m of travel. Temp: tread / carcass °C · thermal grip (blue cold, green near the 100 °C optimum, red hot); sliding heats the tread, airflow cools it. Wear: tread used · wear grip; sliding energy wears the tread (faster above the optimum), grip fades then falls off a cliff past 75% wear (amber above 37.5%, red above 75%); reset (R) fits new tires. No ABS or traction control.</p></div>
+<div class="section"><div class="label">Tire force / peak grip</div><div class="wheels" id="wheels"></div><p class="note">FL / FR / RL / RR · normal load in kN.<br>Bars: force / peak capacity, not remaining grip. SLIDE: combined demand beyond the illustrative force peak; force falls toward 75% of peak. Slip: signed longitudinal slip; + is wheelspin when moving forward. LOCK: stopped wheel above 1 m/s. α: force-producing (relaxed) / kinematic slip angle; the carcass catches up over 0.45 m of travel. Temp: tread / carcass °C · thermal grip (blue cold, green near the 100 °C optimum, red hot); sliding heats the tread, airflow cools it. Wear: tread used · wear grip; sliding energy wears the tread (faster above the optimum), grip fades then falls off a cliff past 75% wear (amber above 37.5%, red above 75%); reset (R) fits new tires. Sim handling has no ABS or traction control; Arcade handling adds grip, stronger slide recovery, and reduces braking in turns.</p></div>
 <div class="section controls"><kbd>W</kbd> / <kbd>↑</kbd> Throttle<br><kbd>S</kbd> / <kbd>↓</kbd> Brake<br>Reverse: stopped, hold the brake (S / LT) and the car backs up; reversing, W / RT brakes and, once stopped, goes forward again. Or hold <kbd>Q</kbd> (reverse) / <kbd>E</kbd> (forward) while stopped on the brake, off throttle<br><kbd>A</kbd> <kbd>D</kbd> / <kbd>←</kbd> <kbd>→</kbd> Steer<br><kbd>X</kbd> / <kbd>Z</kbd> Shift up / down (gamepad RB / LB, once the race is on): switches to the manual gearbox (M beside the gear; the gear flashes red when a shift is refused); <kbd>G</kbd> (gamepad left stick click) back to automatic<br><kbd>F</kbd> DRS (hold; gamepad right stick click). Races: from lap 2, in a DRS zone after being within 1 s of the car ahead at its detection point; braking closes it. Open, it cuts drag 12% and downforce 10% (rear only; illustrative)<br><kbd>Space</kbd> Pause · <kbd>R</kbd> Reset<br><kbd>V</kbd> Chase / overview<br><kbd>H</kbd> Hide / show HUD<br><kbd>C</kbd> Cockpit / chase camera<br><kbd>P</kbd> Autopilot on / off<br><kbd>M</kbd> Sound on / off<br><kbd>O</kbd> Opponents on / off (restarts)<br><kbd>B</kbd> Pit request: box for Soft → Medium → Hard → cancel. On autopilot the car pits at the next entry; driving, take the pit lane on the inside of the main straight (on a real circuit: beside the start/finish straight, entry ~300 m before the line) (80 km/h limiter, +5 s for speeding) and stop on your box (first, green)<br>Start: hold still on the five red lights, go when they go out (moving early: +5 s). On the lights, <kbd>1</kbd>–<kbd>5</kbd> (gamepad LB / RB: one ahead / behind) puts you in the car on that grid position (1 = pole) and takes you off the autopilot; that car takes your slot<br>Race: 10 laps (<kbd>?laps=N</kbd> in the URL); penalties are added at the flag; every finisher must have run two compounds (one stop) or is disqualified. Start tyre: <kbd>?tyre=soft|medium|hard</kbd>. Each car starts with the fuel for the race distance (no refuelling); it burns off, so the car gets lighter<br>Gamepad: touch any button or stick to take control from the autopilot · RT throttle · LT brake (or right stick forward / back, or D-pad up / down) · left stick or D-pad steer · Y pause / resume · Menu (Start, ≡) HUD on / off · B cockpit / chase · X full screen · A units · Back (View) reset car · right stick click autopilot off</div>
 <p class="note">Illustrative, uncalibrated dynamics. Body roll, pitch and aero squat are damped spring modes for display; wheel loads are still quasi-static. Surface grip (assumed): kerb 90%, runoff 70%, grass 35%. Walls are rigid: the body footprint rebounds with 25% restitution and scrubs with friction 0.5; no damage model. Tires start at 70 °C (blanket temperature) and have a two-node thermal model and tread wear; no pressure or camber yet. Compounds (assumed): soft +1.5% grip and 2× wear, hard −1.5% grip and 0.55× wear relative to the medium; a pit stop fits a new set at blanket temperature after a 2.1–3.2 s service. Sound is synthesized from engine rpm, throttle, turbo spool, tire sliding power and speed (V6 firing frequency; no recorded samples). This is a handling testbed, not a validated F1 simulator.</p>
 </aside></main>
@@ -54,10 +54,14 @@ import { createCircuitTrack } from './src/circuit.mjs';
 import { CIRCUITS } from './src/circuits.mjs';
 import { createTimeTrial } from './src/trial.mjs';
 import { createLapTimer, formatLapTime } from './src/laptimer.mjs';
-import { createDriverInput, readGamepad } from './src/input.mjs';
+import { applyArcadeSteeringAssist, createDriverInput, readGamepad } from './src/input.mjs';
 import { createSoundModel, createAudioEngine } from './src/audio.mjs';
 const $ = id => document.getElementById(id);
 const canvas = $('track');
+const handlingButton = document.createElement('button');
+handlingButton.id = 'handling-mode';
+handlingButton.setAttribute('aria-pressed', 'false');
+$('autopilot').after(handlingButton);
 let sim, paused = false, overview = false, cockpit = false, previousTime = null, snapCamera = true;
 let width = 1, height = 1;
 const keys = new Set();
@@ -69,8 +73,38 @@ const circuitKey = Object.hasOwn(CIRCUITS, new URLSearchParams(location.search).
 const track = circuitKey ? createCircuitTrack(CIRCUITS[circuitKey]) : createStadiumTrack({ halfStraight, radius, roadWidth });
 const { surfaceAt, barrierAt } = track;
 const timer = createLapTimer(track, circuitKey ? { lineProgress: 0 } : undefined);
-let autopilot = false, command = { throttle: 0, brake: 0, steer: 0 }, opponents = !circuitKey || new URLSearchParams(location.search).has('race');
+const handlingModes = Object.freeze(['sim', 'arcade']);
+const requestedHandling = new URLSearchParams(location.search).get('handling');
+let autopilot = false, handlingMode = handlingModes.includes(requestedHandling) ? requestedHandling : 'sim';
+let handlingBaseline = null, command = { throttle: 0, brake: 0, steer: 0 }, opponents = !circuitKey || new URLSearchParams(location.search).has('race');
 const driver = createDriverInput();
+const arcadeFactors = Object.freeze({
+  tireMu: 1.6, corneringStiffness: 1, rearCorneringStiffness: 0.9,
+  slidingGripRatio: 0.99, slidingFalloff: 3.5, brakeBias: 0.64,
+});
+const handlingKeys = Object.keys(arcadeFactors);
+function updateHandlingButton() {
+  handlingButton.textContent = `Handling: ${handlingMode}`;
+  handlingButton.setAttribute('aria-pressed', String(handlingMode !== 'sim'));
+}
+function applyHandlingMode() {
+  if (!sim || !handlingBaseline) return;
+  for (const key of handlingKeys) sim.car.config[key] = handlingBaseline[key];
+  if (handlingMode === 'arcade') {
+    for (const [key, factor] of Object.entries(arcadeFactors))
+      sim.car.config[key] = key === 'slidingGripRatio' || key === 'slidingFalloff' || key === 'brakeBias'
+        ? factor : handlingBaseline[key] * factor;
+  }
+}
+function toggleHandlingMode() {
+  handlingMode = handlingModes[(handlingModes.indexOf(handlingMode) + 1) % handlingModes.length];
+  applyHandlingMode();
+  updateHandlingButton();
+  const query = new URLSearchParams(location.search);
+  if (handlingMode === 'sim') query.delete('handling'); else query.set('handling', handlingMode);
+  history.replaceState(null, '', `${location.pathname}${query.toString() ? `?${query}` : ''}${location.hash}`);
+}
+updateHandlingButton();
 // Sound: the AudioContext is created on the first key press or click (autoplay policy).
 const soundModel = createSoundModel(DEFAULT_CAR);
 let soundOn = true, audioCtx = null, audio = null, soundParams = null;
@@ -118,6 +152,8 @@ function reset() {
   const query = new URLSearchParams(location.search), tyre = TIRE_COMPOUNDS[query.get('tyre')] ? query.get('tyre') : 'medium';
   sim = circuitKey && !opponents ? createTimeTrial(track, { tyre }) : createRace(track, { grid: opponents ? DEFAULT_GRID : [], start: opponents && !query.has('nostart'), laps: opponents ? Math.max(1, Math.round(Number(query.get('laps')) || (circuitKey ? 3 : 10))) : 0,
     compoundRule: opponents, player: { tyres: [tyre, tyre === 'hard' ? 'medium' : 'hard'] } }); timer.restart();
+  handlingBaseline = Object.fromEntries(handlingKeys.map(key => [key, sim.car.config[key]]));
+  applyHandlingMode();
   wearSkins(cars.map((_, i) => i));
   cars.forEach((r, i) => { r.model.group.visible = !i || opponents; r.wheelAngle.fill(0); });
   keys.clear(); driver.reset(); soundModel.reset(); previousTime = null; snapCamera = true;
@@ -159,6 +195,7 @@ $('pause').onclick = () => pause(!paused);
 $('reset').onclick = reset;
 $('view').onclick = changeView;
 $('autopilot').onclick = toggleAutopilot;
+$('handling-mode').onclick = toggleHandlingMode;
 $('sound').onclick = toggleSound;
 function toggleHud() {
   const on = document.querySelector('main').classList.toggle('hud-off') === false;
@@ -397,7 +434,7 @@ function render(dt = 0) {
     $('ride').textContent = `${(aeroMap.front * 1000).toFixed(0)} / ${(aeroMap.rear * 1000).toFixed(0)} mm${aeroMap.bottoming ? ' · plank' : aeroMap.stalled ? ' · stall' : ''}`;
     $('balance').textContent = `${(aeroMap.frontShare * 100).toFixed(1)}% F`;
   }
-  ['FL', 'FR', 'RL', 'RR'].forEach((name, i) => {
+    ['FL', 'FR', 'RL', 'RR'].forEach((name, i) => {
     const wheel = c.telemetry.wheels[i];
     $(`load-${name}`).textContent = ((wheel?.load ?? 0) / 1000).toFixed(1);
     $(`grip-${name}`).value = wheel?.utilization ?? 0;
@@ -510,6 +547,8 @@ function frame(now) {
     // send a forward-path autopilot's throttle through a reverse gearbox.
     const forwardRecovery = autopilot && sim.car.gear < 0;
     if (forwardRecovery) command = { throttle: 0, brake: 1, steer: 0, reverse: false };
+    if (handlingMode === 'arcade' && command && !autopilot && sim.car.gear > 0)
+      command = applyArcadeSteeringAssist(command, sim.car);
     sim.advance((now - previousTime) / 1000, command, surfaceAt, barrierAt);
     // On autopilot the race's traffic-aware driver chooses the player's inputs.
     if (autopilot && !forwardRecovery) command = sim.entries[0].command ?? { throttle: 0, brake: 0, steer: 0 };

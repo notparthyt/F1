@@ -47,6 +47,10 @@ in `.assetsignore` (tests, tools, this README) are not uploaded.
   itself until you take over. Press **P** (gamepad right-stick click), touch
   a gamepad, shift gear, or pick a grid slot on the start lights and you are
   driving. P (or the *Autopilot* button) hands the car back at any time.
+* **Choose handling.** The *Handling* menu button switches between the
+  original simulation physics and Arcade handling, which adds grip and
+  countersteering assistance. The selection stays active when you reset and
+  is preserved in the URL as `?handling=arcade`.
 * **The start.** Five red lights come on one per second, then go out after a
   random 0.2–3 s hold. Stay still until they go out: moving more than 0.5 m
   early is a jump start (+5 s). While the lights are on, **1–5** (gamepad
@@ -113,7 +117,7 @@ in `.assetsignore` (tests, tools, this README) are not uploaded.
 
 Keys are on/off, so the pedals and steering ramp (see
 [Driver input](docs/DEVLOG.md#driver-input-inputmjs-cycle-7)). The header buttons do the
-same as their keys (plus *Units* km/h ↔ mph and *Full screen*). Driving keys are
+same as their keys (plus *Handling* sim ↔ arcade, *Units* km/h ↔ mph and *Full screen*). Driving keys are
 ignored while a button has focus; click the 3D view to drive again. Losing
 window focus or hiding the tab pauses and releases every held input.
 
