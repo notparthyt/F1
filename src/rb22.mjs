@@ -107,7 +107,7 @@ function axleOf(corner) {
 // Our livery replaces Red Bull's: the paint is refilled in the car's colour, the decals are
 // cleared, the sponsor names are projected onto both, and the race-number mesh is hidden.
 export const SPONSORS = ['AgentiLoop Racing', 'InkPen.io', 'SuperBox64.com', 'AgentiLoop.si'];
-export const GITHUB = 'github.com/AgentiLoop/F1';
+export const GITHUB = 'github.com/notparthyt/F1';
 // Label slots in model space (nose +z, left +x, up +y): centre c, facing n, w x h metres.
 // Text reads along b (default: left to right seen from outside, tops up, or forward on
 // upward faces) and is projected along n onto the texels within `depth` that face n.
