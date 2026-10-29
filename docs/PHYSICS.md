@@ -1,6 +1,6 @@
 # Physics and 3D model
 
-Technical notes for AgentiLoop Racing. Back to the [README](../README.md); the cycle-by-cycle notes are in the [development log](DEVLOG.md).
+Technical notes for CursorRacing. Back to the [README](../README.md); the cycle-by-cycle notes are in the [development log](DEVLOG.md).
 
 ## 3D view and car model
 

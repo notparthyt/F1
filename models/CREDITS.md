@@ -2,13 +2,21 @@
 
 The project code's licence does not cover these files; each keeps its own licence.
 
+## redbull22.glb
+
+- Model: supplied by the project maintainer.
+- Licence and original creator: not recorded with the supplied file; add the
+  applicable attribution and licence before redistribution.
+- Changes: `rb22.mjs` recolours the model, places the project's livery on its
+  paint and decal textures, steers the front wheel holders, animates the front
+  and rear DRS flaps, and drives the fitted driver's head and hand joints.
+
 ## rb22.glb
 
 - Model: "2026 Redbull RB22" by Tyler_Dave (Sketchfab)
 - Licence: [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/)
 - Changes: `rb22.mjs` replaces the Red Bull livery at load time: the paint texture is refilled
-  in each car's colour, the decal texture is cleared, our sponsor names (AgentiLoop Racing,
-  InkPen.io, SuperBox64.com, AgentiLoop.si, github.com/notparthyt/F1) and a race number are
+  in each car's colour, the decal texture is cleared, our sponsor names (CursorRacing, C1, CR, notparthyt, github.com/notparthyt/F1) and a race number are
   projected onto both, the accent-coloured parts take the car's accent colour and the race
   number mesh is hidden. It also splits the wheels per corner, turns the model's steering
   wheel with the steering and fits it onto the physics car's axles. Every car on the grid

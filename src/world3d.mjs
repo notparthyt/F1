@@ -116,11 +116,20 @@ export function buildWorld({ halfStraight, radius, roadWidth, boxColors = [] }) 
   for (const s of [pit.limitStart, pit.limitEnd]) paint(s, -(pit.inner + pit.outer) / 2, 0.4, pit.outer - pit.inner, 0xf2f2ee);
   for (let i = 0; i < Math.max(boxColors.length, 5); i++) {
     const s = pit.boxStart + pit.boxSpacing * i;
-    paint(s, pit.boxOffset, 7, 3, 0xf2f2ee); paint(s, pit.boxOffset, 6.6, 2.6, boxColors[i] ?? 0x3a4450, 0.012);
+    paint(s, pit.boxOffset, 7, 4.5, 0xf2f2ee); paint(s, pit.boxOffset, 6.6, 4.1, boxColors[i] ?? 0x3a4450, 0.012);
   }
-  const garageLength = pit.boxSpacing * 4 + 60; // from 30 m before the first box to 30 m past the fifth
+  const garageLength = pit.boxSpacing * (Math.max(boxColors.length, 22) - 1) + 60;
   const garage = new THREE.Mesh(new THREE.BoxGeometry(garageLength, 6, 7), std({ color: 0xd9dcd6, roughness: 0.7 }));
   garage.position.set(pit.boxStart - 30 + garageLength / 2 - halfStraight, 3, radius - (half + 12 + 4.5)); garage.castShadow = garage.receiveShadow = true; world.add(garage);
+  const garageBay = new THREE.MeshStandardMaterial({ color: 0x243140, roughness: 0.8 });
+  const garageAccent = new THREE.MeshStandardMaterial({ color: 0x6fffc3, roughness: 0.55 });
+  for (let i = 0; i < Math.max(boxColors.length, 22); i++) {
+    const x = pit.boxStart + pit.boxSpacing * i - halfStraight;
+    const door = new THREE.Mesh(new THREE.BoxGeometry(pit.boxSpacing - 1, 3.8, 0.12), garageBay);
+    door.position.set(x, 2.1, garage.position.z + 3.56); world.add(door);
+    const strip = new THREE.Mesh(new THREE.BoxGeometry(pit.boxSpacing - 1, 0.18, 0.14), garageAccent);
+    strip.position.set(x, 4.2, garage.position.z + 3.57); world.add(strip);
+  }
   // Start/finish: chequered strip, gantry with lights.
   const chequer = texture(128, (g, s) => { for (let i = 0; i < 8; i++) for (let j = 0; j < 8; j++) { g.fillStyle = (i + j) % 2 ? '#111' : '#eee'; g.fillRect(i * s / 8, j * s / 8, s / 8, s / 8); } }, 1, 7.5);
   const line = new THREE.Mesh(new THREE.PlaneGeometry(1.6, roadWidth), new THREE.MeshStandardMaterial({ map: chequer, roughness: 0.6 }));
@@ -181,7 +190,7 @@ export function buildWorld({ halfStraight, radius, roadWidth, boxColors = [] }) 
   postSpots.forEach(([x, y], i) => posts.setMatrixAt(i, new THREE.Matrix4().makeTranslation(x, 2.1, -y)));
   world.add(posts);
 
-  // AgentiLoop Racing branding: trackside hoardings, gantry, grandstand fascias, infield.
+  // Cursor Racing branding: trackside hoardings, gantry, grandstand fascias, infield.
   const logo = (w, h, bg = true, repeat = 1) => {
     const t = texture(1, () => {}, repeat, 1);
     const cv = t.image; cv.width = w; cv.height = h; drawLogo(cv.getContext('2d'), w, h, bg); t.needsUpdate = true;
@@ -391,7 +400,7 @@ export function buildCircuitWorld(track, { boxColors = [] } = {}) {
     const garageAt = -(wallAt + 4.5), concreteGarage = std({ color: 0xd9dcd6, roughness: 0.7 });
     for (let i = 0; i < Math.max(boxColors.length, 5); i++) {
       const s = pit.boxStart + pit.boxSpacing * i;
-      flat(s, pit.boxOffset, 7, 3, 0xf2f2ee); flat(s, pit.boxOffset, 6.6, 2.6, boxColors[i] ?? 0x3a4450, 0.012);
+      flat(s, pit.boxOffset, 7, 4.5, 0xf2f2ee); flat(s, pit.boxOffset, 6.6, 4.1, boxColors[i] ?? 0x3a4450, 0.012);
       const [x, y] = track.point(s, pit.side * garageAt);
       if (standSide === -pit.side || Math.abs(track.offset(x, y)) < wallAt + 3) continue;
       const g = new THREE.Mesh(new THREE.BoxGeometry(pit.boxSpacing - 0.5, 6, 7), concreteGarage);
@@ -403,7 +412,7 @@ export function buildCircuitWorld(track, { boxColors = [] } = {}) {
   const logo = (w, h) => { const t = texture(1, () => {}); const cv = t.image; cv.width = w; cv.height = h; drawLogo(cv.getContext('2d'), w, h, true); t.needsUpdate = true; return t; };
   const logoMat = new THREE.MeshStandardMaterial({ map: logo(1024, 128), roughness: 0.55, emissive: 0xffffff, emissiveIntensity: 0.08 });
   logoMat.emissiveMap = logoMat.map;
-  // AgentiLoop Racing panels on both faces of the start-light gantry, as on the stadium track.
+  // Cursor Racing panels on both faces of the start-light gantry, as on the stadium track.
   for (const side of [-1, 1]) {
     const panel = new THREE.Mesh(new THREE.PlaneGeometry(track.roadWidth + 4.5, (track.roadWidth + 4.5) / 8), logoMat);
     panel.rotation.y = -side * Math.PI / 2; panel.position.set(-6 + side * 0.42, 8.6, 0); start.add(panel);
@@ -451,22 +460,30 @@ export function buildCircuitWorld(track, { boxColors = [] } = {}) {
     }
   }
   const treeMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 });
-  world.add(...[treeGeometry('conifer'), treeGeometry('broadleaf')].map((geo, k) => {
-    const list = spots.filter(t => (t[4] < 0.45) === (k === 0));
-    const mesh = new THREE.InstancedMesh(geo, treeMat, list.length);
-    list.forEach(([x, y, sc, rot, v], i) => {
+  const treeGeometries = [treeGeometry('conifer'), treeGeometry('broadleaf')];
+  const treeCells = new Map(), cellSize = 400;
+  for (const spot of spots) {
+    const [x, y] = spot, species = spot[4] < 0.45 ? 0 : 1;
+    const key = `${species}:${Math.floor(x / cellSize)}:${Math.floor(y / cellSize)}`;
+    (treeCells.get(key) ?? treeCells.set(key, { species, spots: [] }).get(key)).spots.push(spot);
+  }
+  for (const { species, spots: cellSpots } of treeCells.values()) {
+    const mesh = new THREE.InstancedMesh(treeGeometries[species], treeMat, cellSpots.length);
+    cellSpots.forEach(([x, y, sc, rot, v], i) => {
       dummy.position.set(x, 0, -y); dummy.rotation.set(0, rot, 0); dummy.scale.set(sc, sc * (0.85 + v * 0.3), sc);
       dummy.updateMatrix(); mesh.setMatrixAt(i, dummy.matrix);
       const tint = 0.8 + rng() * 0.35; mesh.setColorAt(i, new THREE.Color(tint * (0.95 + rng() * 0.15), tint, tint * (0.85 + rng() * 0.15)));
     });
-    mesh.castShadow = mesh.receiveShadow = true;
-    return mesh;
-  }));
+    mesh.instanceMatrix.needsUpdate = true;
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+    mesh.castShadow = mesh.receiveShadow = false;
+    world.add(mesh);
+  }
   world.userData = { center: [cx, cy], extent };
   return world;
 }
 
-// "AgentiLoop Racing" wordmark with a two-ring loop mark; transparent background when bg is false.
+// "Cursor Racing" wordmark with a two-ring loop mark; transparent background when bg is false.
 export function drawLogo(g, w, h, bg = true) {
   g.clearRect(0, 0, w, h);
   if (bg) {
@@ -475,7 +492,7 @@ export function drawLogo(g, w, h, bg = true) {
     g.fillStyle = '#6fffc3'; g.fillRect(0, h * 0.9, w, h * 0.04);
   }
   g.font = `italic 800 ${h * 0.5}px system-ui, sans-serif`;
-  const word = g.measureText('AgentiLoop').width;
+  const word = g.measureText('Cursor').width;
   g.font = `italic 600 ${h * 0.3}px system-ui, sans-serif`;
   const racing = g.measureText('RACING').width + h * 0.3;
   const total = h * 1.25 + word + h * 0.25 + racing;
@@ -487,7 +504,7 @@ export function drawLogo(g, w, h, bg = true) {
   g.beginPath(); g.arc(x + r * 2.6 + h * 0.05, cy, r, 0, Math.PI * 2); g.stroke();
   x += h * 1.25;
   g.fillStyle = bg ? '#f2f7fb' : 'rgba(245,250,255,0.82)'; g.textBaseline = 'middle';
-  g.font = `italic 800 ${h * 0.5}px system-ui, sans-serif`; g.fillText('AgentiLoop', x, cy);
+  g.font = `italic 800 ${h * 0.5}px system-ui, sans-serif`; g.fillText('Cursor', x, cy);
   x += word + h * 0.25;
   g.fillStyle = bg ? '#6fffc3' : 'rgba(111,255,195,0.85)';
   g.font = `italic 600 ${h * 0.3}px system-ui, sans-serif`;

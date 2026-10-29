@@ -1,16 +1,23 @@
-# AgentiLoop Racing • F1 Dynamics Lab • ProtoType III
+# CursorRacing • F1 Dynamics Lab • ProtoType III
 
 **Play it in your browser: [f1.gokart.games](https://f1.gokart.games)**
 
 <img width="1945" height="1149" alt="Screenshot 2026-10-19 at 6 55 02 PM" src="https://github.com/user-attachments/assets/3438bf84-d85a-4ff9-beeb-89b3ecfdd493" />
 
-Race an open-wheel car against an AI field in 3D, on a stadium test track or on
+Race against a 21-car AI field in 3D, on a stadium test track or on
 18 real circuits (Monza, Silverstone, Spa, Monaco and more, with layouts built
 from real car positions). It has a standing start, pit stops and tyre
 compounds, fuel, ERS and DRS, an automatic or paddle-shift gearbox, plus engine
-and tyre sound made from the physics. Drive from the chase or cockpit camera,
-where the car's mirrors show the cars behind you. It needs a WebGL browser and
-plays with a keyboard or an Xbox (or other standard) controller, with analog
+and tyre sound made from the physics. Drive from the chase, cockpit, or overview
+camera while an independent TV camera records the race with automated cuts to
+close battles and overtakes. Switch between cockpit, T-Cam, chase and overview
+views. The cockpit mirrors show the cars behind you; DRS opens both the rear
+and front flaps, while the driver's elbows and hands follow steering input. The
+steering wheel is aligned to the driver's grip joints. The custom livery also
+appears on the cockpit-facing Halo. A major crash or DNF deploys a safety car:
+the field queues at a controlled pace without AI overtakes, and pit service is
+quicker while it is active. It needs a WebGL browser
+and plays with a keyboard or an Xbox (or other standard) controller, with analog
 triggers and sticks. See [How to play](#how-to-play) and the
 [controls](#controls). Useful URLs:
 [a race at Monza](https://f1.gokart.games/?track=monza&race),
@@ -60,6 +67,9 @@ in `.assetsignore` (tests, tools, this README) are not uploaded.
   the order with intervals, tyres, fuel and penalties, and the minimap at the
   bottom left every car on the layout. At the chequered flag the panel shows the
   classification; R starts a new race.
+* **Weather.** Random rain can arrive during a session. The track gets wetter
+  over time, lowering grip for every car; the AI also reduces its corner-speed
+  targets. Rain intensity and current grip are shown beside the live HUD.
 * **Tyres and pit stops.** You start on mediums (`?tyre=soft|hard` to change).
   In a race every finisher must run two compounds, so you must stop once or be
   disqualified. **B** cycles the pit request (Soft → Medium → Hard →
@@ -109,7 +119,8 @@ in `.assetsignore` (tests, tools, this README) are not uploaded.
 | P | Autopilot on / off |
 | Space | Pause / resume |
 | R | Reset (restarts the race from the grid) |
-| C | Cockpit / chase camera |
+| C / N | Cycle Cockpit → Chase Cam → T-Cam |
+| T | Trackside TV camera recording on / off (saves WebM when stopped) |
 | V | Overview / chase camera |
 | H | HUD on / off |
 | M | Sound on / off (audio starts on the first key press or click) |
@@ -117,9 +128,28 @@ in `.assetsignore` (tests, tools, this README) are not uploaded.
 
 Keys are on/off, so the pedals and steering ramp (see
 [Driver input](docs/DEVLOG.md#driver-input-inputmjs-cycle-7)). The header buttons do the
-same as their keys (plus *Handling* sim ↔ arcade, *Units* km/h ↔ mph and *Full screen*). Driving keys are
-ignored while a button has focus; click the 3D view to drive again. Losing
-window focus or hiding the tab pauses and releases every held input.
+same as their keys (plus *Handling* sim ↔ arcade, *Units* km/h ↔ mph and *Full screen*).
+Driving keys still work when a button has focus; text-entry controls keep their
+normal keyboard behavior. Losing window focus or hiding the tab pauses and
+releases every held input.
+
+The single **Camera** button (or **C / N**) cycles Cockpit → Chase Cam → T-Cam;
+the separate **Overview** button (or **V**) remains available. T-Cam framing
+can be adjusted live in the browser developer console. The mount
+and look-at offsets are in metres from the driver's eye, in car coordinates
+(+X forward, +Y up, +Z sideways); changes take effect immediately:
+`f1Lab.setTcam({ mount: [-0.3, 0.2, -0.2], lookAt: [18, -1.8, -1], fov: 80 })`.
+Call `f1Lab.tcam()` to read the current settings.
+
+The single **Trackside TV** toggle (or **T**) starts a separate 720p trackside
+broadcast camera; it does not change your chase, cockpit, or overview view.
+The broadcast cuts between trackside angles, follows different cars, and
+prioritizes close battles and overtakes. Stop it with the same toggle or **T**
+to save the complete race as a WebM video with synthesized audio.
+
+On a crash or AI retirement, the affected AI car is withdrawn from the race,
+the yellow flag warning flashes on the HUD, and a safety car with flashing
+beacons appears ahead of the leader.
 
 ### Xbox controller (and other standard gamepads)
 
@@ -142,7 +172,7 @@ P still switches the autopilot afterwards).
 | Left-stick click (L3) | Automatic gearbox |
 | Right-stick click (R3) | On autopilot: autopilot off (take the wheel); driving, hold: DRS |
 | A (Cross) | Units: km/h ↔ mph |
-| B (Circle) | Cockpit / chase camera |
+| B (Circle) | Cycle Cockpit → Chase Cam → T-Cam |
 | X (Square) | Pause / resume |
 | Y (Triangle) | Full screen on / off (where the browser supports it) |
 | Menu ≡ (Options) | HUD on / off |

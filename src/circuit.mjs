@@ -98,7 +98,7 @@ function racingLine(xs, ys, headings, limit) {
 // either side: null (no pit stops). The placement is illustrative: the
 // traced layouts carry no pit lane, so it is not each circuit's real one.
 function circuitPitLane({ half, point, offset, progress, signed, curvatureAt }, { reach = 700, minInsideRadius = 20, entryAt = 300, toLimit = 120, limitLength = 260, toMerge = 40, mergeLength = 130 } = {}) {
-  const layout = { inner: half + 1.2, outer: half + 11, lane: -(half + 4.5), boxOffset: -(half + 8.5), boxSpacing: 30, speedLimit: 80 / 3.6 };
+  const layout = { inner: half + 1.2, outer: half + 11, lane: -(half + 1.5), boxOffset: -(half + 9.5), boxSpacing: 11, speedLimit: 80 / 3.6 };
   const total = toLimit + limitLength + toMerge + mergeLength, edge = layout.outer + 1;
   const fits = (s, side) => {
     const o = -side * edge, [x, y] = point(s, o);
@@ -119,7 +119,7 @@ function circuitPitLane({ half, point, offset, progress, signed, curvatureAt }, 
   const { side, entry } = best, limitStart = entry + toLimit, limitEnd = limitStart + limitLength;
   // Five boxes centred between the limit lines.
   return Object.freeze({ ...layout, side, entry, limitStart, limitEnd, mergeStart: limitEnd + toMerge, exit: limitEnd + toMerge + mergeLength,
-    boxStart: (limitStart + limitEnd) / 2 - 2 * layout.boxSpacing });
+    boxStart: (limitStart + limitEnd) / 2 - 10.5 * layout.boxSpacing });
 }
 
 export function createCircuitTrack({ name = 'Circuit', points, length: officialLength, roadWidth = 13, wallOffset = roadWidth / 2 + 12,
@@ -204,26 +204,38 @@ export function createCircuitTrack({ name = 'Circuit', points, length: officialL
   // Nearest point on the centreline: segment index, fraction, signed offset (+ right), distance.
   function nearest(x, y) {
     const list = grid.get(key(Math.floor(x / cell), Math.floor(y / cell)));
-    let best = null;
+    let bestIndex = -1, bestFraction = 0, bestX = 0, bestY = 0, bestCross = 0, bestDistanceSquared = Infinity;
     for (const i of list ?? all) {
       const j = (i + 1) % n, dx = xs[j] - xs[i], dy = ys[j] - ys[i], l2 = dx * dx + dy * dy;
       const f = Math.max(0, Math.min(1, ((x - xs[i]) * dx + (y - ys[i]) * dy) / l2));
-      const px = xs[i] + dx * f, py = ys[i] + dy * f, d = Math.hypot(x - px, y - py);
-      if (!best || d < best.d) best = { i, f, px, py, d, cross: dx * (y - ys[i]) - dy * (x - xs[i]) };
+      const px = xs[i] + dx * f, py = ys[i] + dy * f, offsetX = x - px, offsetY = y - py;
+      const distanceSquared = offsetX * offsetX + offsetY * offsetY;
+      if (distanceSquared < bestDistanceSquared) {
+        bestIndex = i; bestFraction = f; bestX = px; bestY = py;
+        bestCross = dx * (y - ys[i]) - dy * (x - xs[i]);
+        bestDistanceSquared = distanceSquared;
+      }
     }
-    best.offset = best.cross > 0 ? -best.d : best.d;
-    return best;
+    const distance = Math.sqrt(bestDistanceSquared);
+    return {
+      i: bestIndex, f: bestFraction, px: bestX, py: bestY, d: distance,
+      offset: bestCross > 0 ? -distance : distance,
+    };
   }
   const wrap = s => ((s % length) + length) % length;
   const index = s => { s = wrap(s); let lo = 0, hi = n; while (hi - lo > 1) { const m = (lo + hi) >> 1; if (ss[m] <= s) lo = m; else hi = m; } return lo; };
+  const locate = (x, y) => {
+    const q = nearest(x, y);
+    return { progress: ss[q.i] + (ss[q.i + 1] - ss[q.i]) * q.f, offset: q.offset };
+  };
   // Centreline point at arc length s, shifted `offset` metres to the right.
   function point(s, offset = 0) {
     const i = index(s), j = (i + 1) % n, f = (wrap(s) - ss[i]) / (ss[i + 1] - ss[i]);
     const x = xs[i] + (xs[j] - xs[i]) * f, y = ys[i] + (ys[j] - ys[i]) * f, h = headings[i];
     return [x + Math.sin(h) * offset, y - Math.cos(h) * offset];
   }
-  const progress = (x, y) => { const q = nearest(x, y); return ss[q.i] + (ss[q.i + 1] - ss[q.i]) * q.f; };
-  const offset = (x, y) => nearest(x, y).offset;
+  const progress = (x, y) => locate(x, y).progress;
+  const offset = (x, y) => locate(x, y).offset;
   const signed = s => (s = wrap(s)) > length / 2 ? s - length : s;
   const pit = pitLane ? circuitPitLane({ length, half, wallOffset, point, offset, progress, signed, curvatureAt: s => curvature[index(s)] }) : null;
   const surface = (x, y) => {
@@ -233,7 +245,7 @@ export function createCircuitTrack({ name = 'Circuit', points, length: officialL
     return d <= half ? 'asphalt' : d <= half + 1.2 && kerb[q.i] ? 'kerb' : d <= half + 8 ? 'runoff' : 'grass';
   };
   return {
-    kind: 'circuit', name, length, roadWidth, wallOffset, step, offset, surface, progress, point, pit,
+    kind: 'circuit', name, length, roadWidth, wallOffset, step, locate, offset, surface, progress, point, pit,
     // DRS zones [open, close] (lap progress, m), or null: drs gives them as
     // fractions of the lap from the real timing line, which lies timingLine m
     // along the trace (the lap here still starts at its first point).

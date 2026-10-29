@@ -6,15 +6,36 @@ import * as THREE from '../vendor/three.module.js';
 import { GLTFLoader } from '../vendor/GLTFLoader.js';
 import { MeshoptDecoder } from '../vendor/meshopt_decoder.module.js';
 
-export const RB22_URL = new URL('../models/rb22.glb', import.meta.url).href;
+export const RB22_URL = new URL('../models/redbull22.glb', import.meta.url).href;
 // All four wheels of each of these materials are one mesh: split per corner at load.
 const WHEEL_MATERIAL = /^(discs|redbull_wheel_hub|sidewall)/;
 // Parts wholly inside this box (model metres, nose at +z) make up the steering wheel.
 const STEERING_BOX = new THREE.Box3(new THREE.Vector3(-0.14, 0.48, 0.63), new THREE.Vector3(0.14, 0.69, 0.81));
 const CORNERS = ['front-left', 'front-right', 'rear-left', 'rear-right'];
 const MIRRORS = ['mirror-left', 'mirror-right'];
+const MODEL_PARTS = new Set(['Wheel_Holder_Cup_L', 'Wheel_Holder_Cup_R', 'RearWing_flap', 'FrontWings-Flap', 'Lights', 'Yellow_Lights', 'Mirrors']);
+const PART_PIVOTS = {
+  RearWing_flap: new THREE.Vector3(0, 0.84, -2.165),
+  'FrontWings-Flap': new THREE.Vector3(0, 0.2, 2.2),
+};
 // Steering wheel turn per radian of road-wheel steer (full lock 0.38 rad -> about 110°).
 export const STEERING_RATIO = 5;
+function aimBoneAt(bone, endpoint, target, origin, from, to, rotation, worldRotation, parentRotation) {
+  bone.getWorldPosition(origin);
+  from.subVectors(endpoint, origin).normalize();
+  to.subVectors(target, origin).normalize();
+  if (from.lengthSq() < 1e-8 || to.lengthSq() < 1e-8) return;
+  rotation.setFromUnitVectors(from, to);
+  bone.getWorldQuaternion(worldRotation);
+  bone.parent.getWorldQuaternion(parentRotation).invert();
+  bone.quaternion.copy(parentRotation.multiply(rotation.multiply(worldRotation)));
+  bone.updateMatrixWorld(true);
+}
+function setBoneWorldQuaternion(bone, worldRotation, parentRotation) {
+  bone.parent.getWorldQuaternion(parentRotation).invert();
+  bone.quaternion.copy(parentRotation.multiply(worldRotation));
+  bone.updateMatrixWorld(true);
+}
 // A flat 4 cm plate on top of the bodywork, left of the cockpit (part of the detail mesh): its
 // magenta-and-white metallic texture flashes white in the cockpit view, so it is left out.
 const NOSE_PLATE = new THREE.Box3(new THREE.Vector3(0.07, 0.69, 1.11), new THREE.Vector3(0.125, 0.712, 1.165));
@@ -29,10 +50,50 @@ export async function loadRB22Template(source = RB22_URL) {
   const meshes = []; gltf.scene.traverse(o => { if (o.isMesh) meshes.push(o); });
   const template = new THREE.Group(), wheels = CORNERS.map(name => Object.assign(new THREE.Group(), { name }));
   const steering = new THREE.Group(); steering.name = 'steering';
+  const parts = new Map();
+  const partFor = mesh => {
+    for (let node = mesh; node; node = node.parent) if (MODEL_PARTS.has(node.name)) return node.name;
+    return null;
+  };
+  const partGroup = name => {
+    if (!parts.has(name)) {
+      const group = new THREE.Group(); group.name = name;
+      const pivot = PART_PIVOTS[name];
+      if (pivot) group.position.copy(pivot);
+      parts.set(name, group); template.add(group);
+    }
+    return parts.get(name);
+  };
+  const driverSource = gltf.scene.getObjectByName('Sketchfab_model');
+  if (driverSource) {
+    const driver = driverSource.clone(true);
+    driver.name = 'driver-rig';
+    driver.matrixAutoUpdate = false;
+    driver.matrix.copy(driverSource.matrixWorld);
+    template.add(driver);
+  }
   for (const m of meshes) {
+    if (m.isSkinnedMesh) continue;
     const geometry = toFloat(m.geometry).applyMatrix4(m.matrixWorld);
     if (m.material.name.startsWith('redbull_detail')) dropTriangles(geometry, NOSE_PLATE);
     geometry.computeBoundingBox();
+    const part = partFor(m);
+    if (part === 'Mirrors') {
+      splitCorners(geometry).slice(0, 2).forEach((g, i) => {
+        if (g) template.add(Object.assign(new THREE.Mesh(g, m.material), { name: MIRRORS[i] }));
+      });
+      continue;
+    }
+    if (part && part !== 'Lights' && part !== 'Yellow_Lights' && part !== 'Wheel_Holder_Cup_L' && part !== 'Wheel_Holder_Cup_R') {
+      const pivot = PART_PIVOTS[part];
+      if (pivot) geometry.translate(-pivot.x, -pivot.y, -pivot.z);
+      partGroup(part).add(new THREE.Mesh(geometry, m.material));
+      continue;
+    }
+    if (part) {
+      partGroup(part).add(new THREE.Mesh(geometry, m.material));
+      continue;
+    }
     if (WHEEL_MATERIAL.test(m.material.name)) {
       splitCorners(geometry).forEach((g, i) => g && wheels[i].add(new THREE.Mesh(g, m.material)));
       continue;
@@ -96,7 +157,9 @@ export function splitCorners(geometry) {
 // brake disc (split corner meshes are non-indexed). Needs current world matrices.
 function axleOf(corner) {
   const axis = new THREE.Vector3(), a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3(), n = new THREE.Vector3();
-  const disc = corner.children.find(m => m.material.name.startsWith('discs')), pos = disc.geometry.attributes.position;
+  const disc = corner.children.find(m => m.material.name.startsWith('discs'));
+  if (!disc) return new THREE.Vector3(0, 0, 1);
+  const pos = disc.geometry.attributes.position;
   for (let t = 0; t < pos.count; t += 3) {
     [a, b, c].forEach((v, k) => v.fromBufferAttribute(pos, t + k).applyMatrix4(disc.matrixWorld));
     n.crossVectors(b.sub(a), c.sub(a)); axis.addScaledVector(n, Math.sign(n.z) || 1);
@@ -106,7 +169,7 @@ function axleOf(corner) {
 
 // Our livery replaces Red Bull's: the paint is refilled in the car's colour, the decals are
 // cleared, the sponsor names are projected onto both, and the race-number mesh is hidden.
-export const SPONSORS = ['AgentiLoop Racing', 'InkPen.io', 'SuperBox64.com', 'AgentiLoop.si'];
+export const SPONSORS = ['CursorRacing', 'notparthyt', 'CR', 'C1'];
 export const GITHUB = 'github.com/notparthyt/F1';
 // Label slots in model space (nose +z, left +x, up +y): centre c, facing n, w x h metres.
 // Text reads along b (default: left to right seen from outside, tops up, or forward on
@@ -121,7 +184,7 @@ export const LIVERY_SLOTS = [
   // that runs rearward on the left and forward on the right.
   { role: 0, c: [0.062, 0.86, -0.95], n: v(0, 1, 0), b: v(0, 0, -1), w: 0.64, h: 0.09 },
   { role: 0, c: [-0.062, 0.86, -0.95], n: v(0, 1, 0), b: v(0, 0, 1), w: 0.64, h: 0.09 },
-  { role: 1, on: 'decals', c: [0, 0.86, -2.21], n: v(0, 0.94, 0.33), w: 0.9, h: 0.16 }, // rear wing
+  { role: 1, on: 'decals', c: [0, 0.845, -2.167], n: v(0, 0.94, 0.33), w: 0.9, h: 0.05 }, // rear wing
   ...sides({ role: 2, c: [0.62, 0.3, 2.42], n: v(1, 0, 0), w: 0.4, h: 0.16 }), // front wing endplates (the right one's decal area is cut short)
   ...sides({ role: 3, on: 'decals', c: [0.39, 0.16, 2.61], n: v(0, 1, 0), w: 0.55, h: 0.14 }), // front wing
   ...sides({ role: 3, c: [0.57, 0.8, -2.1], n: v(1, 0, 0), w: 0.4, h: 0.2 }), // rear wing endplates
@@ -145,27 +208,32 @@ const HALO = new WeakMap(); // template -> one decal geometry per HALO_SLOTS ent
 
 // The paint triangles of the bar facing the eye under each slot, lifted off the surface,
 // with UVs across the slot's label (0..1; the label canvas is transparent outside).
-function haloGeometries(template, slots = HALO_SLOTS) {
-  let mesh; template.traverse(o => { if (o.isMesh && o.material.name.startsWith(LAYERS.paint)) mesh = o; });
-  const g = mesh.geometry.index ? mesh.geometry.toNonIndexed() : mesh.geometry, P = g.attributes.position, N = g.attributes.normal;
+export function haloGeometries(template, slots = HALO_SLOTS) {
+  const meshes = [];
+  template.traverse(o => { if (o.isMesh && o.material.name.startsWith(LAYERS.paint)) meshes.push(o); });
+  if (!meshes.length) throw new Error('Could not find paint meshes for halo livery');
   const F = new THREE.Vector3(0, -Math.sin(HALO_PITCH), Math.cos(HALO_PITCH)), U = new THREE.Vector3(0, Math.cos(HALO_PITCH), Math.sin(HALO_PITCH));
   const p = new THREE.Vector3(), d = new THREE.Vector3(), nrm = new THREE.Vector3();
   return slots.map(s => {
     const pos = [], uv = [];
-    for (let i = 0; i < P.count; i += 3) {
-      nrm.set(0, 0, 0); const st = [];
-      for (let k = 0; k < 3; k++) {
-        p.fromBufferAttribute(P, i + k); nrm.add(d.fromBufferAttribute(N, i + k));
-        d.subVectors(p, HALO_EYE);
-        if (p.y < 0.75 || p.z < 0.3 || p.z > 0.75 || d.dot(F) <= 0) break;
-        st.push([(-d.x / d.dot(F) - s.x) / s.w + 0.5, (d.dot(U) / d.dot(F) - s.y) / s.h + 0.5]);
-      }
-      if (st.length < 3 || nrm.dot(d) >= 0 || !st.some(([u, v]) => u > 0 && u < 1 && v > 0 && v < 1)) continue;
-      for (let k = 0; k < 3; k++) {
-        p.fromBufferAttribute(P, i + k).addScaledVector(nrm.fromBufferAttribute(N, i + k), 0.002); pos.push(p.x, p.y, p.z);
-        uv.push(...st[k]);
+    for (const mesh of meshes) {
+      const g = mesh.geometry.index ? mesh.geometry.toNonIndexed() : mesh.geometry, P = g.attributes.position, N = g.attributes.normal;
+      for (let i = 0; i < P.count; i += 3) {
+        nrm.set(0, 0, 0); const st = [];
+        for (let k = 0; k < 3; k++) {
+          p.fromBufferAttribute(P, i + k); nrm.add(d.fromBufferAttribute(N, i + k));
+          d.subVectors(p, HALO_EYE);
+          if (p.y < 0.75 || p.z < 0.3 || p.z > 0.75 || d.dot(F) <= 0) break;
+          st.push([(-d.x / d.dot(F) - s.x) / s.w + 0.5, (d.dot(U) / d.dot(F) - s.y) / s.h + 0.5]);
+        }
+        if (st.length < 3 || nrm.dot(d) >= 0 || !st.some(([u, v]) => u > 0 && u < 1 && v > 0 && v < 1)) continue;
+        for (let k = 0; k < 3; k++) {
+          p.fromBufferAttribute(P, i + k).addScaledVector(nrm.fromBufferAttribute(N, i + k), 0.002); pos.push(p.x, p.y, p.z);
+          uv.push(...st[k]);
+        }
       }
     }
+    if (!pos.length) throw new Error(`Could not find halo paint geometry for label at x=${s.x}`);
     const out = new THREE.BufferGeometry();
     out.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); out.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
     out.computeVertexNormals();
@@ -184,8 +252,22 @@ export function liveryTexels(template, slots = LIVERY_SLOTS, size = PAINT_SIZE) 
   const out = [];
   for (const [layer, material] of Object.entries(LAYERS)) {
     const keys = slots.flatMap((s, k) => (s.on ?? 'paint') === layer ? [k] : []);
-    let mesh; template.traverse(o => { if (o.isMesh && o.material.name.startsWith(material)) mesh = o; });
-    rasterSlots(mesh, keys.map(k => slots[k]), size).forEach((texels, j) => { out[keys[j]] = texels; });
+    const meshes = [];
+    template.traverse(o => { if (o.isMesh && o.material.name.startsWith(material)) meshes.push(o); });
+    const parts = meshes.map(mesh => rasterSlots(mesh, keys.map(k => slots[k]), size));
+    keys.forEach((key, j) => {
+      const hits = parts.map(part => part[j]).filter(Boolean);
+      const count = hits.reduce((sum, hit) => sum + hit.idx.length, 0);
+      const idx = new Int32Array(count), s = new Float32Array(count), t = new Float32Array(count);
+      let offset = 0;
+      for (const hit of hits) {
+        idx.set(hit.idx, offset); s.set(hit.s, offset); t.set(hit.t, offset);
+        offset += hit.idx.length;
+      }
+      out[key] = {
+        idx, s, t,
+      };
+    });
   }
   return out;
 }
@@ -305,6 +387,14 @@ export function buildRB22Car(template, config, { paint = 0x0e1626, accent = 0x39
   const physical = o => new THREE.MeshPhysicalMaterial(o);
   const car = new THREE.Group(); car.name = 'f1-car';
   const root = template.clone(true);
+  template.traverse(source => {
+    if (!source.isSkinnedMesh) return;
+    const target = root.getObjectByName(source.name);
+    if (!target?.isSkinnedMesh) return;
+    const bones = source.skeleton.bones.map(bone => root.getObjectByName(bone.name));
+    if (bones.some(bone => !bone)) throw new Error(`Could not clone driver skeleton for ${source.name}`);
+    target.bind(new THREE.Skeleton(bones, source.skeleton.boneInverses.map(matrix => matrix.clone())), source.bindMatrix.clone());
+  });
   // Nose +z, left +x -> nose +x, left -z; then put the front axle on the physics front axle.
   root.rotation.y = Math.PI / 2; car.add(root);
   root.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
@@ -348,32 +438,120 @@ export function buildRB22Car(template, config, { paint = 0x0e1626, accent = 0x39
     return { pivot, spin, front: i < 2 };
   });
 
-  // The rear wing is part of the merged bodywork, so the DRS flap is a placeholder.
-  const drsFlap = new THREE.Group(); car.add(drsFlap);
+  for (const [name, i] of [['Wheel_Holder_Cup_L', 0], ['Wheel_Holder_Cup_R', 1]]) {
+    const holder = root.getObjectByName(name);
+    if (holder) { car.updateMatrixWorld(true); wheels[i].pivot.attach(holder); }
+  }
+  const drsFlap = root.getObjectByName('RearWing_flap') ?? new THREE.Group();
+  const frontWingFlap = root.getObjectByName('FrontWings-Flap');
+  if (!drsFlap.parent) car.add(drsFlap);
+  if (frontWingFlap) frontWingFlap.userData.closedRotation = frontWingFlap.rotation.x;
+  drsFlap.userData.closedRotation = drsFlap.rotation.x;
+  const rearLights = root.getObjectByName('Lights');
+  const yellowLights = root.getObjectByName('Yellow_Lights');
+  if (yellowLights) yellowLights.visible = false;
+  rearLights?.traverse(o => {
+    if (!o.isMesh) return;
+    o.material = o.material.clone();
+    if ('emissive' in o.material) {
+      o.material.emissive.set(0xff1414);
+      o.material.emissiveIntensity = 0;
+    }
+  });
+  yellowLights?.traverse(o => {
+    if (!o.isMesh) return;
+    o.material = o.material.clone();
+    if ('emissive' in o.material) {
+      o.material.emissive.set(0xffb400);
+      o.material.emissiveIntensity = 0;
+    }
+  });
 
   // Steering wheel turns about its column (steeringWheel.rotation.x).
   const steer = root.getObjectByName('steering'), sc = box(steer).getCenter(new THREE.Vector3());
   const steeringWheel = new THREE.Group(); steeringWheel.name = 'steering-wheel';
   steeringWheel.position.copy(sc); car.add(steeringWheel); car.updateMatrixWorld(true);
   steeringWheel.attach(steer);
-  // Bring the wheel 12 cm back toward the driver (the eye and helmet keep their places).
-  steeringWheel.position.x -= 0.12;
 
-  // The model has no driver: a helmet sits behind the steering wheel.
-  const head = new THREE.Vector3(sc.x - 0.80, 0.70, 0);
-  const helmetMesh = new THREE.Mesh(new THREE.SphereGeometry(0.125, 32, 20), physical({ color: helmet, roughness: 0.25, clearcoat: 1 }));
-  helmetMesh.scale.set(1.1, 1, 0.95); helmetMesh.position.copy(head);
-  const visor = new THREE.Mesh(new THREE.SphereGeometry(0.127, 32, 12, -0.9, 1.8, 1.2, 0.45),
-    physical({ color: 0x0a0d12, metalness: 0.9, roughness: 0.05, clearcoat: 1 }));
-  visor.scale.copy(helmetMesh.scale); visor.rotation.y = Math.PI / 2; visor.position.copy(head);
-  const stripe = new THREE.Mesh(new THREE.TorusGeometry(0.126, 0.012, 8, 40), physical({ color: accent, roughness: 0.3, clearcoat: 1 }));
-  stripe.rotation.y = Math.PI / 2; stripe.scale.set(1.1, 1, 0.95); stripe.position.copy(head);
-  for (const m of [helmetMesh, visor, stripe]) { m.castShadow = true; car.add(m); }
+  const rig = root.getObjectByName('driver-rig');
+  const skeleton = rig && (() => { let found; rig.traverse(o => { if (!found && o.isSkinnedMesh) found = o.skeleton; }); return found; })();
+  const driverHead = skeleton?.bones[7] ?? null;
+  const elbowBones = [skeleton?.bones[10] ?? null, skeleton?.bones[34] ?? null];
+  const handBones = [skeleton?.bones[11] ?? null, skeleton?.bones[35] ?? null];
+  const driverElbows = elbowBones.filter(Boolean), driverHands = handBones.filter(Boolean);
+  const arms = elbowBones.flatMap((fore, i) => {
+    const hand = handBones[i], upper = fore?.parent;
+    return upper && hand ? [{ upper, fore, hand }] : [];
+  });
+  car.updateMatrixWorld(true);
+  const wheelRotation = steeringWheel.getWorldQuaternion(new THREE.Quaternion()).invert();
+  for (const arm of arms) {
+    arm.rest = {
+      upper: arm.upper.quaternion.clone(),
+      fore: arm.fore.quaternion.clone(),
+      hand: arm.hand.quaternion.clone(),
+    };
+    const shoulder = arm.upper.getWorldPosition(new THREE.Vector3());
+    const elbow = arm.fore.getWorldPosition(new THREE.Vector3());
+    const hand = arm.hand.getWorldPosition(new THREE.Vector3());
+    arm.upperLength = shoulder.distanceTo(elbow);
+    arm.foreLength = elbow.distanceTo(hand);
+    arm.grip = steeringWheel.worldToLocal(hand.clone());
+    arm.handRotation = wheelRotation.clone().multiply(arm.hand.getWorldQuaternion(new THREE.Quaternion()));
+    arm.pole = root.worldToLocal(elbow.clone());
+  }
+  const shoulder = new THREE.Vector3(), target = new THREE.Vector3(), direction = new THREE.Vector3();
+  const pole = new THREE.Vector3(), elbowTarget = new THREE.Vector3(), endpoint = new THREE.Vector3();
+  const origin = new THREE.Vector3(), from = new THREE.Vector3(), to = new THREE.Vector3();
+  const rotation = new THREE.Quaternion(), wheelWorldRotation = new THREE.Quaternion();
+  const boneWorldRotation = new THREE.Quaternion(), parentRotation = new THREE.Quaternion();
+  const updateArms = () => {
+    for (const arm of arms) {
+      arm.upper.quaternion.copy(arm.rest.upper);
+      arm.fore.quaternion.copy(arm.rest.fore);
+      arm.hand.quaternion.copy(arm.rest.hand);
+    }
+    steeringWheel.updateWorldMatrix(true, false);
+    for (const arm of arms) arm.upper.updateWorldMatrix(true, true);
+    steeringWheel.getWorldQuaternion(wheelWorldRotation);
+    for (const arm of arms) {
+      arm.upper.getWorldPosition(shoulder);
+      steeringWheel.localToWorld(target.copy(arm.grip));
+      direction.subVectors(target, shoulder);
+      const maxReach = arm.upperLength + arm.foreLength - 1e-4;
+      const minReach = Math.abs(arm.upperLength - arm.foreLength) + 1e-4;
+      const reach = THREE.MathUtils.clamp(direction.length(), minReach, maxReach);
+      direction.normalize();
+
+      root.localToWorld(pole.copy(arm.pole)).sub(shoulder);
+      pole.addScaledVector(direction, -pole.dot(direction));
+      if (pole.lengthSq() < 1e-8) {
+        pole.set(0, 1, 0).addScaledVector(direction, -direction.y);
+        if (pole.lengthSq() < 1e-8) pole.set(1, 0, 0).addScaledVector(direction, -direction.x);
+      }
+      pole.normalize();
+      const along = (arm.upperLength ** 2 - arm.foreLength ** 2 + reach ** 2) / (2 * reach);
+      const height = Math.sqrt(Math.max(arm.upperLength ** 2 - along ** 2, 0));
+      elbowTarget.copy(shoulder).addScaledVector(direction, along).addScaledVector(pole, height);
+
+      arm.fore.getWorldPosition(endpoint);
+      aimBoneAt(arm.upper, endpoint, elbowTarget, origin, from, to, rotation, boneWorldRotation, parentRotation);
+      arm.hand.getWorldPosition(endpoint);
+      aimBoneAt(arm.fore, endpoint, target, origin, from, to, rotation, boneWorldRotation, parentRotation);
+      rotation.copy(wheelWorldRotation).multiply(arm.handRotation);
+      setBoneWorldQuaternion(arm.hand, rotation, parentRotation);
+    }
+  };
+  const driverRest = { head: driverHead?.quaternion.clone() ?? null };
+  const eye = driverHead
+    ? car.worldToLocal(driverHead.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0, 0.07, 0)))
+    : new THREE.Vector3(sc.x - 0.55, 0.77, 0);
 
   const body = new THREE.Group(); body.name = 'sprung-body';
   const pivots = new Set(wheels.map(w => w.pivot));
   car.children.filter(o => !pivots.has(o)).forEach(o => body.add(o));
   car.add(body);
-  return { group: car, body, wheels, driver: [helmetMesh, visor, stripe], drsFlap, steeringWheel, eye: [sc.x - 0.55, head.y + 0.07],
-    mirrors: MIRRORS.map(name => root.getObjectByName(name)) };
+  updateArms();
+  return { group: car, body, wheels, driver: [], driverHead, driverElbows, driverHands, driverRest, updateArms, drsFlap, frontWingFlap, steeringWheel,
+    rearLights, yellowLights, eye: [eye.x, eye.y, eye.z], mirrors: MIRRORS.map(name => root.getObjectByName(name)).filter(Boolean) };
 }

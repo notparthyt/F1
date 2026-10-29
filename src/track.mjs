@@ -15,8 +15,10 @@ export const SURFACE_GRIP = Object.freeze({ asphalt: 1, pit: 1, kerb: 0.9, runof
 // exits blend in after turn 1. Layout and the 80 km/h limit are illustrative.
 export function stadiumPitLane(halfStraight, radius, roadWidth) {
   const half = roadWidth / 2, straight = 2 * halfStraight, turn = straight + Math.PI * radius;
-  return Object.freeze({ entry: 0.07 * straight, limitStart: 0.33 * straight, limitEnd: 0.73 * straight, mergeStart: turn + 40, exit: turn + 0.4 * straight,
-    inner: half + 1.2, outer: half + 11, lane: -(half + 4.5), boxOffset: -(half + 8.5), boxStart: 0.4 * straight, boxSpacing: 30, speedLimit: 80 / 3.6 });
+  const limitStart = 0.15 * straight, limitEnd = 0.85 * straight, boxSpacing = 12;
+  return Object.freeze({ entry: 0.07 * straight, limitStart, limitEnd, mergeStart: turn + 40, exit: turn + 0.4 * straight,
+    inner: half + 1.2, outer: half + 11, lane: -(half + 1.5), boxOffset: -(half + 9.5),
+    boxStart: (limitStart + limitEnd) / 2 - 10.5 * boxSpacing, boxSpacing, speedLimit: 80 / 3.6 });
 }
 
 export function createStadiumTrack({ halfStraight, radius, roadWidth, wallOffset = roadWidth / 2 + 12 }) {
