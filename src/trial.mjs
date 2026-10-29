@@ -3,7 +3,7 @@
 // createRace (car, entries[0], advance, start, finish, standings...) so the
 // browser front end drives either. The car starts `runUp` metres before the
 // start/finish line on the racing line, so lap 1 begins with a flying start.
-// DRS is free to use in the circuit's DRS zones, as in practice and qualifying.
+// DRS can be manually used anywhere, as in practice and qualifying.
 import { Simulation, createCar, fitTires, newErsLap, tireTempGrip, tireWearGrip, TIRE_COMPOUNDS, FIXED_DT } from './physics.mjs';
 import { createCircuitAutopilot } from './autopilot.mjs';
 import { findDrsZones, inDrsZone } from './race.mjs';
@@ -29,6 +29,8 @@ export function createTimeTrial(track, { tyre = 'medium', runUp = 150, car: carS
     car, entries: [entry], drive, time: 0, pit: null, options: {}, drsZones, drsEnabled: true,
     start: { enabled: false, phase: 'race', lit: 0, lightsOut: 0, sinceLightsOut: Infinity },
     finish: { laps: 0, flag: false, flagTime: null, done: false },
+    yellowFlag: { active: false, remaining: 0 },
+    safetyCar: { active: false, progress: null, speed: 0 },
     // input: the player's command, or null to let the circuit autopilot drive
     // (re-planned every physics step). Frames are capped at 0.25 s like Simulation.
     // Crossing the start/finish line forwards starts a new ERS lap.
@@ -36,9 +38,9 @@ export function createTimeTrial(track, { tyre = 'medium', runUp = 150, car: carS
       accumulator += Math.min(elapsed, 0.25);
       let steps = 0;
       while (accumulator + 1e-12 >= FIXED_DT) {
-        // The autopilot opens DRS throughout a zone; the player's request counts only in one.
-        entry.drsAllowed = drsZones.some(z => inDrsZone(track, z, track.progress(car.x, car.y)));
-        const command = input ?? { ...drive(car, { grip: tyreGrip() }), drs: true };
+        entry.drsAllowed = true;
+        const inZone = drsZones.some(z => inDrsZone(track, z, track.progress(car.x, car.y)));
+        const command = input ?? { ...drive(car, { grip: tyreGrip() }), drs: inZone };
         entry.command = { ...command, drs: entry.drsAllowed && command.drs === true };
         sim.advance(FIXED_DT, entry.command, surfaceAt, barrierAt);
         const p = track.progress(car.x, car.y);

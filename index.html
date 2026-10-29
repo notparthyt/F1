@@ -62,16 +62,23 @@ import { createCircuitTrack } from './src/circuit.mjs';
 import { CIRCUITS } from './src/circuits.mjs';
 import { createTimeTrial } from './src/trial.mjs';
 import { createLapTimer, formatLapTime } from './src/laptimer.mjs';
-import { applyArcadeSteeringAssist, createDriverInput, readGamepad } from './src/input.mjs';
+import { applyArcadeAccelerationAssist, applyArcadeSteeringAssist, createDriverInput, readGamepad } from './src/input.mjs';
 import { createSoundModel, createAudioEngine } from './src/audio.mjs';
 import { createWeather } from './src/weather.mjs';
+import { captureHandlingBaseline, applyHandlingMode as applyCarHandlingMode } from './src/handling.mjs';
 const $ = id => document.getElementById(id);
 const canvas = $('track');
 const handlingButton = document.createElement('button');
 handlingButton.id = 'handling-mode';
 handlingButton.setAttribute('aria-pressed', 'false');
 $('autopilot').after(handlingButton);
-let sim, paused = false, overview = false, cockpit = false, tcam = false, previousTime = null, snapCamera = true;
+const originalCarButton = document.createElement('button');
+originalCarButton.id = 'original-car';
+originalCarButton.setAttribute('aria-pressed', 'false');
+originalCarButton.textContent = 'Original car: off';
+handlingButton.after(originalCarButton);
+let sim, paused = false, overview = false, cockpit = false, tcam = false, look360 = false, previousTime = null, snapCamera = true;
+let lookYaw = 0, lookPitch = 0.18, lookDistance = 6, lookPointer = null;
 let width = 1, height = 1;
 const keys = new Set();
 const halfStraight = 220, radius = 90, roadWidth = 15;
@@ -87,23 +94,16 @@ const requestedHandling = new URLSearchParams(location.search).get('handling');
 let autopilot = false, handlingMode = handlingModes.includes(requestedHandling) ? requestedHandling : 'sim';
 let handlingBaseline = null, command = { throttle: 0, brake: 0, steer: 0 }, opponents = !circuitKey || new URLSearchParams(location.search).has('race');
 const driver = createDriverInput();
-const arcadeFactors = Object.freeze({
-  tireMu: 1.6, corneringStiffness: 1, rearCorneringStiffness: 0.9,
-  slidingGripRatio: 0.99, slidingFalloff: 3.5, brakeBias: 0.64,
-});
-const handlingKeys = Object.keys(arcadeFactors);
 function updateHandlingButton() {
   handlingButton.textContent = `Handling: ${handlingMode}`;
   handlingButton.setAttribute('aria-pressed', String(handlingMode !== 'sim'));
 }
 function applyHandlingMode() {
   if (!sim || !handlingBaseline) return;
-  for (const key of handlingKeys) sim.car.config[key] = handlingBaseline[key];
-  if (handlingMode === 'arcade') {
-    for (const [key, factor] of Object.entries(arcadeFactors))
-      sim.car.config[key] = key === 'slidingGripRatio' || key === 'slidingFalloff' || key === 'brakeBias'
-        ? factor : handlingBaseline[key] * factor;
-  }
+  applyCarHandlingMode(sim.entries, handlingMode, handlingBaseline);
+  sim.setAiPace?.(handlingMode === 'arcade'
+    ? { cornerSpeed: sim.entries[0].cornerSpeed, brakeDecel: sim.entries[0].brakeDecel }
+    : null);
 }
 function toggleHandlingMode() {
   handlingMode = handlingModes[(handlingModes.indexOf(handlingMode) + 1) % handlingModes.length];
@@ -164,7 +164,7 @@ function reset() {
   weather = createWeather();
   sim = circuitKey && !opponents ? createTimeTrial(track, { tyre }) : createRace(track, { grid: opponents ? DEFAULT_GRID : [], start: opponents && !query.has('nostart'), laps: opponents ? Math.max(1, Math.round(Number(query.get('laps')) || (circuitKey ? 3 : 10))) : 0,
     compoundRule: opponents, player: { tyres: [tyre, tyre === 'hard' ? 'medium' : 'hard'] } }); timer.restart();
-  handlingBaseline = Object.fromEntries(handlingKeys.map(key => [key, sim.car.config[key]]));
+  handlingBaseline = captureHandlingBaseline(sim.entries);
   applyHandlingMode();
   wearSkins(cars.map((_, i) => i));
   cars.forEach((r, i) => { r.model.group.visible = !i || opponents; r.wheelAngle.fill(0); });
@@ -197,27 +197,59 @@ function pause(value) {
 function updateCameraButtons() {
   $('view').textContent = overview ? 'Chase view' : 'Overview';
   $('view').setAttribute('aria-pressed', String(overview));
-  const mode = overview ? 'Overview' : cockpit ? 'Cockpit' : tcam ? 'T-Cam' : 'Chase Cam';
+  const mode = overview ? 'Overview' : look360 ? '360 Look' : cockpit ? 'Cockpit' : tcam ? 'T-Cam' : 'Chase Cam';
   $('camera-mode').textContent = `Camera: ${mode}`;
-  $('camera-mode').setAttribute('aria-label', `Camera mode: ${mode}. Click to cycle through Cockpit, Chase Cam, and T-Cam.`);
+  $('camera-mode').setAttribute('aria-label', `Camera mode: ${mode}. Click to cycle Cockpit, Chase Cam, and T-Cam; press U for 360 Look.`);
   $('camera-mode').title = `Camera: ${mode} · click to cycle`;
 }
 function changeView() {
   overview = !overview;
-  if (overview) cockpit = tcam = false;
+  if (overview) cockpit = tcam = look360 = false;
   updateCameraButtons();
 }
 function changeCamera() {
-  const mode = overview ? 'overview' : cockpit ? 'cockpit' : tcam ? 'tcam' : 'chase';
-  const nextMode = mode === 'overview' ? 'cockpit' : mode === 'cockpit' ? 'chase' : mode === 'chase' ? 'tcam' : 'cockpit';
+  const mode = overview ? 'overview' : look360 ? 'look360' : cockpit ? 'cockpit' : tcam ? 'tcam' : 'chase';
+  const nextMode = mode === 'overview' || mode === 'look360' ? 'cockpit' : mode === 'cockpit' ? 'chase' : mode === 'chase' ? 'tcam' : 'cockpit';
   cockpit = nextMode === 'cockpit';
   tcam = nextMode === 'tcam';
-  overview = false;
+  overview = look360 = false;
+  snapCamera = true;
+  updateCameraButtons();
+}
+function changeLook360() {
+  look360 = !look360;
+  lookPointer = null;
+  canvas.style.touchAction = look360 ? 'none' : '';
+  if (look360) {
+    overview = cockpit = tcam = false;
+    lookYaw = sim.car.heading - Math.PI / 2;
+  }
   snapCamera = true;
   updateCameraButtons();
 }
 $('camera-mode').onclick = changeCamera;
 updateCameraButtons();
+canvas.addEventListener('pointerdown', event => {
+  if (!look360 || event.button !== 0) return;
+  lookPointer = { id: event.pointerId, x: event.clientX, y: event.clientY };
+  canvas.setPointerCapture(event.pointerId);
+});
+canvas.addEventListener('pointermove', event => {
+  if (!look360 || lookPointer?.id !== event.pointerId) return;
+  lookYaw -= (event.clientX - lookPointer.x) * 0.006;
+  lookPitch = THREE.MathUtils.clamp(lookPitch + (event.clientY - lookPointer.y) * 0.004, -0.3, 1.2);
+  lookPointer.x = event.clientX; lookPointer.y = event.clientY;
+});
+const endLookDrag = event => {
+  if (lookPointer?.id === event.pointerId) lookPointer = null;
+};
+canvas.addEventListener('pointerup', endLookDrag);
+canvas.addEventListener('pointercancel', endLookDrag);
+canvas.addEventListener('wheel', event => {
+  if (!look360) return;
+  event.preventDefault();
+  lookDistance = THREE.MathUtils.clamp(lookDistance + Math.sign(event.deltaY) * 0.8, 3, 14);
+}, { passive: false });
 $('pause').onclick = () => pause(!paused);
 $('reset').onclick = reset;
 $('view').onclick = changeView;
@@ -355,13 +387,14 @@ const title = c => c[0].toUpperCase() + c.slice(1);
 const drivingKeys = ['KeyW','KeyS','KeyA','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','KeyQ','KeyE','KeyF'];
 window.addEventListener('keydown', e => {
   if (e.target.closest('input,select,textarea,[contenteditable="true"]')) return;
-  if (e.target.closest('button') && !drivingKeys.includes(e.code) && e.code !== 'KeyT') return;
-  if ([...drivingKeys,'Space','KeyR','KeyV','KeyP','KeyC','KeyN','KeyM','KeyO','KeyB','KeyH','KeyZ','KeyX','KeyG','KeyT'].includes(e.code)) e.preventDefault();
+  if (e.target.closest('button') && !drivingKeys.includes(e.code) && !['KeyT','KeyU'].includes(e.code)) return;
+  if ([...drivingKeys,'Space','KeyR','KeyV','KeyP','KeyC','KeyN','KeyM','KeyO','KeyB','KeyH','KeyZ','KeyX','KeyG','KeyT','KeyU'].includes(e.code)) e.preventDefault();
   if (e.repeat) return;
   if (e.code !== 'KeyM') startAudio();
   if (e.code === 'Space') pause(!paused);
   else if (e.code === 'KeyR') reset();
   else if (e.code === 'KeyV') changeView();
+  else if (e.code === 'KeyU') changeLook360();
   else if (e.code === 'KeyP') toggleAutopilot();
   else if (e.code === 'KeyC' || e.code === 'KeyN') changeCamera();
   else if (e.code === 'KeyT') toggleRecording();
@@ -388,11 +421,11 @@ for (const name of ['FL', 'FR', 'RL', 'RR']) {
 }
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
 renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.9;
 renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 const scene = new THREE.Scene();
 scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
-scene.environmentIntensity = 0.55;
+scene.environmentIntensity = 0.4;
 scene.fog = new THREE.Fog(0xc8d8e4, 220, 1700);
 const dryFog = new THREE.Color(0xc8d8e4), rainFog = new THREE.Color(0x72808b);
 let weather = createWeather();
@@ -403,9 +436,9 @@ weatherBadge.setAttribute('aria-live', 'polite');
 weatherBadge.style.cssText = 'position:absolute;top:151px;left:8px;padding:8px 12px;border:1px solid #ffffff2e;border-radius:6px;background:#0b121a9c;color:#e9f0f6;font-size:11px;font-weight:700;letter-spacing:.1em;text-shadow:0 1px 2px #000a;pointer-events:none';
 document.querySelector('.scene').append(weatherBadge);
 const camera = new THREE.PerspectiveCamera(58, 1, 0.1, 4000);
-scene.add(new THREE.HemisphereLight(0xd6e8ff, 0x4a5a32, 0.7));
-const sun = new THREE.DirectionalLight(0xfff0d8, 2.8);
-sun.castShadow = true; sun.shadow.mapSize.set(circuitKey ? 1024 : 2048, circuitKey ? 1024 : 2048);
+scene.add(new THREE.HemisphereLight(0xd6e8ff, 0x4a5a32, 0.55));
+const sun = new THREE.DirectionalLight(0xfff0d8, 2.2);
+sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
 Object.assign(sun.shadow.camera, { left: -14, right: 14, top: 14, bottom: -14, near: 1, far: 140 });
 sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.02;
 scene.add(sun, sun.target);
@@ -470,17 +503,33 @@ scene.add(safetyCarModel.group);
 // old car carries on with the AI. Reset puts you back in the navy car.
 const skins = cars.map((_, i) => i);
 let model;
-// The player's mirrors reflect the scene behind (the rivals' keep the environment reflection).
+let originalCar = false;
+// The player's mirrors reflect the rear view (the rivals keep the environment reflection).
 function wearSkins(list) {
+  model?.setOriginalLivery?.(false);
   model?.mirrors?.forEach(m => m?.userData.mirror?.(false));
   model?.driver.forEach(m => { m.visible = true; }); // the cockpit view hides your own driver
   skins.splice(0, skins.length, ...list);
   model = cars[skins[0]].model;
-  // The mirrors leave out your own rear wheels, so they show the track behind instead.
-  const rearWheels = model.wheels.filter(w => !w.front).map(w => w.pivot);
-  model.mirrors?.forEach(m => m.userData.mirror ? m.userData.mirror(true) : makeMirror(m, { hide: rearWheels }));
+  model.setOriginalLivery?.(originalCar);
+  // Hide the player's car from its own mirrors so the rear view is not blocked by bodywork.
+  model.mirrors?.forEach(m => m.userData.mirror ? m.userData.mirror(true) : makeMirror(m, {
+    hide: [model.group],
+  }));
 }
 wearSkins(skins);
+function updateOriginalCarButton() {
+  originalCarButton.hidden = typeof model.setOriginalLivery !== 'function';
+  originalCarButton.textContent = `Original car: ${originalCar ? 'on' : 'off'}`;
+  originalCarButton.setAttribute('aria-pressed', String(originalCar));
+}
+originalCarButton.onclick = () => {
+  if (typeof model.setOriginalLivery !== 'function') return;
+  originalCar = !originalCar;
+  model.setOriginalLivery(originalCar);
+  updateOriginalCarButton();
+};
+updateOriginalCarButton();
 const MAX_SPIN_STEP = 0.3; // rad of drawn wheel rotation per frame
 const hex = n => `#${n.toString(16).padStart(6, '0')}`;
 // HUD colour of an entry's car: its livery's paint, or `mine` for the navy car.
@@ -507,19 +556,10 @@ function poseCar(m, c, angles, dt, yellowFlagActive = false) {
   // Steering left (positive steer) turns the wheel's top toward the left side (-z).
   if (m.steeringWheel) m.steeringWheel.rotation.x = -c.steer * STEERING_RATIO;
   const drs = Math.max(0, Math.min(1, c.drs ?? 0));
-  m.drsFlap.rotation.x = (m.drsFlap.userData.closedRotation ?? 0) + drs * 0.35;
+  m.drsFlap.rotation.x = (m.drsFlap.userData.closedRotation ?? 0)
+    + drs * (m.drsFlap.userData.openingDirection ?? 1) * (m.drsFlap.userData.openAngle ?? -210 * Math.PI / 180);
   if (m.frontWingFlap) m.frontWingFlap.rotation.x = (m.frontWingFlap.userData.closedRotation ?? 0) + drs * 0.2;
-  if (m.driverHead && m.driverRest.head) {
-    const vibration = Math.min(1, c.telemetry.speed / 80) * 0.012;
-    const clampMotion = (value, limit) => Math.max(-limit, Math.min(limit, value));
-    const headMotion = driverHeadRotation.set(
-      clampMotion(-c.ay * 0.0015, 0.05) + Math.sin(c.time * 17) * vibration,
-      clampMotion(c.steer * 0.08, 0.06) + Math.sin(c.time * 5) * vibration * 0.5,
-      clampMotion(-c.ax * 0.0015, 0.05) + Math.sin(c.time * 13 + 0.7) * vibration,
-    );
-    driverOffset.setFromEuler(headMotion);
-    m.driverHead.quaternion.copy(m.driverRest.head).multiply(driverOffset);
-  }
+  m.updateHead?.({ ax: c.ax, ay: c.ay, steer: c.steer, speed: c.telemetry.speed, time: c.time });
   m.updateArms?.();
   const harvest = c.telemetry.powertrain?.ers?.harvest ?? 0;
   const rearFlash = weather.state.intensity > 0.05 || harvest > 30_000;
@@ -536,18 +576,17 @@ function poseCar(m, c, angles, dt, yellowFlagActive = false) {
 function resize() {
   const bounds = canvas.getBoundingClientRect();
   width = Math.max(bounds.width, 1); height = Math.max(bounds.height, 1);
-  const maxPixels = 2_500_000;
-  renderer.setPixelRatio(Math.min(devicePixelRatio, circuitKey ? 1.5 : 2, Math.sqrt(maxPixels / (width * height))));
+  const maxPixels = 4_000_000;
+  renderer.setPixelRatio(Math.min(devicePixelRatio, circuitKey ? 2 : 2.5, Math.sqrt(maxPixels / (width * height))));
   renderer.setSize(width, height, false);
   camera.aspect = width / height; camera.updateProjectionMatrix();
 }
 new ResizeObserver(resize).observe(canvas);
 const forward = new THREE.Vector3(), chase = new THREE.Vector3(), look = new THREE.Vector3();
-const driverHeadRotation = new THREE.Euler(), driverOffset = new THREE.Quaternion();
 const tcamConfig = {
-  mount: new THREE.Vector3(-0.3, 0.2, -0.2),
-  lookAt: new THREE.Vector3(18, -1.8, -1),
-  fov: 80,
+  mount: new THREE.Vector3(-0.2, 0.1, -0.1),
+  lookAt: new THREE.Vector3(9, -2.5, 0),
+  fov: 60,
 };
 function setTcam({ mount, lookAt, fov } = {}) {
   const readVector = (value, name) => {
@@ -563,9 +602,6 @@ function setTcam({ mount, lookAt, fov } = {}) {
   }
   return { mount: tcamConfig.mount.toArray(), lookAt: tcamConfig.lookAt.toArray(), fov: tcamConfig.fov };
 }
-// Cockpit view: local +x forward -> camera -z, pitched 4° down toward the road.
-const head = { x: 0, z: 0 };
-const eyeTilt = new THREE.Quaternion().setFromEuler(new THREE.Euler(-4 * Math.PI / 180, -Math.PI / 2, 0, 'YXZ'));
 function placeScene(dt) {
   const c = sim.car, g = model.group;
   sun.position.set(c.x + 35, 70, -c.y + 25); sun.target.position.copy(g.position);
@@ -580,16 +616,22 @@ function placeScene(dt) {
     camera.fov = 42; camera.near = 0.1;
     if (circuitKey) { const [x, y] = world.userData.center, e = world.userData.extent; camera.position.set(x, 1.6 * e, -y + 1.2 * e); camera.lookAt(x, 0, -y); }
     else { camera.position.set(0, 300, 420); camera.lookAt(0, 0, 0); }
+  } else if (look360) {
+    camera.fov = 58; camera.near = 0.1; camera.up.set(0, 1, 0);
+    const target = look.copy(g.position).setY(0.85);
+    const horizontal = lookDistance * Math.cos(lookPitch);
+    camera.position.set(
+      target.x + Math.sin(lookYaw) * horizontal,
+      target.y + lookDistance * Math.sin(lookPitch),
+      target.z + Math.cos(lookYaw) * horizontal,
+    );
+    camera.lookAt(target);
   } else if (cockpit) {
-    // Driver's eye, carried by the sprung body. The head is thrown opposite to the
-    // body-frame acceleration (illustrative neck compliance, ~80 ms lag, clamped).
-    const k = snapCamera ? 1 : 1 - Math.exp(-dt / 0.08), clamp = (v, m) => Math.max(-m, Math.min(m, v));
-    head.x += (clamp(-c.ax / 9.81 * 0.008, 0.04) - head.x) * k;
-    head.z += (clamp(c.ay / 9.81 * 0.006, 0.03) - head.z) * k;
     camera.fov = 72; camera.near = 0.03;
     g.updateMatrixWorld(true);
-    camera.position.copy(model.body.localToWorld(look.set(model.eye[0] + head.x, model.eye[1], (model.eye[2] ?? 0) + head.z)));
-    model.body.getWorldQuaternion(camera.quaternion).multiply(eyeTilt);
+    model.visor.updateWorldMatrix(true, false);
+    model.visor.getWorldPosition(camera.position);
+    model.visor.getWorldQuaternion(camera.quaternion);
   } else if (tcam) {
     camera.fov = tcamConfig.fov; camera.near = 0.1; camera.up.set(0, 1, 0);
     camera.position.copy(model.body.localToWorld(look.fromArray(model.eye).add(tcamConfig.mount)));
@@ -874,7 +916,7 @@ function frame(now) {
     const forwardRecovery = autopilot && sim.car.gear < 0;
     if (forwardRecovery) command = { throttle: 0, brake: 1, steer: 0, reverse: false };
     if (handlingMode === 'arcade' && command && !autopilot && sim.car.gear > 0)
-      command = applyArcadeSteeringAssist(command, sim.car);
+      command = applyArcadeSteeringAssist(applyArcadeAccelerationAssist(command), sim.car);
     sim.advance(elapsed, command, (x, y) => weather.surfaceGrip(surfaceAt(x, y)), barrierAt, weather.state.grip);
     // On autopilot the race's traffic-aware driver chooses the player's inputs.
     if (autopilot && !forwardRecovery) command = sim.entries[0].command ?? { throttle: 0, brake: 0, steer: 0 };
@@ -897,7 +939,12 @@ reset(); resize(); requestAnimationFrame(frame);
 window.f1Lab = {
   tcam: () => setTcam(),
   setTcam,
-  snapshot: () => ({ car: structuredClone(sim.car), timing: structuredClone(timer.state), paused, overview, cockpit, tcam, recording: mediaRecorder?.state === 'recording', broadcastTarget: broadcastTarget?.name ?? null, broadcastShot: broadcastShotIndex, keys: [...keys], command: { ...command }, inputSource: autopilot ? 'autopilot' : driver.source }),
+  rearFlap: () => ({ pivotOffset: [...model.drsFlap.userData.pivotOffset], angle: model.drsFlap.userData.angleDegrees }),
+  setRearFlap: ({ pivotOffset = [0, 0.095, -0.145], angle = -210 } = {}) => {
+    const result = cars.map(car => car.model.setRearFlap({ pivotOffset, angle }))[0];
+    return result;
+  },
+  snapshot: () => ({ car: structuredClone(sim.car), timing: structuredClone(timer.state), paused, overview, cockpit, tcam, look360, recording: mediaRecorder?.state === 'recording', broadcastTarget: broadcastTarget?.name ?? null, broadcastShot: broadcastShotIndex, keys: [...keys], command: { ...command }, inputSource: autopilot ? 'autopilot' : driver.source }),
   track: () => ({ key: circuitKey, name: circuitKey ? track.name : 'Stadium test track', length: track.length, surface: track.surface(sim.car.x, sim.car.y), offset: track.offset(sim.car.x, sim.car.y), progress: track.progress(sim.car.x, sim.car.y) }),
   race: () => ({ opponents, finish: sim.finish, yellowFlag: sim.yellowFlag, safetyCar: sim.safetyCar, safetyCarVisible: safetyCarModel.group.visible, classification: sim.classification(), standings: opponents ? sim.standings() : [], cars: sim.entries.map(e => ({ name: e.name, x: e.car.x, y: e.car.y, speed: e.car.telemetry.speed, lane: e.lane, compound: e.car.compound, pit: e.pit?.phase ?? null, pitRequest: e.pitRequest, stops: structuredClone(e.stops), compounds: [...e.compounds], penalty: e.penalty, wake: e.car.wake.strength ?? 0, contact: e.car.contact ?? null, drs: e.car.drs, drsAllowed: !!e.drsAllowed, drsGap: e.drsGap, retired: !!e.retired, ...(m => ({ visible: m.group.visible, drawn: [m.group.position.x, -m.group.position.z], flap: m.drsFlap.rotation.x, frontFlap: m.frontWingFlap?.rotation.x ?? null, holderSteer: m.wheels[0].pivot.rotation.y }))(cars[skins[e.index]].model) })) }),
   start: () => (m => ({ ...sim.start, jumpStart: m.jumpStart, penalty: m.penalty, reaction: m.reaction, shown: !$('lights').hidden, litShown: $('lights').querySelectorAll('.on').length, status: $('status').textContent }))(sim.entries[0]),
@@ -908,7 +955,7 @@ window.f1Lab = {
     const px = Math.round((p.x + 1) / 2 * gl.drawingBufferWidth), py = Math.round((p.y + 1) / 2 * gl.drawingBufferHeight);
     const rgba = new Uint8Array(4); gl.readPixels(px, py, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, rgba);
     return { calls: renderer.info.render.calls, triangles: renderer.info.render.triangles, carNdc: [p.x, p.y, p.z], carPixel: [...rgba],
-      steer: model.wheels[0].pivot.rotation.y, steeringWheel: model.steeringWheel?.rotation.x ?? null, spin: model.wheels.map(w => w.spin.rotation.z), body: [model.body.rotation.x, model.body.rotation.z, model.body.position.y], camera: camera.position.toArray(), cameraDir: camera.getWorldDirection(new THREE.Vector3()).toArray(), head: { ...head }, driverVisible: model.driver[0]?.visible ?? true, tcam, flaps: [model.drsFlap.rotation.x, model.frontWingFlap?.rotation.x ?? null], hands: model.driverHands?.map(hand => hand.quaternion.toArray()) ?? [] };
+      steer: model.wheels[0].pivot.rotation.y, steeringWheel: model.steeringWheel?.rotation.x ?? null, spin: model.wheels.map(w => w.spin.rotation.z), body: [model.body.rotation.x, model.body.rotation.z, model.body.position.y], camera: camera.position.toArray(), cameraDir: camera.getWorldDirection(new THREE.Vector3()).toArray(), visor: model.visor.getWorldPosition(new THREE.Vector3()).toArray(), driverHead: model.driverHead && { position: model.driverHead.position.toArray(), rotation: model.driverHead.quaternion.toArray() }, driverNeck: model.driverNeck?.quaternion.toArray() ?? null, driverVisible: model.driver[0]?.visible ?? true, tcam, flaps: [model.drsFlap.rotation.x, model.frontWingFlap?.rotation.x ?? null], hands: model.driverHands?.map(hand => hand.quaternion.toArray()) ?? [] };
   },
   // The player's mirrors on screen: CSS-pixel box [x0, y0, x1, y1] of each glass (null off screen).
   mirrors: () => (model.mirrors ?? []).map(m => {

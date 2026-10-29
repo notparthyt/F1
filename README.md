@@ -56,8 +56,10 @@ in `.assetsignore` (tests, tools, this README) are not uploaded.
   driving. P (or the *Autopilot* button) hands the car back at any time.
 * **Choose handling.** The *Handling* menu button switches between the
   original simulation physics and Arcade handling, which adds grip and
-  countersteering assistance. The selection stays active when you reset and
-  is preserved in the URL as `?handling=arcade`.
+  countersteering assistance and caps the player's throttle at 85%. In Arcade
+  mode, AI cars use the same grip and cornering/braking targets as the player.
+  The selection stays active when you reset and is preserved in the URL as
+  `?handling=arcade`.
 * **The start.** Five red lights come on one per second, then go out after a
   random 0.2–3 s hold. Stay still until they go out: moving more than 0.5 m
   early is a jump start (+5 s). While the lights are on, **1–5** (gamepad
@@ -80,8 +82,8 @@ in `.assetsignore` (tests, tools, this README) are not uploaded.
   one, painted green. The crew holds you until it is safe to leave.
 * **DRS.** Hold **F** (gamepad right-stick click). In a race it opens from
   lap 2, in a DRS zone, when you were within 1 s of the car ahead at the
-  detection point; any braking closes it. In a time trial it is free in the
-  zones. The HUD shows when it is available and when it is open.
+  detection point; any braking closes it. With opponents off, or in a time
+  trial, DRS can be used anywhere. The HUD shows when it is available and open.
 * **Fuel and ERS.** Each car carries the fuel for the race distance and gets
   lighter as it burns off. The hybrid store deploys up to 120 kW whenever you
   are on the throttle above 100 km/h, within 4 MJ a lap, and recharges under
@@ -120,6 +122,7 @@ in `.assetsignore` (tests, tools, this README) are not uploaded.
 | Space | Pause / resume |
 | R | Reset (restarts the race from the grid) |
 | C / N | Cycle Cockpit → Chase Cam → T-Cam |
+| U | Toggle 360 Look camera; drag to orbit and use the wheel to zoom |
 | T | Trackside TV camera recording on / off (saves WebM when stopped) |
 | V | Overview / chase camera |
 | H | HUD on / off |
@@ -138,8 +141,20 @@ the separate **Overview** button (or **V**) remains available. T-Cam framing
 can be adjusted live in the browser developer console. The mount
 and look-at offsets are in metres from the driver's eye, in car coordinates
 (+X forward, +Y up, +Z sideways); changes take effect immediately:
-`f1Lab.setTcam({ mount: [-0.3, 0.2, -0.2], lookAt: [18, -1.8, -1], fov: 80 })`.
-Call `f1Lab.tcam()` to read the current settings.
+`f1Lab.setTcam({ mount: [-0.2, 0.1, -0.1], lookAt: [9, -2.5, 0], fov: 60 })`.
+FOV accepts 20–100 degrees. Call `f1Lab.tcam()` to read the current settings.
+Cockpit view is positioned at the driver's visor and follows the animated head
+pose; the T-Cam remains mounted independently.
+The **Original car** button switches only the player's RB22 between its authored
+mesh livery and the game's CursorRacing livery; AI liveries are unchanged, and
+the selection follows the player when taking another grid slot.
+In 360 Look mode, drag across the track view to rotate around the car and scroll
+to zoom. The rear flap uses a default pivot offset of `[0, 0.095, -0.145]`
+model-space metres and opens by `-210` degrees. Set it at runtime with
+`f1Lab.setRearFlap({ pivotOffset: [0, 0.095, -0.145], angle: -210 })`, or call
+`f1Lab.rearFlap()` to read the current setting.
+With opponents off, hold **F** to open DRS anywhere on the track and release
+it to close.
 
 The single **Trackside TV** toggle (or **T**) starts a separate 720p trackside
 broadcast camera; it does not change your chase, cockpit, or overview view.

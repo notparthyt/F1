@@ -5,6 +5,7 @@ import { createStadiumTrack } from '../src/track.mjs';
 import { createCircuitTrack } from '../src/circuit.mjs';
 import { CIRCUITS } from '../src/circuits.mjs';
 import { createRace, DEFAULT_GRID } from '../src/race.mjs';
+import { createTimeTrial } from '../src/trial.mjs';
 
 const track = createStadiumTrack({ halfStraight: 220, radius: 90, roadWidth: 15 });
 
@@ -71,6 +72,24 @@ test('a driving player opens DRS only on request and only where it is allowed', 
   const race = behind({ drsEnableLaps: 0 });
   const { opened } = run(race, 3, () => ({ throttle: 1, drs: true }));
   assert.equal(opened[0], false);
+});
+
+test('solo races allow manually requested DRS on any part of the track', () => {
+  const race = createRace(track, { grid: [] });
+  const { opened, allowed } = run(race, 3, () => ({ throttle: 1, drs: true }));
+  assert.deepEqual(allowed, [true, false]);
+  assert.deepEqual(opened, [true, false]);
+});
+
+test('time trials allow manually requested DRS outside marked zones', () => {
+  const monza = createCircuitTrack(CIRCUITS.monza), trial = createTimeTrial(monza);
+  const awayFromZones = monza.drsZones[0][1] + 30;
+  [trial.car.x, trial.car.y] = monza.point(awayFromZones, monza.lineOffset(awayFromZones));
+  trial.advance(1 / 240, { throttle: 1, drs: true });
+  assert.equal(trial.entries[0].drsAllowed, true);
+  assert.ok(trial.car.drs > 0);
+  trial.advance(1 / 240, { throttle: 1, drs: false });
+  assert.equal(trial.entries[0].command.drs, false);
 });
 
 test('circuits without zone data get DRS zones on their longest straights, Monza including the main straight', () => {

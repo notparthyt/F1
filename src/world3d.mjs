@@ -8,7 +8,7 @@ function texture(size, draw, repeatX = 1, repeatY = 1) {
   draw(cv.getContext('2d'), size);
   const t = new THREE.CanvasTexture(cv);
   t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(repeatX, repeatY);
-  t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+  t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 16;
   return t;
 }
 function noise(g, s, base, spread, count) {
@@ -25,7 +25,7 @@ function asphaltMaterial(width, vScale = 30) {
   const loader = new THREE.TextureLoader(), tile = 2.5;
   const [map, normalMap, roughnessMap] = ['diff', 'nor_gl', 'rough'].map(m => {
     const t = loader.load(new URL(`../models/asphalt_track_${m}_1k.jpg`, import.meta.url).href);
-    t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(width / tile, vScale / tile); t.anisotropy = 8;
+    t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(width / tile, vScale / tile); t.anisotropy = 16;
     if (m === 'diff') t.colorSpace = THREE.SRGBColorSpace;
     return t;
   });

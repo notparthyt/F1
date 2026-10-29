@@ -258,6 +258,9 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
   const signed = d => (d = ahead_(d)) > length / 2 ? d - length : d;
   // Fuel for the distance: per stadium lap, or per kilometre of a circuit.
   const fuelLap = circuit ? o.fuelPerKm * length / 1000 : o.fuelPerLap;
+  const createDrive = spec => circuit
+    ? createCircuitAutopilot(track, { latGrip: 0.74 * spec.cornerSpeed / 43, brakeGrip: 0.62 * spec.brakeDecel / 26 })
+    : createAutopilot({ halfStraight, radius }, { cornerSpeed: spec.cornerSpeed, brakeDecel: spec.brakeDecel });
   const entries = [{ name: 'You', player: true, cornerSpeed: 43, brakeDecel: 26, tyres: ['medium', 'hard'], ...player }, ...grid].map((spec, i) => {
     const car = createCar(spec.car), tyres = spec.tyres ?? ['medium', 'hard'];
     if (!spec.player) car.config.tireWearEnergy /= 1 + o.wearSpread * (2 * vary() - 1);
@@ -271,8 +274,7 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
     const p = progressOf(car);
     // Circuit AI pace: the plan's grip margins scale with the spec's corner
     // speed and braking relative to the player's (43 m/s, 26 m/s²).
-    const drive = circuit ? createCircuitAutopilot(track, { latGrip: 0.74 * spec.cornerSpeed / 43, brakeGrip: 0.62 * spec.brakeDecel / 26 })
-      : createAutopilot({ halfStraight, radius }, { cornerSpeed: spec.cornerSpeed, brakeDecel: spec.brakeDecel });
+    const drive = createDrive(spec);
     return { ...spec, index: i, car, lane: 0, offset: circuit ? lane - track.lineOffset(p) : lane, last: p, covered: signed(p - startLine), grid: signed(p - startLine),
       reactionTime: o.reactionMin + rand() * (o.reactionMax - o.reactionMin), reaction: null, jumpStart: false, penalty: 0, finish: null,
       // Pit stops: own box, compounds used, completed stops, the stop in
@@ -334,8 +336,10 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
   // Fraction of the last step at which covered distance passed lap point `point` (null if it did not).
   const crossing = (before, after, point) => Math.floor((after - point) / length) > Math.floor((before - point) / length)
     ? (after - (Math.floor((after - point) / length) * length + point)) / (after - before) : null;
-  const drsEnabled = () => flagTime === null && time >= lightsOut && Math.max(...entries.map(e => e.covered)) >= o.drsEnableLaps * length;
-  const drsAllowed = e => !safetyCarActive() && !e.finish && !e.pit && !e.retired && drsEnabled() && [...e.drsArmed].some(z => inDrsZone(track, z, progressOf(e.car)));
+  const solo = entries.length === 1 && drs;
+  const drsEnabled = () => solo || flagTime === null && time >= lightsOut && Math.max(...entries.map(e => e.covered)) >= o.drsEnableLaps * length;
+  const drsAllowed = e => !safetyCarActive() && !e.finish && !e.pit && !e.retired
+    && (solo || drsEnabled() && [...e.drsArmed].some(z => inDrsZone(track, z, progressOf(e.car))));
   function corners(car) {
     const s = progressOf(car);
     if (bends) { const i = Math.floor(s / bends.step) % bends.n; return { toCorner: bends.to[i], fromCorner: bends.since[i] }; }
@@ -840,7 +844,8 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
       // DRS: the AI (and the player's autopilot) opens it wherever allowed;
       // the player's own request (input.drs) is ignored where it is not.
       e.drsAllowed = drsAllowed(e);
-      command = { ...command, drs: e.drsAllowed && (!e.manual || command.drs === true) };
+      const autoDrsAllowed = solo ? drsZones.some(z => inDrsZone(track, z, progressOf(e.car))) : e.drsAllowed;
+      command = { ...command, drs: e.manual ? e.drsAllowed && command.drs === true : autoDrsAllowed };
       const safetySpeed = safetyCarSpeedLimit(e);
       if (e.manual && Number.isFinite(safetySpeed)) {
         const speed = e.car.telemetry.speed;
@@ -907,6 +912,12 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
 
   return {
     entries, options: o, aiCommand, pit, compoundRule: rule, drsZones,
+    setAiPace(pace = null) {
+      if (pace !== null && (!Number.isFinite(pace.cornerSpeed) || pace.cornerSpeed <= 0
+        || !Number.isFinite(pace.brakeDecel) || pace.brakeDecel <= 0))
+        throw new RangeError('AI cornerSpeed and brakeDecel must be positive finite numbers');
+      for (const e of entries) if (!e.player) e.drive = createDrive(pace ? { ...e, ...pace } : e);
+    },
     get drsEnabled() { return drsEnabled(); }, inPitLane: car => inPitLane(car),
     get yellowFlag() { return { active: safetyCarActive(), remaining: Math.max(0, yellowFlagUntil - time), ...yellowFlag }; },
     get safetyCar() { return { active: safetyCarActive(), progress: safetyCarProgress, speed: o.safetyCarSpeed }; },
