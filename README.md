@@ -1,228 +1,177 @@
-# CursorRacing • F1 Dynamics Lab • ProtoType III
+# C1 · CursorRacing · notparthyt · CR
 
-**Play it in your browser: [f1.gokart.games](https://f1.gokart.games)**
+## F1 Dynamics Lab — Prototype III
 
-<img width="1945" height="1149" alt="Screenshot 2026-10-19 at 6 55 02 PM" src="https://github.com/user-attachments/assets/3438bf84-d85a-4ff9-beeb-89b3ecfdd493" />
+**Play:** [f1.gokart.games](https://f1.gokart.games) · **Source:** [notparthyt/F1](https://github.com/notparthyt/F1)
 
-Race against a 21-car AI field in 3D, on a stadium test track or on
-18 real circuits (Monza, Silverstone, Spa, Monaco and more, with layouts built
-from real car positions). It has a standing start, pit stops and tyre
-compounds, fuel, ERS and DRS, an automatic or paddle-shift gearbox, plus engine
-and tyre sound made from the physics. Drive from the chase, cockpit, or overview
-camera while an independent TV camera records the race with automated cuts to
-close battles and overtakes. Switch between cockpit, T-Cam, chase and overview
-views. The cockpit mirrors show the cars behind you; DRS opens both the rear
-and front flaps, while the driver's elbows and hands follow steering input. The
-steering wheel is aligned to the driver's grip joints. The custom livery also
-appears on the cockpit-facing Halo. A major crash or DNF deploys a safety car:
-the field queues at a controlled pace without AI overtakes, and pit service is
-quicker while it is active. It needs a WebGL browser
-and plays with a keyboard or an Xbox (or other standard) controller, with analog
-triggers and sticks. See [How to play](#how-to-play) and the
-[controls](#controls). Useful URLs:
-[a race at Monza](https://f1.gokart.games/?track=monza&race),
-[the Spa time trial](https://f1.gokart.games/?track=spa).
+![CursorRacing F1 Dynamics Lab gameplay screenshot](Screenshot%202026-10-29%20215341.png)
 
-A playable browser testbed for an open-wheel vehicle model, rendered in 3D with
-Three.js (r170, vendored under `vendor/`, MIT licence in `vendor/LICENSE-three`).
-**Prototype, not a validated Formula 1 simulator.** All vehicle parameters are
-illustrative assumptions, not measured F1 data or a season's regulations.
-3D models and textures keep their own licences; see `models/CREDITS.md`.
+A browser-based, 3D open-wheel racing prototype with a 240 Hz vehicle physics
+simulation. Race a 21-car AI field on the stadium test track or choose from 18
+real circuits, or run a solo time trial. The circuit layouts are rebuilt from
+real racing-line data.
 
-## Run
+> **Prototype notice:** This project is an experimental vehicle dynamics
+> testbed, not an official or validated Formula 1 simulator. Vehicle
+> specifications and physics values are illustrative, not measured F1 data.
 
-From this directory, run `python3 -m http.server 5188 --bind 127.0.0.1`, then open
-`http://127.0.0.1:5188`. ES modules require HTTP; do not open the HTML as a file.
-Game modules live in `src/`, tests in `test/`, and Three.js is served from `vendor/`, so there are no runtime downloads, npm
-dependencies, or bundler. A WebGL-capable browser is required.
+## Highlights
 
-Run validation with `node --test` (runs every `test/*.test.mjs` file).
-Node's built-in test runner is the only test dependency.
+- **Driving and handling:** keyboard or standard gamepad input, automatic or
+  manual paddle-shift gears, reverse, and Sim or Arcade handling.
+- **Race weekend systems:** standing starts, AI opponents, lap timing,
+  standings, pit stops, tyre compounds, fuel, ERS, DRS, changing weather, and
+  safety-car periods.
+- **3D cameras:** cockpit, chase, T-Cam, overview, and 360 Look. A separate
+  trackside TV camera can record the race to WebM.
+- **Car details:** animated driver and steering wheel, cockpit mirrors, and
+  player livery selection.
+- **Telemetry:** live speed, lap times, vehicle dynamics, and tyre information.
 
-The site is a Cloudflare Worker that serves only static assets (`wrangler.toml`).
-`npx wrangler deploy` publishes the repository to f1.gokart.games. Files listed
-in `.assetsignore` (tests, tools, this README) are not uploaded.
+## Run locally
 
+Serve the project over HTTP; ES modules will not work when opening `index.html`
+directly as a file.
 
-## How to play
+```powershell
+py -m http.server 5188 --bind 127.0.0.1
+```
 
-* **Pick a circuit** from the menu at the right of the header. The stadium
-  test track opens as a race against four AI cars (10 laps). A real circuit
-  opens as a solo time trial; press **O** (or add `?race`) to race the field
-  there (3 laps by default).
-* **Take the wheel.** Every session starts on autopilot, so the car drives
-  itself until you take over. Press **P** (gamepad right-stick click), touch
-  a gamepad, shift gear, or pick a grid slot on the start lights and you are
-  driving. P (or the *Autopilot* button) hands the car back at any time.
-* **Choose handling.** The *Handling* menu button switches between the
-  original simulation physics and Arcade handling, which adds grip and
-  countersteering assistance and caps the player's throttle at 85%. In Arcade
-  mode, AI cars use the same grip and cornering/braking targets as the player.
-  The selection stays active when you reset and is preserved in the URL as
-  `?handling=arcade`.
-* **The start.** Five red lights come on one per second, then go out after a
-  random 0.2–3 s hold. Stay still until they go out: moving more than 0.5 m
-  early is a jump start (+5 s). While the lights are on, **1–5** (gamepad
-  **LB / RB**) move you into the car on that grid position (1 = pole); that car
-  takes your old slot and you drive on in its colours.
-* **The race.** The timing box shows your position and lap, the side panel
-  the order with intervals, tyres, fuel and penalties, and the minimap at the
-  bottom left every car on the layout. At the chequered flag the panel shows the
-  classification; R starts a new race.
-* **Weather.** Random rain can arrive during a session. The track gets wetter
-  over time, lowering grip for every car; the AI also reduces its corner-speed
-  targets. Rain intensity and current grip are shown beside the live HUD.
-* **Tyres and pit stops.** You start on mediums (`?tyre=soft|hard` to change).
-  In a race every finisher must run two compounds, so you must stop once or be
-  disqualified. **B** cycles the pit request (Soft → Medium → Hard →
-  cancel). On autopilot the car boxes at the next pit entry. When you drive,
-  take the pit lane (on the inside of the stadium's main straight; on a real
-  circuit beside the start/finish straight, entry about 300 m before the line),
-  keep to the 80 km/h limit (+5 s for speeding) and stop on your box, the first
-  one, painted green. The crew holds you until it is safe to leave.
-* **DRS.** Hold **F** (gamepad right-stick click). In a race it opens from
-  lap 2, in a DRS zone, when you were within 1 s of the car ahead at the
-  detection point; any braking closes it. With opponents off, or in a time
-  trial, DRS can be used anywhere. The HUD shows when it is available and open.
-* **Fuel and ERS.** Each car carries the fuel for the race distance and gets
-  lighter as it burns off. The hybrid store deploys up to 120 kW whenever you
-  are on the throttle above 100 km/h, within 4 MJ a lap, and recharges under
-  braking.
-* **Gears.** The gearbox is automatic. **X / Z** (gamepad **RB / LB**) shift
-  up / down and switch your car to the manual gearbox (an M shows beside the
-  gear; the gear flashes red when a shift is refused, e.g. a downshift that
-  would over-rev). **G** (gamepad left-stick click) goes back to automatic,
-  as does handing the car to the autopilot.
-* **Reversing.** Stopped and pointing at a wall? Hold the brake: once the car
-  is still it selects reverse (the HUD shows **R**) and the brake pedal backs
-  it up. In reverse the throttle brakes, and holding it at a stop selects
-  forward again. This works the same with keys or gamepad. Q / E still select
-  reverse / forward explicitly (stopped, on the brake, off the throttle).
-  Brake-to-reverse is off on the start lights.
-* **Off track.** Kerbs, run-off and grass have less grip, and a lap with all
-  four wheels past the road edge is deleted. Walls are solid: there is no
-  damage, but you lose time. R resets the car (and restarts the race).
+Then open [http://127.0.0.1:5188](http://127.0.0.1:5188). If `py` is not
+available, use `python -m http.server 5188 --bind 127.0.0.1`.
 
-## Controls
+The app uses vendored Three.js and has no runtime package install or bundler.
+Run the test suite with Node.js:
 
-### Keyboard
+```powershell
+node --test
+```
+
+The site is configured as a Cloudflare Worker serving static assets.
+`npx wrangler deploy` deploys it to the configured domain. The files excluded
+from deployment are listed in `.assetsignore`.
+
+## Getting started
+
+1. Choose a circuit from the header. The stadium starts a race; a real circuit
+   starts as a solo time trial. Press **O** to toggle opponents. A real-circuit
+   race uses three laps by default; the stadium race uses ten.
+2. Drive with **W / ↑** to accelerate, **S / ↓** to brake, and **A / D** or
+   **← / →** to steer. Use **P** to toggle the autopilot.
+3. Use the HUD and standings to follow lap timing, position, tyres, fuel, and
+   penalties. Press **R** to reset the car and restart the session.
+
+In races, use different tyre compounds to meet the two-compound rule. Press
+**B** to cycle a pit request, then take the pit lane and stop in your box.
+Speeding in the pit lane incurs a penalty.
+
+## Keyboard controls
 
 | Key | Action |
 |---|---|
 | W / ↑ | Throttle |
-| S / ↓ | Brake (held at a standstill: reverse) |
-| A D / ← → | Steer |
-| X / Z | Shift up / down (manual gearbox) |
-| G | Automatic gearbox |
-| F (hold) | DRS |
-| Q / E | Select reverse / forward (stopped, on the brake) |
-| B | Pit request: Soft → Medium → Hard → cancel |
-| 1–5 | On the start lights: drive the car on that grid position |
-| P | Autopilot on / off |
+| S / ↓ | Brake; at a standstill, selects reverse |
+| A / D · ← / → | Steer |
+| X / Z | Shift up / down; switches to manual gears |
+| G | Return to automatic gears |
+| Q / E | Select reverse / forward explicitly |
+| F (hold) | Request DRS where permitted |
+| B | Cycle pit request: Soft → Medium → Hard → cancel |
+| 1–5 | On the start lights, take the selected grid position |
+| P | Toggle autopilot |
 | Space | Pause / resume |
-| R | Reset (restarts the race from the grid) |
+| R | Reset the car and restart the session |
 | C / N | Cycle Cockpit → Chase Cam → T-Cam |
-| U | Toggle 360 Look camera; drag to orbit and use the wheel to zoom |
-| T | Trackside TV camera recording on / off (saves WebM when stopped) |
-| V | Overview / chase camera |
-| H | HUD on / off |
-| M | Sound on / off (audio starts on the first key press or click) |
-| O | Opponents on / off (restarts) |
+| V | Toggle Overview |
+| U | Toggle 360 Look; drag to orbit and scroll to zoom |
+| T | Start / stop trackside TV recording |
+| O | Toggle opponents and restart the session |
+| H | Toggle HUD |
+| M | Toggle sound |
 
-Keys are on/off, so the pedals and steering ramp (see
-[Driver input](docs/DEVLOG.md#driver-input-inputmjs-cycle-7)). The header buttons do the
-same as their keys (plus *Handling* sim ↔ arcade, *Units* km/h ↔ mph and *Full screen*).
-Driving keys still work when a button has focus; text-entry controls keep their
-normal keyboard behavior. Losing window focus or hiding the tab pauses and
-releases every held input.
+Pedals and keyboard steering ramp up and down rather than switching instantly.
+Driving keys remain active while a header button has focus.
 
-The single **Camera** button (or **C / N**) cycles Cockpit → Chase Cam → T-Cam;
-the separate **Overview** button (or **V**) remains available. T-Cam framing
-can be adjusted live in the browser developer console. The mount
-and look-at offsets are in metres from the driver's eye, in car coordinates
-(+X forward, +Y up, +Z sideways); changes take effect immediately:
-`f1Lab.setTcam({ mount: [-0.2, 0.1, -0.1], lookAt: [9, -2.5, 0], fov: 60 })`.
-FOV accepts 20–100 degrees. Call `f1Lab.tcam()` to read the current settings.
-Cockpit view is positioned at the driver's visor and follows the animated head
-pose; the T-Cam remains mounted independently.
-The **Original car** button switches only the player's RB22 between its authored
-mesh livery and the game's CursorRacing livery; AI liveries are unchanged, and
-the selection follows the player when taking another grid slot.
-In 360 Look mode, drag across the track view to rotate around the car and scroll
-to zoom. The rear flap uses a default pivot offset of `[0, 0.095, -0.145]`
-model-space metres and opens by `-210` degrees. Set it at runtime with
-`f1Lab.setRearFlap({ pivotOffset: [0, 0.095, -0.145], angle: -210 })`, or call
-`f1Lab.rearFlap()` to read the current setting.
-With opponents off, hold **F** to open DRS anywhere on the track and release
-it to close.
+## Gamepad controls
 
-The single **Trackside TV** toggle (or **T**) starts a separate 720p trackside
-broadcast camera; it does not change your chase, cockpit, or overview view.
-The broadcast cuts between trackside angles, follows different cars, and
-prioritizes close battles and overtakes. Stop it with the same toggle or **T**
-to save the complete race as a WebM video with synthesized audio.
-
-On a crash or AI retirement, the affected AI car is withdrawn from the race,
-the yellow flag warning flashes on the HUD, and a safety car with flashing
-beacons appears ahead of the leader.
-
-### Xbox controller (and other standard gamepads)
-
-Any controller the browser reports with the W3C **standard** layout works:
-Xbox Wireless / Series / One pads, and PlayStation or other pads that use the
-same layout (PlayStation names in brackets). The first standard pad found is
-used. Browsers only expose a pad after one of its buttons is pressed; the first
-time a pad appears it takes the car from the autopilot (once per page load;
-P still switches the autopilot afterwards).
+Any connected gamepad using the browser's standard mapping is supported.
+Touch a gamepad button to connect and take control from the autopilot.
 
 | Control | Action |
 |---|---|
-| RT (R2) | Throttle, analog |
-| LT (L2) | Brake, analog (held at a standstill: reverse) |
-| Right stick forward / back | Throttle / brake, analog (alternative to the triggers) |
-| Left stick | Steer, analog |
-| D-pad ↑ / ↓ | Throttle / brake (on/off, with the keyboard ramps) |
-| D-pad ← / → | Steer (on/off, with the keyboard ramps) |
-| RB / LB (R1 / L1) | Shift up / down (manual gearbox); on the start lights: the grid slot behind / ahead |
-| Left-stick click (L3) | Automatic gearbox |
-| Right-stick click (R3) | On autopilot: autopilot off (take the wheel); driving, hold: DRS |
-| A (Cross) | Units: km/h ↔ mph |
-| B (Circle) | Cycle Cockpit → Chase Cam → T-Cam |
-| X (Square) | Pause / resume |
-| Y (Triangle) | Full screen on / off (where the browser supports it) |
-| Menu ≡ (Options) | HUD on / off |
-| View ⧉ (Share / Create) | Reset car (restarts the race) |
+| RT / R2 | Analog throttle |
+| LT / L2 | Analog brake |
+| Right stick | Alternative analog throttle / brake |
+| Left stick | Analog steering |
+| D-pad | Throttle, brake, and steering |
+| RB / LB · R1 / L1 | Shift up / down; on the start lights, change grid slot |
+| Left-stick click | Return to automatic gears |
+| Right-stick click | Take over from autopilot; hold while driving to request DRS |
+| A / Cross | Toggle km/h and mph |
+| B / Circle | Cycle driving cameras |
+| X / Square | Pause / resume |
+| Y / Triangle | Toggle fullscreen |
+| Menu / Options | Toggle HUD |
+| View / Share | Reset the car and session |
 
-* Triggers and sticks have an 8% deadzone with the remaining travel rescaled;
-  the steering stick has a 1.5 power curve for finer control near centre.
-  Steering authority falls with speed, as for the keyboard.
-* Keyboard and gamepad can be used together: the larger pedal value wins, and
-  a held steering key or D-pad direction overrides the stick.
-* Buttons act once per press. R3 only turns the autopilot off; to hand the
-  car back to it use P. Pit request, overview camera, sound and opponents have
-  no gamepad button; use B, V, M and O on the keyboard.
-* There is no rumble, button remapping or calibration. Racing wheels and pads
-  that report a non-standard layout are ignored.
+Keyboard and gamepad inputs can be combined. Analog triggers and sticks use a
+small deadzone; steering authority decreases with speed.
 
-### URL options
+## Modes and options
 
-| Option | Effect |
+- **Handling:** the header button switches between Sim and Arcade. Arcade adds
+  grip and countersteering assistance and caps the player's throttle at 85%;
+  AI cars use the same Arcade grip and cornering/braking targets.
+- **Original car:** toggles the player's car between its authored model livery
+  and the CursorRacing livery. AI liveries are unaffected.
+- **DRS:** in a race, DRS is limited to enabled zones and eligibility rules.
+  In a solo time trial or with opponents disabled, it can be requested anywhere.
+- **Weather:** rain changes track grip and the AI's corner-speed targets.
+- **Pit stops:** with opponents enabled, races use a two-compound rule. Request
+  a compound with **B** and stop in your pit box.
+
+Supported URL options:
+
+| Query option | Effect |
 |---|---|
-| `?track=<key>` | Real circuit (time trial); keys are listed [in the development log](docs/DEVLOG.md#real-circuits-time-trial-circuitmjs-circuitsmjs-trialmjs-cycle-15) |
-| `&race` | Race the AI field on a real circuit |
-| `?laps=N` | Race distance (default 10 on the stadium, 3 on a real circuit) |
-| `?tyre=soft\|medium\|hard` | Start compound |
-| `?nostart` | Skip the start lights |
-| `?car=procedural` | The built-in procedural car instead of the RB22 |
+| `?track=<key>` | Select a real circuit for a solo time trial |
+| `&race` | Start with AI opponents on a real circuit |
+| `?laps=N` | Set race distance (default: 10 stadium, 3 real circuit) |
+| `?tyre=soft`, `?tyre=medium`, or `?tyre=hard` | Set the starting compound |
+| `?nostart` | Skip the starting lights |
+| `?handling=arcade` | Start in Arcade handling |
+| `?car=procedural` | Use the built-in procedural car instead of the RB22 |
 
-For example [a race at Monza](https://f1.gokart.games/?track=monza&race) or
-[a 5-lap race at Spa on softs](https://f1.gokart.games/?track=spa&race&laps=5&tyre=soft).
+Examples: [Monza race](https://f1.gokart.games/?track=monza&race) ·
+[Spa time trial](https://f1.gokart.games/?track=spa) ·
+[five-lap Spa race on soft tyres](https://f1.gokart.games/?track=spa&race&laps=5&tyre=soft)
 
-## More documentation
+## Camera and model tuning
 
-* [docs/PHYSICS.md](docs/PHYSICS.md): the vehicle model (tyres, aero, load transfer, temperature, wear, sound), the stadium track and walls, and the 3D car and cockpit camera.
-* [docs/DEVLOG.md](docs/DEVLOG.md): per-feature notes by development cycle (AI, race rules, pit stops, fuel, ERS, DRS, real circuits), test verification, and the roadmap.
+The browser console exposes `f1Lab.setTcam(...)` and `f1Lab.tcam()` to adjust
+and inspect T-Cam framing. Mount and look-at offsets are metres in car
+coordinates (+X forward, +Y up, +Z sideways); FOV accepts 20–100 degrees:
+
+```js
+f1Lab.setTcam({ mount: [-0.2, 0.1, -0.1], lookAt: [9, -2.5, 0], fov: 60 });
+```
+
+The cockpit camera follows the animated driver's head. The rear flap can be
+configured at runtime with `f1Lab.setRearFlap(...)`; use `f1Lab.rearFlap()` to
+inspect its current settings.
+
+## Documentation
+
+- [Physics and 3D model](docs/PHYSICS.md) — vehicle model, cameras, track, and
+  simulation details.
+- [Development log](docs/DEVLOG.md) — implementation history, tests, and
+  development notes.
+- [Model and texture credits](models/CREDITS.md) — third-party assets,
+  licenses, and project attributions.
 
 ## Credits
 
-Three.js is MIT licensed (`vendor/LICENSE-three`). 3D models and textures keep their own licences; see `models/CREDITS.md`.
+Project credits: **C1**, **CursorRacing**, **notparthyt**, and **CR**.
+Three.js is MIT licensed; see [`vendor/LICENSE-three`](vendor/LICENSE-three).
+Third-party models and textures retain their own licenses and attributions;
+see [models/CREDITS.md](models/CREDITS.md).
