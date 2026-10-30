@@ -13,11 +13,6 @@ export const INPUT_DEFAULTS = Object.freeze({
 });
 
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
-const ARCADE_THROTTLE_SCALE = 0.85;
-
-export function applyArcadeAccelerationAssist(command) {
-  return { ...command, throttle: clamp((command?.throttle ?? 0) * ARCADE_THROTTLE_SCALE, 0, 1) };
-}
 
 export function applyArcadeSteeringAssist(command, car) {
   const c = car ?? {};

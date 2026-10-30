@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { INPUT_DEFAULTS, applyArcadeAccelerationAssist, applyArcadeSteeringAssist, shapeAxis, readGamepad, createDriverInput } from '../src/input.mjs';
+import { INPUT_DEFAULTS, applyArcadeSteeringAssist, shapeAxis, readGamepad, createDriverInput } from '../src/input.mjs';
 
 const none = { throttle: false, brake: false, left: false, right: false };
 const run = (input, seconds, dt, keys, pad = null, speed = 0) => {
@@ -62,6 +62,7 @@ test('arcade steering assist preserves normal cornering and countersteers a slid
   const normalTurn = applyArcadeSteeringAssist(command, car);
   assert.equal(normalTurn.steer, command.steer);
   assert.ok(Math.abs(normalTurn.brake - 0.66) < 1e-12);
+  assert.equal(applyArcadeSteeringAssist({ ...command, throttle: 1 }, car).throttle, 1);
 
   const brakingTurn = applyArcadeSteeringAssist({ ...command, steer: 0.8 }, car);
   assert.ok(Math.abs(brakingTurn.brake - 0.32) < 1e-12);
@@ -75,16 +76,6 @@ test('arcade steering assist preserves normal cornering and countersteers a slid
   car.vy = -4;
   const rightSlide = applyArcadeSteeringAssist(command, car);
   assert.ok(rightSlide.steer > command.steer);
-});
-
-test('arcade acceleration assist reduces player throttle without changing other controls', () => {
-  const command = { throttle: 1, brake: 0.2, steer: -0.3, drs: true };
-  assert.deepEqual(applyArcadeAccelerationAssist(command), {
-    throttle: 0.85, brake: 0.2, steer: -0.3, drs: true,
-  });
-  assert.equal(applyArcadeAccelerationAssist({ throttle: 0.5 }).throttle, 0.425);
-  assert.equal(applyArcadeAccelerationAssist({ throttle: 0 }).throttle, 0);
-  assert.equal(command.throttle, 1);
 });
 
 test('gamepad standard mapping: triggers are analog pedals, left stick steers, others ignored', () => {

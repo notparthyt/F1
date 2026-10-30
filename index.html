@@ -62,7 +62,7 @@ import { createCircuitTrack } from './src/circuit.mjs';
 import { CIRCUITS } from './src/circuits.mjs';
 import { createTimeTrial } from './src/trial.mjs';
 import { createLapTimer, formatLapTime } from './src/laptimer.mjs';
-import { applyArcadeAccelerationAssist, applyArcadeSteeringAssist, createDriverInput, readGamepad } from './src/input.mjs';
+import { applyArcadeSteeringAssist, createDriverInput, readGamepad } from './src/input.mjs';
 import { createSoundModel, createAudioEngine } from './src/audio.mjs';
 import { createWeather } from './src/weather.mjs';
 import { captureHandlingBaseline, applyHandlingMode as applyCarHandlingMode } from './src/handling.mjs';
@@ -916,7 +916,7 @@ function frame(now) {
     const forwardRecovery = autopilot && sim.car.gear < 0;
     if (forwardRecovery) command = { throttle: 0, brake: 1, steer: 0, reverse: false };
     if (handlingMode === 'arcade' && command && !autopilot && sim.car.gear > 0)
-      command = applyArcadeSteeringAssist(applyArcadeAccelerationAssist(command), sim.car);
+      command = applyArcadeSteeringAssist(command, sim.car);
     sim.advance(elapsed, command, (x, y) => weather.surfaceGrip(surfaceAt(x, y)), barrierAt, weather.state.grip);
     // On autopilot the race's traffic-aware driver chooses the player's inputs.
     if (autopilot && !forwardRecovery) command = sim.entries[0].command ?? { throttle: 0, brake: 0, steer: 0 };

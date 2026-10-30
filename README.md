@@ -120,7 +120,7 @@ small deadzone; steering authority decreases with speed.
 ## Modes and options
 
 - **Handling:** the header button switches between Sim and Arcade. Arcade adds
-  grip and countersteering assistance and caps the player's throttle at 85%;
+  grip and countersteering assistance while preserving full player throttle;
   AI cars use the same Arcade grip and cornering/braking targets.
 - **Original car:** toggles the player's car between its authored model livery
   and the CursorRacing livery. AI liveries are unaffected.
