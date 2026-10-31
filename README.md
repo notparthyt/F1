@@ -2,7 +2,7 @@
 
 ## F1 Dynamics Lab — Prototype III
 
-**Play:** [GitHub Pages](https://notparthyt.github.io/F1/) · [f1.gokart.games](https://f1.gokart.games) · **Source:** [notparthyt/F1](https://github.com/notparthyt/F1)
+**Play:** [GitHub Pages](https://notparthyt.github.io/F1/) · **Source:** [notparthyt/F1](https://github.com/notparthyt/F1)
 
 ![CursorRacing F1 Dynamics Lab gameplay screenshot](Screenshot%202026-10-29%20215341.png)
 
