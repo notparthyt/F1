@@ -2,6 +2,10 @@
 
 The project code's licence does not cover these files; each keeps its own licence.
 
+## Project credits
+
+C1, CursorRacing, notparthyt, and CR.
+
 ## redbull22.glb
 
 - Model: supplied by the project maintainer.
@@ -16,7 +20,7 @@ The project code's licence does not cover these files; each keeps its own licenc
 - Model: "2026 Redbull RB22" by Tyler_Dave (Sketchfab)
 - Licence: [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/)
 - Changes: `rb22.mjs` replaces the Red Bull livery at load time: the paint texture is refilled
-  in each car's colour, the decal texture is cleared, our sponsor names (CursorRacing, C1, CR, notparthyt, github.com/notparthyt/F1) and a race number are
+  in each car's colour, the decal texture is cleared, our sponsor names (C1, CursorRacing, notparthyt, CR, github.com/notparthyt/F1) and a race number are
   projected onto both, the accent-coloured parts take the car's accent colour and the race
   number mesh is hidden. It also splits the wheels per corner, turns the model's steering
   wheel with the steering and fits it onto the physics car's axles. Every car on the grid

@@ -51,6 +51,11 @@ export function createStadiumTrack({ halfStraight, radius, roadWidth, wallOffset
     // Outer and inner walls; the normal points back towards the circuit.
     barrierAt: (x, y) => {
       const { r, ux, uy } = local(x, y);
+      const p = progress(x, y), dividerRadius = radius - pit.inner, dividerPenetration = 0.55 - Math.abs(r - dividerRadius);
+      if (p > pit.entry + 18 && p < pit.exit - 18 && dividerPenetration > 0) {
+        const direction = r < dividerRadius ? -1 : 1;
+        return { depth: dividerPenetration, nx: ux * direction, ny: uy * direction };
+      }
       const outer = r - (radius + wallOffset);
       if (outer > 0) return { depth: outer, nx: -ux, ny: -uy };
       const inner = radius - wallOffset - r;

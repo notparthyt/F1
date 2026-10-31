@@ -228,7 +228,7 @@ export const inDrsZone = (track, z, p) => { const L = track.length, a = d => ((d
 // when their tread wear passes pitWear (or the player requests a stop).
 // fuel: in a race with a distance every car carries the fuel for it (unless
 // its car spec sets fuelLoad); the burn-off makes the cars lighter lap by lap.
-export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = {}, start = false, laps = 0, compoundRule = false, fuel = true, drs = true } = {}) {
+export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = {}, playerGridSlot = null, start = false, laps = 0, compoundRule = false, fuel = true, tireWear = true, drs = true } = {}) {
   const o = { ...RACE_DEFAULTS, ...options };
   const rand = random(start?.seed ?? (Math.random() * 2 ** 32));
   // Separate stream for AI form, mistakes and wear (fixed when unseeded, so
@@ -258,15 +258,18 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
   const signed = d => (d = ahead_(d)) > length / 2 ? d - length : d;
   // Fuel for the distance: per stadium lap, or per kilometre of a circuit.
   const fuelLap = circuit ? o.fuelPerKm * length / 1000 : o.fuelPerLap;
+  const playerSlot = Number.isInteger(playerGridSlot) ? clamp(playerGridSlot, 0, grid.length) : grid.length;
   const createDrive = spec => circuit
     ? createCircuitAutopilot(track, { latGrip: 0.74 * spec.cornerSpeed / 43, brakeGrip: 0.62 * spec.brakeDecel / 26 })
     : createAutopilot({ halfStraight, radius }, { cornerSpeed: spec.cornerSpeed, brakeDecel: spec.brakeDecel });
   const entries = [{ name: 'You', player: true, cornerSpeed: 43, brakeDecel: 26, tyres: ['medium', 'hard'], ...player }, ...grid].map((spec, i) => {
     const car = createCar(spec.car), tyres = spec.tyres ?? ['medium', 'hard'];
     if (!spec.player) car.config.tireWearEnergy /= 1 + o.wearSpread * (2 * vary() - 1);
+    if (!tireWear) { car.config.tireWearEnergy = Infinity; car.config.tireWearGripLoss = 0; car.config.tireCliffGripLoss = 0; }
     fitTires(car, tyres[0]);
     if (fuel && laps && spec.car?.fuelLoad === undefined) car.fuel = laps * fuelLap * (1 + o.fuelMargin) + o.fuelReserve;
-    const slot = i === 0 ? grid.length : i - 1;
+    const aiSlot = i - 1;
+    const slot = i === 0 ? playerSlot : aiSlot >= playerSlot ? aiSlot + 1 : aiSlot;
     const lane = slot === 0 ? 0 : (slot % 2 ? -1 : 1) * 2.6;
     // Grid slots gridSpacing m apart behind the line, alternating sides.
     if (circuit) { const s = length - 0.8 - o.gridSpacing * slot; [car.x, car.y] = track.point(s, lane); car.heading = track.heading(s); }
@@ -848,10 +851,11 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
       command = { ...command, drs: e.manual ? e.drsAllowed && command.drs === true : autoDrsAllowed };
       const safetySpeed = safetyCarSpeedLimit(e);
       if (e.manual && Number.isFinite(safetySpeed)) {
-        const speed = e.car.telemetry.speed;
+        const overspeed = Math.max(0, e.car.telemetry.speed - safetySpeed);
+        const throttleReduction = clamp(overspeed / 12, 0, 0.75);
         command = { ...command,
-          throttle: speed >= safetySpeed ? 0 : command.throttle,
-          brake: Math.max(command.brake, clamp((speed - safetySpeed) * 0.2, 0, 1)),
+          throttle: command.throttle * (1 - throttleReduction),
+          brake: Math.max(command.brake, clamp(overspeed * 0.08, 0, 0.35)),
         };
       }
       return (e.command = command);
@@ -921,6 +925,18 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
     get drsEnabled() { return drsEnabled(); }, inPitLane: car => inPitLane(car),
     get yellowFlag() { return { active: safetyCarActive(), remaining: Math.max(0, yellowFlagUntil - time), ...yellowFlag }; },
     get safetyCar() { return { active: safetyCarActive(), progress: safetyCarProgress, speed: o.safetyCarSpeed }; },
+    // Stage the player at a pit box without swapping or moving a grid opponent.
+    placePlayerAt(x, y, heading) {
+      if (![x, y, heading].every(Number.isFinite)) throw new TypeError('Player position and heading must be finite');
+      const e = entries[0], car = e.car;
+      car.x = x; car.y = y; car.heading = heading;
+      car.vx = 0; car.vy = 0; car.yawRate = 0; car.wheelOmega.fill(0); car.steer = 0;
+      const p = progressOf(car);
+      e.last = p; e.covered = e.grid = signed(p - startLine);
+      e.offset = circuit ? offsetOf(car) - track.lineOffset(p) : offsetOf(car);
+      e.pitVisit = pitS(car) === null ? null : { speeding: false, served: true };
+      return p;
+    },
     // Player's pit request: the compound to fit at the next stop (null cancels).
     // On autopilot the car boxes at the next pit entry; driving, stop in the box.
     requestPit(compound) { if (pit) entries[0].pitRequest = compound === null || TIRE_COMPOUNDS[compound] ? compound : entries[0].pitRequest; },

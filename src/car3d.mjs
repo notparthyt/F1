@@ -248,5 +248,7 @@ export function buildF1Car(config, livery) {
   const pivots = new Set(wheels.map(w => w.pivot));
   car.children.filter(o => !pivots.has(o)).forEach(o => body.add(o));
   car.add(body);
-  return { group: car, body, wheels, driver: [helmet, visor], drsFlap, eye: [-0.17, 0.8] };
+  const driver = [helmet, visor];
+  const setDriverVisible = visible => driver.forEach(part => { part.visible = visible; });
+  return { group: car, body, wheels, driver, setDriverVisible, drsFlap, eye: [-0.17, 0.8] };
 }

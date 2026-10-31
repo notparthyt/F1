@@ -123,7 +123,8 @@ function circuitPitLane({ half, point, offset, progress, signed, curvatureAt }, 
 }
 
 export function createCircuitTrack({ name = 'Circuit', points, length: officialLength, roadWidth = 13, wallOffset = roadWidth / 2 + 12,
-  step = 2, smoothing = 40, kerbCurvature = 1 / 600, kerbReach = 30, lineMargin = 1.6, minRadius = 15, pitLane = true, timingLine = 0, drs = null }) {
+  step = 2, smoothing = 40, kerbCurvature = 1 / 600, kerbReach = 30, lineMargin = 1.6, minRadius = 15, pitLane = true, timingLine = 0, drs = null,
+  elevationProfile = [] }) {
   const pairs = points.length && typeof points[0] === 'number' ? Array.from({ length: points.length / 2 }, (_, i) => [points[2 * i], points[2 * i + 1]]) : points;
   let poly = spline(pairs, step);
   const polyLength = () => poly.reduce((L, a, i) => { const b = poly[(i + 1) % poly.length]; return L + Math.hypot(b[0] - a[0], b[1] - a[1]); }, 0);
@@ -171,7 +172,24 @@ export function createCircuitTrack({ name = 'Circuit', points, length: officialL
   poly.forEach(([x, y], i) => { xs[i] = x; ys[i] = y; });
   for (let i = 0; i < n; i++) ss[i + 1] = ss[i] + Math.hypot(xs[(i + 1) % n] - xs[i], ys[(i + 1) % n] - ys[i]);
   const length = ss[n], half = roadWidth / 2;
-  const headings = new Float64Array(n), curvature = new Float64Array(n);
+  // Elevations are only used when supplied from track-specific measurements.
+  // Interpolate the measured [lap fraction, metres] points smoothly and wrap
+  // continuously across start/finish; never invent hills for a flat data set.
+  const elevationPoints = [...elevationProfile].sort((a, b) => a[0] - b[0]);
+  const elevationAt = s => {
+    if (!elevationPoints.length) return 0;
+    const u = (((s % length) + length) % length) / length;
+    const beforeIndex = elevationPoints.findLastIndex(p => p[0] <= u);
+    const a = elevationPoints[beforeIndex < 0 ? elevationPoints.length - 1 : beforeIndex];
+    const b = elevationPoints[(beforeIndex + 1) % elevationPoints.length];
+    const start = a[0], end = b[0] + (beforeIndex + 1 === 0 || beforeIndex === elevationPoints.length - 1 ? 1 : 0);
+    const at = u < start ? u + 1 : u;
+    const t = Math.max(0, Math.min(1, (at - start) / (end - start || 1)));
+    const blend = t * t * (3 - 2 * t);
+    return a[1] + (b[1] - a[1]) * blend;
+  };
+  const headings = new Float64Array(n), curvature = new Float64Array(n), elevation = new Float64Array(n);
+  for (let i = 0; i < n; i++) elevation[i] = elevationAt(ss[i]);
   for (let i = 0; i < n; i++) { const j = (i + 1) % n; headings[i] = Math.atan2(ys[j] - ys[i], xs[j] - xs[i]); }
   for (let i = 0; i < n; i++) {
     const a = headings[(i - 1 + n) % n], b = headings[i], d = Math.atan2(Math.sin(b - a), Math.cos(b - a));
@@ -250,7 +268,8 @@ export function createCircuitTrack({ name = 'Circuit', points, length: officialL
     // fractions of the lap from the real timing line, which lies timingLine m
     // along the trace (the lap here still starts at its first point).
     drsZones: drs && drs.map(z => z.map(f => ((f * length + timingLine) % length + length) % length)),
-    samples: { x: xs, y: ys, s: ss, heading: headings, curvature, kerb, line, lineStep, lineCurvature },
+    samples: { x: xs, y: ys, z: elevation, s: ss, heading: headings, curvature, kerb, line, lineStep, lineCurvature },
+    heightAt: elevationAt,
     heading: s => headings[index(s)], curvatureAt: s => curvature[index(s)],
     // Racing-line offset (m, + right) at arc length s, interpolated.
     lineOffset: s => { const i = index(s), f = (wrap(s) - ss[i]) / (ss[i + 1] - ss[i]); return line[i] + (line[(i + 1) % n] - line[i]) * f; },
@@ -259,6 +278,16 @@ export function createCircuitTrack({ name = 'Circuit', points, length: officialL
     // circuit run closer than that, the boundary is the midline between them.
     barrierAt: (x, y) => {
       const q = nearest(x, y), depth = q.d - wallOffset;
+      if (pit) {
+        const s = signed(ss[q.i] + (ss[q.i + 1] - ss[q.i]) * q.f);
+        const dividerOffset = -pit.side * (half + 1.2);
+        const penetration = 0.55 - Math.abs(q.offset - dividerOffset);
+        if (s > pit.entry + 18 && s < pit.exit - 18 && penetration > 0) {
+          const nx = -Math.sin(headings[q.i]), ny = Math.cos(headings[q.i]);
+          const direction = q.offset < dividerOffset ? -pit.side : pit.side;
+          return { depth: penetration, nx: nx * direction, ny: ny * direction };
+        }
+      }
       return depth > 0 ? { depth, nx: (q.px - x) / q.d, ny: (q.py - y) / q.d } : null;
     },
   };

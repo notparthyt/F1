@@ -7,6 +7,56 @@ import { GLTFLoader } from '../vendor/GLTFLoader.js';
 import { MeshoptDecoder } from '../vendor/meshopt_decoder.module.js';
 
 export const RB22_URL = new URL('../models/redbull22.glb', import.meta.url).href;
+export const DRIVER_SUIT_STYLES = Object.freeze([
+  { name: 'Racing Red', hue: 0.005, swatch: '#e53935' },
+  { name: 'Ocean Blue', hue: 0.59, swatch: '#1769aa' },
+  { name: 'Papaya Orange', hue: 0.075, swatch: '#f47b20' },
+  { name: 'Emerald', hue: 0.37, swatch: '#15966b' },
+  { name: 'Violet', hue: 0.76, swatch: '#8053b8' },
+  { name: 'Sun Yellow', hue: 0.14, swatch: '#e2b924' },
+  { name: 'Arctic Cyan', hue: 0.52, swatch: '#32aeb5' },
+  { name: 'Hot Pink', hue: 0.91, swatch: '#d94d91' },
+  { name: 'Graphite', hue: 0.59, swatch: '#53606b' },
+]);
+const SUIT_TEXTURES = new WeakMap();
+export function createDriverSuitTexture(source, styleIndex) {
+  if (!source?.image || typeof document === 'undefined') return source;
+  const style = DRIVER_SUIT_STYLES[styleIndex];
+  if (!style) throw new RangeError(`Unknown driver suit style: ${styleIndex}`);
+  if (styleIndex === 0) return source;
+  let variants = SUIT_TEXTURES.get(source);
+  if (!variants) SUIT_TEXTURES.set(source, variants = new Map());
+  if (variants.has(styleIndex)) return variants.get(styleIndex);
+  const size = 1024, canvas = document.createElement('canvas');
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  ctx.drawImage(source.image, 0, 0, size, size);
+  const image = ctx.getImageData(0, 0, size, size), px = image.data;
+  const hueToRgb = (p, q, t) => {
+    if (t < 0) t++;
+    if (t > 1) t--;
+    if (t < 1 / 6) return p + (q - p) * 6 * t;
+    if (t < 1 / 2) return q;
+    if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+    return p;
+  };
+  for (let i = 0; i < px.length; i += 4) {
+    const r = px[i] / 255, g = px[i + 1] / 255, b = px[i + 2] / 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b), light = (max + min) / 2;
+    if (max - min < 0.055) continue;
+    const sat = (max - min) / (1 - Math.abs(2 * light - 1));
+    const q = light < 0.5 ? light * (1 + sat) : light + sat - light * sat, p = 2 * light - q;
+    px[i] = hueToRgb(p, q, style.hue + 1 / 3) * 255;
+    px[i + 1] = hueToRgb(p, q, style.hue) * 255;
+    px[i + 2] = hueToRgb(p, q, style.hue - 1 / 3) * 255;
+  }
+  ctx.putImageData(image, 0, 0);
+  const texture = new THREE.CanvasTexture(canvas);
+  for (const key of ['colorSpace', 'flipY', 'wrapS', 'wrapT', 'anisotropy', 'channel']) texture[key] = source[key];
+  texture.needsUpdate = true;
+  variants.set(styleIndex, texture);
+  return texture;
+}
 // All four wheels of each of these materials are one mesh: split per corner at load.
 const WHEEL_MATERIAL = /^(discs|redbull_wheel_hub|sidewall)/;
 // Parts wholly inside this box (model metres, nose at +z) make up the steering wheel.
@@ -20,8 +70,9 @@ const PART_PIVOTS = {
 };
 const REAR_FLAP_OPEN_ANGLE = -150;
 const REAR_FLAP_PIVOT_OFFSET = [0, 0.095, -0.145];
-// Steering wheel turn per radian of road-wheel steer (full lock 0.38 rad -> about 110°).
-export const STEERING_RATIO = 5;
+// Visual wheel travel: the default 0.38 rad front-wheel lock maps to 180°.
+// The physics steering angle remains independently limited by maxSteer.
+export const STEERING_RATIO = Math.PI / 0.38;
 function aimBoneAt(bone, endpoint, target, origin, from, to, rotation, worldRotation, parentRotation) {
   bone.getWorldPosition(origin);
   from.subVectors(endpoint, origin).normalize();
@@ -387,7 +438,7 @@ function wheelDecals(map) {
 
 // livery: { paint, accent, helmet } hex colours and index (the car's place in the sponsor
 // rotation and its race number, index + 1). Without a DOM (node) the paint stays as modelled.
-export function buildRB22Car(template, config, { paint = 0x0e1626, accent = 0x39e0ae, helmet = 0x1e2a6e, index = 0 } = {}) {
+export function buildRB22Car(template, config, { paint = 0x0e1626, accent = 0x39e0ae, helmet = 0x1e2a6e, index = 0, suitIndex = 0 } = {}) {
   const physical = o => new THREE.MeshPhysicalMaterial(o);
   const car = new THREE.Group(); car.name = 'f1-car';
   const root = template.clone(true);
@@ -430,6 +481,19 @@ export function buildRB22Car(template, config, { paint = 0x0e1626, accent = 0x39
       decal.name = 'halo-label'; root.add(decal);
     });
   }
+  const setDriverSuit = styleIndex => {
+    if (!Number.isInteger(styleIndex) || !DRIVER_SUIT_STYLES[styleIndex]) throw new RangeError('Driver suit style must be an index from 0 to 8');
+    root.traverse(o => {
+      if (!o.isMesh || !/M_Clothes/i.test(o.material?.name ?? '')) return;
+      const base = originalAppearance.get(o)?.material ?? o.material;
+      const material = base.clone();
+      material.map = createDriverSuitTexture(base.map, styleIndex);
+      material.needsUpdate = true;
+      o.material = material;
+    });
+    return DRIVER_SUIT_STYLES[styleIndex].name;
+  };
+  setDriverSuit(suitIndex);
   const box = o => { car.updateMatrixWorld(true); return new THREE.Box3().setFromObject(o); };
   const F = config.wheelbase * (1 - config.frontWeight);
   root.position.x = F - box(root.getObjectByName(CORNERS[0])).getCenter(new THREE.Vector3()).x;
@@ -504,6 +568,8 @@ export function buildRB22Car(template, config, { paint = 0x0e1626, accent = 0x39
   steeringWheel.attach(steer);
 
   const rig = root.getObjectByName('driver-rig');
+  const driver = rig ? [rig] : [];
+  const setDriverVisible = visible => driver.forEach(part => { part.visible = visible; });
   const skeleton = rig && (() => { let found; rig.traverse(o => { if (!found && o.isSkinnedMesh) found = o.skeleton; }); return found; })();
   const driverNeck = skeleton?.bones[6] ?? null;
   const driverHead = skeleton?.bones[7] ?? null;
@@ -512,7 +578,7 @@ export function buildRB22Car(template, config, { paint = 0x0e1626, accent = 0x39
   const driverElbows = elbowBones.filter(Boolean), driverHands = handBones.filter(Boolean);
   const arms = elbowBones.flatMap((fore, i) => {
     const hand = handBones[i], upper = fore?.parent;
-    return upper && hand ? [{ upper, fore, hand }] : [];
+    return upper && hand ? [{ upper, fore, hand, handIndex: i }] : [];
   });
   car.updateMatrixWorld(true);
   const wheelRotation = steeringWheel.getWorldQuaternion(new THREE.Quaternion()).invert();
@@ -537,6 +603,7 @@ export function buildRB22Car(template, config, { paint = 0x0e1626, accent = 0x39
   const origin = new THREE.Vector3(), from = new THREE.Vector3(), to = new THREE.Vector3();
   const rotation = new THREE.Quaternion(), wheelWorldRotation = new THREE.Quaternion();
   const boneWorldRotation = new THREE.Quaternion(), parentRotation = new THREE.Quaternion();
+  const transferGrip = new THREE.Vector3();
   const updateArms = () => {
     for (const arm of arms) {
       arm.upper.quaternion.copy(arm.rest.upper);
@@ -549,7 +616,18 @@ export function buildRB22Car(template, config, { paint = 0x0e1626, accent = 0x39
     steeringWheel.getWorldQuaternion(wheelWorldRotation);
     for (const arm of arms) {
       arm.upper.getWorldPosition(shoulder);
-      steeringWheel.localToWorld(target.copy(arm.grip));
+      // At extreme lock, smoothly gather both hands onto the side the driver
+      // is pulling toward, as a short hand-over-hand correction for hairpins.
+      const wheelAngle = steeringWheel.rotation.x, lock = Math.abs(wheelAngle);
+      const transfer = THREE.MathUtils.smoothstep(lock, Math.PI * 0.58, Math.PI * 0.88);
+      const side = Math.sign(wheelAngle);
+      if (transfer > 0 && side) {
+        const radius = Math.hypot(arm.grip.y, arm.grip.z);
+        const vertical = (arm.handIndex === 0 ? 1 : -1) * radius * 0.28;
+        transferGrip.set(arm.grip.x, vertical, side * Math.sqrt(Math.max(0, radius * radius - vertical * vertical)));
+        target.copy(arm.grip).lerp(transferGrip, transfer);
+      } else target.copy(arm.grip);
+      steeringWheel.localToWorld(target);
       direction.subVectors(target, shoulder);
       const maxReach = arm.upperLength + arm.foreLength - 1e-4;
       const minReach = Math.abs(arm.upperLength - arm.foreLength) + 1e-4;
@@ -668,6 +746,6 @@ export function buildRB22Car(template, config, { paint = 0x0e1626, accent = 0x39
   }
   visor.name = 'driver-visor-camera';
   updateArms();
-  return { group: car, body, wheels, driver: [], driverNeck, driverHead, visor, driverElbows, driverHands, driverRest, updateHead, updateArms, drsFlap, setRearFlap, setOriginalLivery, frontWingFlap, steeringWheel,
+  return { group: car, body, wheels, driver, setDriverVisible, setDriverSuit, driverNeck, driverHead, visor, driverElbows, driverHands, driverRest, updateHead, updateArms, drsFlap, setRearFlap, setOriginalLivery, frontWingFlap, steeringWheel,
     rearLights, yellowLights, eye: [eye.x, eye.y, eye.z], mirrors: MIRRORS.map(name => root.getObjectByName(name)).filter(Boolean) };
 }

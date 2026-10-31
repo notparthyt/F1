@@ -32,6 +32,24 @@ test('the default field has 22 safe grid slots and pit boxes inside the speed-li
   assert.equal(race.pit.boxSpacing, 12);
 });
 
+test('staging the player in the pit lane resets their progress without moving the AI grid', () => {
+  const race = createRace(track, { start: { seed: 3 } });
+  const rivalStarts = race.entries.slice(1).map(e => [e.car.x, e.car.y]);
+  const x = race.pit.boxStart - 220, y = -(track.radius + race.pit.boxOffset);
+  const progress = race.placePlayerAt(x, y, 0);
+  const player = race.entries[0];
+  assert.equal(progress, track.progress(x, y));
+  assert.equal(player.last, progress);
+  assert.equal(player.covered, player.grid);
+  assert.ok(Math.abs(player.covered - (progress - (track.halfStraight + 0.8))) < 1e-9);
+  assert.deepEqual(race.entries.slice(1).map(e => [e.car.x, e.car.y]), rivalStarts);
+  race.advance(FIXED_DT, { throttle: 0, brake: 1, steer: 0 }, track.surfaceAt, track.barrierAt);
+  assert.equal(player.jumpStart, false);
+  assert.equal(player.penalty, 0);
+  assert.equal(player.pit, null);
+  assert.equal(player.pitVisit.served, true);
+});
+
 test('wake is strongest close behind on the centreline and absent ahead or beside', () => {
   const lead = place(0, 0);
   assert.ok(wakeStrength(lead, place(-RACE_DEFAULTS.wakeMinGap - 0.01, 0)) > 0.99);

@@ -3,7 +3,7 @@ import * as THREE from '../vendor/three.module.js';
 
 let rendering = false;
 
-export function makeMirror(mesh, { width = 512, hide = [], tilt = 0.18, extend = 3 } = {}) {
+export function makeMirror(mesh, { width = 384, hide = [], tilt = 0.18, extend = 3, refreshRate = 30 } = {}) {
   const geometry = mesh.geometry.index ? mesh.geometry.toNonIndexed() : mesh.geometry;
   const positions = geometry.attributes.position;
   const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3();
@@ -63,7 +63,7 @@ export function makeMirror(mesh, { width = 512, hide = [], tilt = 0.18, extend =
   const target = new THREE.WebGLRenderTarget(
     width,
     Math.max(16, Math.round(width * (vMax - vMin) / (uMax - uMin))),
-    { type: THREE.HalfFloatType, samples: 4 },
+    { type: THREE.HalfFloatType, samples: 0 },
   );
   const textureMatrix = new THREE.Matrix4();
   const mirrorCamera = new THREE.PerspectiveCamera();
@@ -93,6 +93,7 @@ export function makeMirror(mesh, { width = 512, hide = [], tilt = 0.18, extend =
   const worldCenter = new THREE.Vector3(), worldNormal = new THREE.Vector3();
   const up = new THREE.Vector3(), eye = new THREE.Vector3(), point = new THREE.Vector3();
   const direction = new THREE.Vector3();
+  let lastRenderAt = -Infinity;
   const bias = new THREE.Matrix4().set(
     0.5, 0, 0, 0.5,
     0, 0.5, 0, 0.5,
@@ -101,6 +102,9 @@ export function makeMirror(mesh, { width = 512, hide = [], tilt = 0.18, extend =
   );
   mesh.onBeforeRender = (renderer, scene, camera) => {
     if (rendering || mesh.material !== glass) return;
+    const now = performance.now();
+    if (now - lastRenderAt < 1000 / refreshRate) return;
+    lastRenderAt = now;
 
     worldCenter.copy(center).applyMatrix4(mesh.matrixWorld);
     worldNormal.copy(normal).transformDirection(mesh.matrixWorld);

@@ -31,6 +31,13 @@ export function createTimeTrial(track, { tyre = 'medium', runUp = 150, car: carS
     finish: { laps: 0, flag: false, flagTime: null, done: false },
     yellowFlag: { active: false, remaining: 0 },
     safetyCar: { active: false, progress: null, speed: 0 },
+    placePlayerAt(x, y, heading) {
+      if (![x, y, heading].every(Number.isFinite)) throw new TypeError('Player position and heading must be finite');
+      car.x = x; car.y = y; car.heading = heading;
+      car.vx = 0; car.vy = 0; car.yawRate = 0; car.wheelOmega.fill(0); car.steer = 0;
+      last = track.progress(x, y);
+      return last;
+    },
     // input: the player's command, or null to let the circuit autopilot drive
     // (re-planned every physics step). Frames are capped at 0.25 s like Simulation.
     // Crossing the start/finish line forwards starts a new ERS lap.

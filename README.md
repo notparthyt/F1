@@ -2,7 +2,7 @@
 
 ## F1 Dynamics Lab — Prototype III
 
-**Play:** [f1.gokart.games](https://f1.gokart.games) · **Source:** [notparthyt/F1](https://github.com/notparthyt/F1)
+**Play:** [GitHub Pages](https://notparthyt.github.io/F1/) · [f1.gokart.games](https://f1.gokart.games) · **Source:** [notparthyt/F1](https://github.com/notparthyt/F1)
 
 ![CursorRacing F1 Dynamics Lab gameplay screenshot](Screenshot%202026-10-29%20215341.png)
 
@@ -21,12 +21,14 @@ real racing-line data.
   manual paddle-shift gears, reverse, and Sim or Arcade handling.
 - **Race weekend systems:** standing starts, AI opponents, lap timing,
   standings, pit stops, tyre compounds, fuel, ERS, DRS, changing weather, and
-  safety-car periods.
+  safety-car periods. Q1, Q2, and Q3 set the race grid; each player session
+  starts on fresh Soft tyres, and tyre wear begins with the main race.
 - **3D cameras:** cockpit, chase, T-Cam, overview, and 360 Look. A separate
   trackside TV camera can record the race to WebM.
 - **Car details:** animated driver and steering wheel, cockpit mirrors, and
   player livery selection.
 - **Telemetry:** live speed, lap times, vehicle dynamics, and tyre information.
+- **Graphics:** Default, Mid Optimized, and Max Optimized performance presets.
 
 ## Run locally
 
@@ -47,23 +49,38 @@ Run the test suite with Node.js:
 node --test
 ```
 
-The site is configured as a Cloudflare Worker serving static assets.
-`npx wrangler deploy` deploys it to the configured domain. The files excluded
-from deployment are listed in `.assetsignore`.
+GitHub Pages publishes the project from the `main` branch root. The site is
+available at [notparthyt.github.io/F1](https://notparthyt.github.io/F1/).
+The existing Cloudflare Worker can also be deployed with `npx wrangler deploy`;
+the files excluded from that deployment are listed in `.assetsignore`.
 
 ## Getting started
 
-1. Choose a circuit from the header. The stadium starts a race; a real circuit
-   starts as a solo time trial. Press **O** to toggle opponents. A real-circuit
-   race uses three laps by default; the stadium race uses ten.
-2. Drive with **W / ↑** to accelerate, **S / ↓** to brake, and **A / D** or
-   **← / →** to steer. Use **P** to toggle the autopilot.
-3. Use the HUD and standings to follow lap timing, position, tyres, fuel, and
-   penalties. Press **R** to reset the car and restart the session.
+1. Choose a circuit from the header. The stadium starts a race weekend; real
+   circuits start as solo time trials. Press **O** to toggle opponents. With
+   opponents enabled, set a clean lap in each qualifying stage you advance to;
+   Q1, Q2, and Q3 determine the main-race grid. The default race is ten laps on
+   the stadium and three laps on a real circuit.
+2. Your driver spawns beside the car. Click the viewport to capture the mouse,
+   aim at the car, and press **L** to enter. Qualifying begins first; the race
+   starts after the final classification is set.
+3. Drive with **W / ↑** to accelerate, **S / ↓** to brake, and **A / D** or
+   **← / →** to steer. Use **I** to toggle autopilot and **P** to pause.
+4. Use the HUD and standings to follow lap timing, position, tyres, fuel, and
+   penalties. Press **R** to reset the session.
 
 In races, use different tyre compounds to meet the two-compound rule. Press
 **B** to cycle a pit request, then take the pit lane and stop in your box.
 Speeding in the pit lane incurs a penalty.
+
+Outside the car, **W** walks forward, **S** walks backward, and **A / D**
+strafe relative to the camera; double-tap **W** to run and press **Space** to
+jump. Barriers and cars block the driver. **Shift** stands the driver. Press
+**E** while standing still to open the emote menu, then press **1–9** or click
+an emote; **E** or **Esc** closes the menu. **M** opens the driver suit menu.
+Moving cancels an emote and resumes the walking animation. In a race, you can
+exit with **L** only after finishing; in practice or a solo time trial,
+complete a lap first.
 
 ## Keyboard controls
 
@@ -74,13 +91,23 @@ Speeding in the pit lane incurs a penalty.
 | A / D · ← / → | Steer |
 | X / Z | Shift up / down; switches to manual gears |
 | G | Return to automatic gears |
-| Q / E | Select reverse / forward explicitly |
+| Q / E | Select reverse / forward explicitly while driving; E opens the emote menu on foot |
 | F (hold) | Request DRS where permitted |
 | B | Cycle pit request: Soft → Medium → Hard → cancel |
+| W / A / S / D (on foot) | Walk |
+| Mouse (on foot) | Aim with the centered reticle |
+| E, then 1–9 (on foot) | Open the emote menu and play an emote |
+| Esc (on foot) | Close the emote menu |
+| C / N (on foot) | Cycle third-person, first-person, and second-person cameras |
+| L (on foot) | Enter when aiming at the car; exit only after finishing |
 | 1–5 | On the start lights, take the selected grid position |
-| P | Toggle autopilot |
-| Space | Pause / resume |
-| R | Reset the car and restart the session |
+| I | Toggle autopilot |
+| P | Pause / resume |
+| Space (on foot) | Jump |
+| Double-tap W (on foot) | Run |
+| Shift (on foot) | Stand |
+| M (on foot) | Open driver suit menu |
+| R | Reset the session |
 | C / N | Cycle Cockpit → Chase Cam → T-Cam |
 | V | Toggle Overview |
 | U | Toggle 360 Look; drag to orbit and scroll to zoom |
@@ -109,8 +136,8 @@ Touch a gamepad button to connect and take control from the autopilot.
 | Right-stick click | Take over from autopilot; hold while driving to request DRS |
 | A / Cross | Toggle km/h and mph |
 | B / Circle | Cycle driving cameras |
-| X / Square | Pause / resume |
-| Y / Triangle | Toggle fullscreen |
+| Y / Triangle | Pause / resume |
+| X / Square | Toggle fullscreen |
 | Menu / Options | Toggle HUD |
 | View / Share | Reset the car and session |
 
@@ -122,6 +149,7 @@ small deadzone; steering authority decreases with speed.
 - **Handling:** the header button switches between Sim and Arcade. Arcade adds
   grip and countersteering assistance while preserving full player throttle;
   AI cars use the same Arcade grip and cornering/braking targets.
+- **Optimization:** choose Default, Mid Optimized, or Max Optimized graphics.
 - **Original car:** toggles the player's car between its authored model livery
   and the CursorRacing livery. AI liveries are unaffected.
 - **DRS:** in a race, DRS is limited to enabled zones and eligibility rules.

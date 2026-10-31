@@ -51,8 +51,9 @@ export function centerline(halfStraight, radius, step = 2) {
 function ribbon(pts, a, b, y0, material, vScale, y1) {
   const pos = [], uv = [], idx = [];
   pts.forEach((p, i) => {
-    if (y1 === undefined) pos.push(p.x + p.nx * a, y0, -(p.y + p.ny * a), p.x + p.nx * b, y0, -(p.y + p.ny * b));
-    else pos.push(p.x + p.nx * a, y0, -(p.y + p.ny * a), p.x + p.nx * a, y1, -(p.y + p.ny * a));
+    const base = p.h ?? 0;
+    if (y1 === undefined) pos.push(p.x + p.nx * a, base + y0, -(p.y + p.ny * a), p.x + p.nx * b, base + y0, -(p.y + p.ny * b));
+    else pos.push(p.x + p.nx * a, base + y0, -(p.y + p.ny * a), p.x + p.nx * a, base + y1, -(p.y + p.ny * a));
     uv.push(0, p.s / vScale, 1, p.s / vScale);
     if (i) { const k = 2 * i; idx.push(k - 2, k - 1, k, k - 1, k + 1, k); }
   });
@@ -109,6 +110,9 @@ export function buildWorld({ halfStraight, radius, roadWidth, boxColors = [] }) 
   const along = (a, b) => pts.filter(p => p.s >= a && p.s <= b);
   world.add(ribbon(along(pit.entry, pit.exit), pit.inner, pit.outer, 0.006, asphaltMaterial(Math.abs(pit.outer - pit.inner)), 30));
   world.add(ribbon(along(pit.entry, pit.exit), pit.inner, pit.inner + 0.25, 0.009, std({ color: 0xf2f2ee, roughness: 0.6 }), 10));
+  // Physical pit divider, with short gaps at entry and exit so cars can join
+  // and leave the lane. It matches the perimeter wall and catch fence.
+  const pitDivider = along(pit.entry + 18, pit.exit - 18);
   const paint = (s, offset, length, width, color, y = 0.01) => {
     const m = new THREE.Mesh(new THREE.PlaneGeometry(length, width), std({ color, roughness: 0.6 }));
     m.rotation.x = -Math.PI / 2; m.position.set(s - halfStraight, y, radius + offset); world.add(m); m.receiveShadow = true;
@@ -181,6 +185,11 @@ export function buildWorld({ halfStraight, radius, roadWidth, boxColors = [] }) 
     g.beginPath(); g.moveTo(0, 0); g.lineTo(s, s); g.moveTo(s, 0); g.lineTo(0, s); g.stroke();
   }, 20, 1);
   const fenceMat = new THREE.MeshStandardMaterial({ map: meshTex, alphaTest: 0.4, side: THREE.DoubleSide, metalness: 0.6, roughness: 0.5 });
+  if (pitDivider.length > 1) {
+    const dividerWall = ribbon(pitDivider, pit.inner, 0, 0, std({ map: wall, roughness: 0.8 }), 6, 1.1);
+    dividerWall.castShadow = true; world.add(dividerWall);
+    world.add(ribbon(pitDivider, pit.inner, 0, 1.1, fenceMat, 0.16, 4.2));
+  }
   const postSpots = [];
   for (const s of [-1, 1]) {
     world.add(ribbon(pts, s * (half + 12), 0, 1.1, fenceMat, 0.16, 4.2));
@@ -275,10 +284,10 @@ export function buildWorld({ halfStraight, radius, roadWidth, boxColors = [] }) 
 // wallOffset (left out where another part of the circuit runs closer), a
 // start/finish line and light gantry at s = 0, a grandstand beside it,
 // hoardings, trees off the circuit and a hill ring sized to the layout.
-export function buildCircuitWorld(track, { boxColors = [] } = {}) {
+export function buildCircuitWorld(track, { boxColors = [], night = false } = {}) {
   const world = new THREE.Group(), half = track.roadWidth / 2, wallAt = track.wallOffset;
-  const { x: X, y: Y, s: S, heading: H, kerb } = track.samples, n = X.length;
-  const pts = Array.from({ length: n + 1 }, (_, k) => { const i = k % n; return { x: X[i], y: Y[i], nx: -Math.sin(H[i]), ny: Math.cos(H[i]), s: k < n ? S[i] : track.length, i }; });
+  const { x: X, y: Y, z: Z, s: S, heading: H, kerb } = track.samples, n = X.length;
+  const pts = Array.from({ length: n + 1 }, (_, k) => { const i = k % n; return { x: X[i], y: Y[i], h: Z?.[i] ?? 0, nx: -Math.sin(H[i]), ny: Math.cos(H[i]), s: k < n ? S[i] : track.length, i }; });
   // Consecutive runs of samples meeting a predicate (each run shares its end point).
   const runs = keep => { const out = []; let cur = null; for (const p of pts) { if (keep(p)) (cur ??= (out.push([]), out.at(-1))).push(p); else cur = null; } return out.filter(r => r.length > 1); };
   const std = (o) => new THREE.MeshStandardMaterial({ side: THREE.DoubleSide, ...o });
@@ -289,7 +298,10 @@ export function buildCircuitWorld(track, { boxColors = [] } = {}) {
   const skyR = extent + 1500, sky = new THREE.SphereGeometry(skyR, 32, 16), col = [];
   for (let i = 0; i < sky.attributes.position.count; i++) {
     const t = Math.max(0, sky.attributes.position.getY(i) / skyR);
-    const c = new THREE.Color(0xdfe9f1).lerp(new THREE.Color(0x3d78b8), Math.pow(t, 0.6)); col.push(c.r, c.g, c.b);
+    const c = night
+      ? new THREE.Color(0x111a30).lerp(new THREE.Color(0x02040b), Math.pow(t, 0.7))
+      : new THREE.Color(0xdfe9f1).lerp(new THREE.Color(0x3d78b8), Math.pow(t, 0.6));
+    col.push(c.r, c.g, c.b);
   }
   sky.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
   const skyMesh = new THREE.Mesh(sky, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide, fog: false, depthWrite: false }));
@@ -299,8 +311,54 @@ export function buildCircuitWorld(track, { boxColors = [] } = {}) {
     noise(g, s, '#3f6b2e', 0.25, 9000);
     for (let i = 0; i < s; i += 64) { g.fillStyle = 'rgba(255,255,255,0.035)'; g.fillRect(0, i, s, 32); }
   }, size / 8, size / 8);
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(size, size), new THREE.MeshStandardMaterial({ map: grass, roughness: 1 }));
-  ground.rotation.x = -Math.PI / 2; ground.position.set(cx, -0.03, -cy); ground.receiveShadow = true; world.add(ground);
+  // Drape the infield and verges to the same continuous elevation curve used
+  // by the road. Use a spatial segment index so each terrain vertex projects
+  // to a nearby centreline segment instead of snapping to a sparse sample.
+  const terrainSegments = 160, terrainPositions = [], terrainUvs = [], terrainIndices = [];
+  const terrainCellSize = 80, terrainSearchRadius = 205, terrainCells = new Map();
+  const terrainCellKey = (x, y) => `${x},${y}`;
+  for (let k = 0; k < n; k++) {
+    const j = (k + 1) % n;
+    const minX = Math.floor((Math.min(X[k], X[j]) - terrainSearchRadius) / terrainCellSize);
+    const maxX = Math.floor((Math.max(X[k], X[j]) + terrainSearchRadius) / terrainCellSize);
+    const minY = Math.floor((Math.min(Y[k], Y[j]) - terrainSearchRadius) / terrainCellSize);
+    const maxY = Math.floor((Math.max(Y[k], Y[j]) + terrainSearchRadius) / terrainCellSize);
+    for (let gx = minX; gx <= maxX; gx++) for (let gy = minY; gy <= maxY; gy++) {
+      const key = terrainCellKey(gx, gy);
+      (terrainCells.get(key) ?? terrainCells.set(key, []).get(key)).push(k);
+    }
+  }
+  for (let j = 0; j <= terrainSegments; j++) for (let i = 0; i <= terrainSegments; i++) {
+    const x = cx + (i / terrainSegments - 0.5) * size;
+    const y = cy + (j / terrainSegments - 0.5) * size;
+    const candidates = terrainCells.get(terrainCellKey(Math.floor(x / terrainCellSize), Math.floor(y / terrainCellSize))) ?? [];
+    let progress = 0, bestD2 = Infinity;
+    for (const k of candidates) {
+      const next = (k + 1) % n, dx = X[next] - X[k], dy = Y[next] - Y[k];
+      const lengthSquared = dx * dx + dy * dy;
+      const fraction = Math.max(0, Math.min(1, ((x - X[k]) * dx + (y - Y[k]) * dy) / lengthSquared));
+      const px = X[k] + dx * fraction, py = Y[k] + dy * fraction;
+      const distanceSquared = (x - px) ** 2 + (y - py) ** 2;
+      if (distanceSquared < bestD2) {
+        bestD2 = distanceSquared;
+        progress = S[k] + (S[k + 1] - S[k]) * fraction;
+      }
+    }
+    const distance = Math.sqrt(bestD2), fade = 1 - THREE.MathUtils.smoothstep(distance, wallAt + 20, 190);
+    const height = (bestD2 < Infinity ? track.heightAt(progress) * fade : 0) - 0.055;
+    terrainPositions.push(x, height, -y);
+    terrainUvs.push(i / terrainSegments * size / 8, j / terrainSegments * size / 8);
+    if (i && j) {
+      const k = j * (terrainSegments + 1) + i, a = k - terrainSegments - 2, b = a + 1, c = k - 1, e = k;
+      terrainIndices.push(a, b, c, b, e, c);
+    }
+  }
+  const terrainGeometry = new THREE.BufferGeometry();
+  terrainGeometry.setAttribute('position', new THREE.Float32BufferAttribute(terrainPositions, 3));
+  terrainGeometry.setAttribute('uv', new THREE.Float32BufferAttribute(terrainUvs, 2));
+  terrainGeometry.setIndex(terrainIndices); terrainGeometry.computeVertexNormals();
+  const ground = new THREE.Mesh(terrainGeometry, new THREE.MeshStandardMaterial({ map: grass, roughness: 1, side: THREE.DoubleSide }));
+  ground.receiveShadow = true; world.add(ground);
 
   const kerbTex = texture(64, (g, s) => { g.fillStyle = '#d8dad6'; g.fillRect(0, 0, s, s); g.fillStyle = '#c3302b'; g.fillRect(0, 0, s, s / 2); });
   const wallTex = texture(128, (g, s) => {
@@ -326,15 +384,15 @@ export function buildCircuitWorld(track, { boxColors = [] } = {}) {
     for (const r of runs(clear)) {
       const w = ribbon(r, side * wallAt, 0, 0, std({ map: wallTex, roughness: 0.8 }), 6, 1.1); w.castShadow = true; world.add(w);
       world.add(ribbon(r, side * wallAt, 0, 1.1, fenceMat, 0.16, 4.2));
-      r.forEach((p, k) => { if (k % 4 === 0) postSpots.push([p.x + p.nx * side * wallAt, p.y + p.ny * side * wallAt]); });
+      r.forEach((p, k) => { if (k % 4 === 0) postSpots.push([p.x + p.nx * side * wallAt, p.y + p.ny * side * wallAt, p.h]); });
     }
   }
   const posts = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.06, 0.06, 4.2, 6), steel, postSpots.length);
-  postSpots.forEach(([x, y], i) => posts.setMatrixAt(i, new THREE.Matrix4().makeTranslation(x, 2.1, -y)));
+  postSpots.forEach(([x, y, h], i) => posts.setMatrixAt(i, new THREE.Matrix4().makeTranslation(x, h + 2.1, -y)));
   world.add(posts);
 
   // Start/finish at s = 0 in a local frame: +x along the track, +z to the right.
-  const start = new THREE.Group(); start.position.set(X[0], 0, -Y[0]); start.rotation.y = H[0]; world.add(start);
+  const start = new THREE.Group(); start.position.set(X[0], Z?.[0] ?? 0, -Y[0]); start.rotation.y = H[0]; world.add(start);
   const chequer = texture(128, (g, s) => { for (let i = 0; i < 8; i++) for (let j = 0; j < 8; j++) { g.fillStyle = (i + j) % 2 ? '#111' : '#eee'; g.fillRect(i * s / 8, j * s / 8, s / 8, s / 8); } }, 1, track.roadWidth / 2);
   const line = new THREE.Mesh(new THREE.PlaneGeometry(1.6, track.roadWidth), new THREE.MeshStandardMaterial({ map: chequer, roughness: 0.6 }));
   line.rotation.x = -Math.PI / 2; line.position.set(0, 0.014, 0); line.receiveShadow = true; start.add(line);
@@ -378,6 +436,75 @@ export function buildCircuitWorld(track, { boxColors = [] } = {}) {
     for (let i = 0; i < 7; i++) { const c = new THREE.Mesh(new THREE.BoxGeometry(0.35, 14, 0.35), steel); c.position.set(-114.4 + i * 18.13, 7, standSide * (z0 - 1.6)); stand.add(c); }
   }
 
+  // Additional spectator blocks at separate sectors make each circuit read
+  // as a race venue from the cockpit, not an empty ribbon with distant trees.
+  for (let i = 0; i < 4; i++) {
+    const s = track.length * (0.13 + i * 0.19), side = i % 2 ? 1 : -1;
+    const [x, y] = track.point(s, side * (wallAt + 31)), h = track.heightAt(s);
+    if (Math.abs(track.offset(x, y)) < wallAt + 18) continue;
+    const stand = new THREE.Group(); stand.position.set(x, h, -y); stand.rotation.y = track.heading(s); world.add(stand);
+    const sign = side;
+    const base = new THREE.Mesh(new THREE.BoxGeometry(68, 1.2, 13), concrete); base.position.set(0, 0.7, 0); base.castShadow = base.receiveShadow = true; stand.add(base);
+    for (let row = 0; row < 7; row++) {
+      const step = new THREE.Mesh(new THREE.BoxGeometry(66 - row * 1.2, 0.8, 1.5), stepMats);
+      step.position.set(0, 1.7 + row * 0.85, sign * (1 + row * 1.45)); step.castShadow = true; stand.add(step);
+    }
+    const roof = new THREE.Mesh(new THREE.BoxGeometry(70, 0.7, 14), std({ color: 0xc9d0d2, roughness: 0.55 }));
+    roof.position.set(0, 9.2, sign * 5); roof.castShadow = true; stand.add(roof);
+  }
+
+  // Marshal posts, safety cabinets and camera platforms along the outer fence.
+  const marshalMat = std({ color: 0xffc857, roughness: 0.72 });
+  for (let i = 0; i < 12; i++) {
+    const s = track.length * (i + 0.35) / 12, side = i % 2 ? -1 : 1;
+    const [x, y] = track.point(s, side * (wallAt + 10)), h = track.heightAt(s);
+    if (Math.abs(track.offset(x, y)) < wallAt + 7) continue;
+    const post = new THREE.Group(); post.position.set(x, h, -y); post.rotation.y = track.heading(s); world.add(post);
+    const box = new THREE.Mesh(new THREE.BoxGeometry(1.6, 2.2, 1.4), marshalMat); box.position.y = 1.1; box.castShadow = true; post.add(box);
+    const platform = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.35, 3), steel); platform.position.set(0, 2.35, side * 1.2); post.add(platform);
+    const camera = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.45, 0.42), std({ color: 0x111820, metalness: 0.5 }));
+    camera.position.set(0, 2.9, side * 1.2); camera.rotation.y = Math.PI / 2; post.add(camera);
+  }
+
+  if (night) {
+    const poleMat = new THREE.MeshStandardMaterial({ color: 0x252a32, metalness: 0.72, roughness: 0.36 });
+    const lampMat = new THREE.MeshStandardMaterial({ color: 0xffefc2, emissive: 0xffd77a, emissiveIntensity: 3.8, roughness: 0.25 });
+    const buildingMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.78, emissive: 0x111a2a, emissiveIntensity: 0.35 });
+    const windowMat = new THREE.MeshStandardMaterial({ color: 0xffd88a, emissive: 0xffb84d, emissiveIntensity: 2.2, roughness: 0.25 });
+    const lampCount = 36;
+    for (let i = 0; i < lampCount; i++) {
+      const s = track.length * i / lampCount, side = i % 2 ? -1 : 1, h = track.heightAt(s);
+      const [x, y] = track.point(s, side * (wallAt + 22));
+      const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.34, 15, 7), poleMat);
+      mast.position.set(x, h + 7.5, -y); mast.castShadow = true; world.add(mast);
+      const arm = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.35, 25), poleMat);
+      const [ax, ay] = track.point(s, side * (wallAt + 10));
+      arm.position.set(ax, h + 14.8, -ay); arm.rotation.y = track.heading(s) + (side > 0 ? Math.PI : 0); world.add(arm);
+      const bulb = new THREE.Mesh(new THREE.BoxGeometry(5.5, 0.25, 1), lampMat);
+      const [lx, ly] = track.point(s, side * (wallAt - 2));
+      bulb.position.set(lx, h + 14.5, -ly); bulb.rotation.y = track.heading(s); world.add(bulb);
+      // Keep the repeated lamp fixtures emissive; only every third mast adds
+      // a dynamic light to the scene to keep the night renderer light.
+      if (i % 3 === 0) {
+        const light = new THREE.PointLight(0xffdfa0, 1400, 190, 2);
+        light.position.set(lx, h + 13.5, -ly); world.add(light);
+      }
+    }
+    // Low-rise illuminated city blocks give the street venues a night skyline.
+    for (let i = 0; i < 18; i++) {
+      const s = track.length * (i + 0.5) / 18, side = i % 2 ? 1 : -1, h = track.heightAt(s);
+      const [x, y] = track.point(s, side * (wallAt + 82));
+      if (Math.abs(track.offset(x, y)) < wallAt + 45) continue;
+      const building = new THREE.Group(); building.position.set(x, h, -y); building.rotation.y = track.heading(s); world.add(building);
+      const tall = 8 + (i % 4) * 5, w = 10 + (i % 3) * 3;
+      const block = new THREE.Mesh(new THREE.BoxGeometry(w, tall, 9), buildingMat); block.position.y = tall / 2; block.castShadow = true; building.add(block);
+      for (let row = 0; row < Math.floor(tall / 2.5); row++) {
+        const windows = new THREE.Mesh(new THREE.BoxGeometry(w * 0.72, 0.28, 0.08), windowMat);
+        windows.position.set(0, 1.6 + row * 2.2, -side * 4.56); building.add(windows);
+      }
+    }
+  }
+
   // Pit lane (circuit.mjs layout; pit-frame offsets are negative towards the
   // pits, centreline offset = side × that): asphalt from the road edge out to
   // the apron's far side between entry and exit, a white line along the fast
@@ -386,15 +513,49 @@ export function buildCircuitWorld(track, { boxColors = [] } = {}) {
   if (pit) {
     const strip = (a, b) => Array.from({ length: Math.round((b - a) / 2) + 1 }, (_, k) => {
       const s = a + (b - a) * k / Math.round((b - a) / 2), [x, y] = track.point(s), h = track.heading(s);
-      return { x, y, nx: -Math.sin(h), ny: Math.cos(h), s: s - a };
+      return { x, y, h: track.heightAt(s), nx: -Math.sin(h), ny: Math.cos(h), s: s - a };
     });
-    // Ribbon offsets are positive to the left: centreline offset −(side × f).
-    const r = f => -pit.side * f;
-    world.add(ribbon(strip(pit.entry, pit.exit), r(-half), r(-pit.outer), 0.006, asphaltMaterial(Math.abs(pit.outer - half)), 30));
-    world.add(ribbon(strip(pit.limitStart, pit.limitEnd), r(-pit.inner), r(-pit.inner - 0.25), 0.009, std({ color: 0xf2f2ee, roughness: 0.6 }), 10));
+    // Build pit-lane meshes from track.point's same signed offsets used by
+    // collision, pit boxes and the AI route, so left/right cannot diverge.
+    const pitRoadMesh = (a, b, material, yOffset = 0.006) => {
+      const path = strip(a, b), positions = [], uvs = [], indices = [];
+      path.forEach(p => {
+        const s = a + p.s, inner = track.point(s, -pit.side * half), outer = track.point(s, -pit.side * pit.outer);
+        const h = track.heightAt(s) + yOffset;
+        positions.push(inner[0], h, -inner[1], outer[0], h, -outer[1]);
+        uvs.push(0, p.s / 30, 1, p.s / 30);
+      });
+      for (let i = 1; i < path.length; i++) { const k = i * 2; indices.push(k - 2, k - 1, k, k - 1, k + 1, k); }
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2)); geometry.setIndex(indices); geometry.computeVertexNormals();
+      const mesh = new THREE.Mesh(geometry, material); mesh.receiveShadow = true; world.add(mesh); return mesh;
+    };
+    const pitSurface = asphaltMaterial(Math.abs(pit.outer - half));
+    world.add(pitRoadMesh(pit.entry, pit.exit, pitSurface));
+    const dividerStart = pit.entry + 18;
+    const divider = strip(dividerStart, pit.exit - 18).map(p => {
+      const [x, y] = track.point(dividerStart + p.s, -pit.side * pit.inner);
+      return { ...p, x, y };
+    });
+    if (divider.length > 1) {
+      const barrier = ribbon(divider, 0, 0, 0, std({ map: wallTex, roughness: 0.8 }), 6, 1.1);
+      barrier.castShadow = true; world.add(barrier);
+      world.add(ribbon(divider, 0, 0, 1.1, fenceMat, 0.16, 4.2));
+      divider.forEach((p, k) => { if (k % 4 === 0) postSpots.push([p.x, p.y, p.h]); });
+    }
+    const linePath = strip(pit.limitStart, pit.limitEnd), linePositions = [], lineUvs = [], lineIndices = [];
+    linePath.forEach(p => {
+      const s = pit.limitStart + p.s, a = track.point(s, -pit.side * pit.inner), b = track.point(s, -pit.side * (pit.inner + 0.25)), h = track.heightAt(s) + 0.009;
+      linePositions.push(a[0], h, -a[1], b[0], h, -b[1]); lineUvs.push(0, p.s / 10, 1, p.s / 10);
+    });
+    for (let i = 1; i < linePath.length; i++) { const k = i * 2; lineIndices.push(k - 2, k - 1, k, k - 1, k + 1, k); }
+    const pitLineGeometry = new THREE.BufferGeometry();
+    pitLineGeometry.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3)); pitLineGeometry.setAttribute('uv', new THREE.Float32BufferAttribute(lineUvs, 2)); pitLineGeometry.setIndex(lineIndices); pitLineGeometry.computeVertexNormals();
+    world.add(new THREE.Mesh(pitLineGeometry, std({ color: 0xf2f2ee, roughness: 0.6 })));
     const flat = (s, f, length, width, color, y = 0.01) => {
       const [x, z] = track.point(s, pit.side * f), m = new THREE.Mesh(new THREE.PlaneGeometry(length, width), std({ color, roughness: 0.6 }));
-      m.rotation.set(-Math.PI / 2, 0, track.heading(s)); m.position.set(x, y, -z); m.receiveShadow = true; world.add(m);
+      m.rotation.set(-Math.PI / 2, 0, track.heading(s)); m.position.set(x, track.heightAt(s) + y, -z); m.receiveShadow = true; world.add(m);
     };
     for (const s of [pit.limitStart, pit.limitEnd]) flat(s, -(pit.inner + pit.outer) / 2, 0.4, pit.outer - pit.inner, 0xf2f2ee);
     const garageAt = -(wallAt + 4.5), concreteGarage = std({ color: 0xd9dcd6, roughness: 0.7 });
@@ -404,7 +565,7 @@ export function buildCircuitWorld(track, { boxColors = [] } = {}) {
       const [x, y] = track.point(s, pit.side * garageAt);
       if (standSide === -pit.side || Math.abs(track.offset(x, y)) < wallAt + 3) continue;
       const g = new THREE.Mesh(new THREE.BoxGeometry(pit.boxSpacing - 0.5, 6, 7), concreteGarage);
-      g.position.set(x, 3, -y); g.rotation.y = track.heading(s); g.castShadow = g.receiveShadow = true; world.add(g);
+      g.position.set(x, track.heightAt(s) + 3, -y); g.rotation.y = track.heading(s); g.castShadow = g.receiveShadow = true; world.add(g);
     }
   }
 
@@ -429,8 +590,8 @@ export function buildCircuitWorld(track, { boxColors = [] } = {}) {
   const boards = new THREE.InstancedMesh(new THREE.BoxGeometry(8, 1, 0.12), [boardBack, boardBack, boardBack, boardBack, logoMat, boardBack], boardSpots.length);
   const dummy = new THREE.Object3D();
   boardSpots.forEach(([p, off], i) => {
-    dummy.position.set(p.x + p.nx * off, 0.75, -(p.y + p.ny * off));
-    dummy.lookAt(p.x, 0.75, -p.y); dummy.updateMatrix(); boards.setMatrixAt(i, dummy.matrix);
+    dummy.position.set(p.x + p.nx * off, p.h + 0.75, -(p.y + p.ny * off));
+    dummy.lookAt(p.x, p.h + 0.75, -p.y); dummy.updateMatrix(); boards.setMatrixAt(i, dummy.matrix);
   });
   boards.castShadow = true; world.add(boards);
 
@@ -470,7 +631,8 @@ export function buildCircuitWorld(track, { boxColors = [] } = {}) {
   for (const { species, spots: cellSpots } of treeCells.values()) {
     const mesh = new THREE.InstancedMesh(treeGeometries[species], treeMat, cellSpots.length);
     cellSpots.forEach(([x, y, sc, rot, v], i) => {
-      dummy.position.set(x, 0, -y); dummy.rotation.set(0, rot, 0); dummy.scale.set(sc, sc * (0.85 + v * 0.3), sc);
+      const h = track.heightAt(track.progress(x, y));
+      dummy.position.set(x, h, -y); dummy.rotation.set(0, rot, 0); dummy.scale.set(sc, sc * (0.85 + v * 0.3), sc);
       dummy.updateMatrix(); mesh.setMatrixAt(i, dummy.matrix);
       const tint = 0.8 + rng() * 0.35; mesh.setColorAt(i, new THREE.Color(tint * (0.95 + rng() * 0.15), tint, tint * (0.85 + rng() * 0.15)));
     });

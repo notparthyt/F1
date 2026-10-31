@@ -2,6 +2,7 @@ const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
 export const WEATHER_DEFAULTS = Object.freeze({
   initialRainChance: 0.18,
+  rainChance: 1,
   dryMin: 80,
   dryMax: 180,
   rainMin: 45,
@@ -45,7 +46,7 @@ export function createWeather({ random = Math.random, options = {} } = {}) {
         intensity = clamp(intensity + (raining ? 1 : -1) * step / config.rampTime, 0, 1);
         wetness = clamp(wetness + (raining ? config.wettingRate : -config.dryingRate) * step, 0, 1);
         if (phaseRemaining <= 1e-9) {
-          raining = !raining;
+          raining = raining ? false : config.rainChance >= 1 || random() < config.rainChance;
           phaseRemaining = duration(raining);
         }
       }

@@ -9,7 +9,7 @@ export const INPUT_DEFAULTS = Object.freeze({
   deadzone: 0.08,                    // stick and trigger deadzone (fraction of travel)
   steerExponent: 1.5,                // stick response curve: finer control near centre
   stickBrakeExponent: 2.5,           // right stick back: gradual brake, full only at full travel
-  steerSpeedScale: 22,               // m/s; steer authority 1 / (1 + (u / scale)^2)
+  steerSpeedScale: 40,               // m/s; reduce high-speed twitch without taking away most steering
 });
 
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));

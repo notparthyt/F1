@@ -100,8 +100,8 @@ test('under the safety car, running cars stay in line at a controlled speed and 
   manualPlayer.car.vx = 20;
   manualPlayer.car.telemetry.speed = 20;
   manualRace.advance(FIXED_DT, { throttle: 1, brake: 0, steer: 0 }, track.surfaceAt, track.barrierAt);
-  assert.equal(manualPlayer.command.throttle, 0);
-  assert.ok(manualPlayer.command.brake > 0);
+  assert.ok(manualPlayer.command.throttle > 0 && manualPlayer.command.throttle < 1);
+  assert.ok(manualPlayer.command.brake > 0 && manualPlayer.command.brake < 1);
 
   const pitRace = createRace(track, { grid: [DEFAULT_GRID[0]] });
   pitRace.requestPit('hard');

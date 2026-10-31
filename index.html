@@ -33,18 +33,43 @@ header{position:absolute;top:0;left:0;right:0;z-index:20}main{height:100vh}.tag,
 @keyframes yellow-flag-flash{to{opacity:.55}}
 @media(max-width:760px){#yellow-flag{top:254px;font-size:10px;padding:7px 10px}}
 </style>
+<style>
+#on-foot-overlay{position:absolute;inset:0;z-index:4;pointer-events:none}
+#on-foot-overlay[hidden],#exit-hint[hidden]{display:none}
+#on-foot-emote-menu{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(330px,calc(100vw - 32px));padding:16px;border:1px solid #ffffff3b;border-radius:9px;background:#0b121af2;box-shadow:0 12px 36px #0009;color:#e9f0f6;pointer-events:auto}
+#on-foot-emote-menu[hidden]{display:none}
+#on-foot-emote-menu h2{margin:0 0 10px;font-size:14px;letter-spacing:.08em;text-transform:uppercase}
+#on-foot-emote-list{display:grid;grid-template-columns:1fr;gap:5px}
+#on-foot-emote-list button{display:flex;justify-content:space-between;text-align:left;padding:7px 9px}
+#on-foot-emote-menu p{margin:10px 0 0;color:#91a4b6;font-size:11px}
+#on-foot-wardrobe-menu{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(350px,calc(100vw - 32px));padding:16px;border:1px solid #ffffff3b;border-radius:9px;background:#0b121af2;box-shadow:0 12px 36px #0009;color:#e9f0f6;pointer-events:auto}
+#on-foot-wardrobe-menu[hidden]{display:none}
+#on-foot-wardrobe-menu h2{margin:0 0 10px;font-size:14px;letter-spacing:.08em;text-transform:uppercase}
+#on-foot-suit-list{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+#on-foot-suit-list button{display:flex;align-items:center;gap:9px;text-align:left;padding:8px}
+#on-foot-suit-list button[aria-pressed="true"]{border-color:#6fffc3;box-shadow:inset 0 0 0 1px #6fffc3}
+#on-foot-suit-list .swatch{width:18px;height:18px;border-radius:50%;border:1px solid #ffffff70;flex:none}
+#on-foot-wardrobe-menu p{margin:10px 0 0;color:#91a4b6;font-size:11px}
+#on-foot-reticle{position:absolute;left:50%;top:50%;width:18px;height:18px;transform:translate(-50%,-50%);border:1px solid #e9f0f6;border-radius:50%;box-shadow:0 0 3px #000}
+#on-foot-reticle:before,#on-foot-reticle:after{content:"";position:absolute;background:#e9f0f6;box-shadow:0 0 3px #000}
+#on-foot-reticle:before{width:26px;height:1px;left:-5px;top:8px}
+#on-foot-reticle:after{height:26px;width:1px;left:8px;top:-5px}
+#on-foot-prompt,#exit-hint{position:absolute;left:50%;bottom:16%;transform:translateX(-50%);padding:10px 15px;border:1px solid #ffffff3b;border-radius:7px;background:#0b121acc;color:#e9f0f6;font-size:13px;font-weight:700;letter-spacing:.04em;text-shadow:0 1px 2px #000;white-space:nowrap}
+#on-foot-prompt strong,#exit-hint strong{color:#6fffc3}
+@media(max-width:760px){#on-foot-prompt,#exit-hint{bottom:22%;font-size:11px}}
+</style>
 </head>
 <body>
 <header><div><h1><span>Cursor
 </span> RACING</h1><div class="subtitle">F1 DYNAMICS SIMULATOR · 240 Hz PHYSICS</div></div><nav aria-label="Simulation controls"><button id="autopilot" aria-pressed="false">Autopilot: off</button><button id="pause" aria-pressed="false">Pause</button><button id="camera-mode" aria-label="Camera mode" title="Click to cycle: Cockpit, Chase Cam, T-Cam">Camera: Chase Cam</button><button id="trackside" aria-pressed="false">Trackside TV: off</button><button id="view" aria-pressed="false">Overview</button><button id="sound" aria-pressed="true">Sound: on</button><button id="field" aria-pressed="true">Opponents: on</button><button id="reset">Reset car</button><button id="hud" aria-pressed="true">HUD: on</button><button id="units">Units: km/h</button><button id="fullscreen" aria-pressed="false">Full screen</button><a id="github" class="btn" href="https://github.com/notparthyt/F1" target="_blank" rel="noopener" title="notparthyt/F1 on GitHub">GitHub F1</a><select id="track-select" aria-label="Circuit"><option value="">Stadium test track · race</option></select></nav></header>
-<main><section class="scene" aria-label="Driving viewport"><canvas id="track" role="img" aria-label="3D view of an open-wheel race car on a stadium-shaped test circuit"></canvas><div class="tag"><strong>LIVE</strong> &nbsp; THREE.JS 3D · 240 Hz PHYSICS / SI UNITS</div><div id="timing" aria-label="Lap timing"><div id="race-pos" aria-label="Race position"></div><div class="label" id="lap-label">Out lap</div><div id="lap-time">–:––.–––</div><div id="lap-delta"></div><div id="hud-speed" aria-label="Speed"><span id="speed-hud">0</span> <span class="unit">km/h</span></div><div id="pit-info" aria-label="Tyres and pit stop"></div></div><div id="lights" role="img" aria-label="Start lights" hidden><span></span><span></span><span></span><span></span><span></span></div><div id="yellow-flag" role="status" aria-live="polite" hidden>SAFETY CAR · FOLLOW · NO OVERTAKING</div><div id="hud-left"><canvas id="minimap" role="img" aria-label="Track map with car positions"></canvas><div id="status" role="status">Ready · W or ↑ to accelerate</div></div></section><aside aria-label="Vehicle telemetry">
+<main><section class="scene" aria-label="Driving viewport"><canvas id="track" role="img" aria-label="3D view of an open-wheel race car on a stadium-shaped test circuit"></canvas><div class="tag"><strong>LIVE</strong> &nbsp; THREE.JS 3D · 240 Hz PHYSICS / SI UNITS</div><div id="timing" aria-label="Lap timing"><div id="race-pos" aria-label="Race position"></div><div class="label" id="lap-label">Out lap</div><div id="lap-time">–:––.–––</div><div id="lap-delta"></div><div id="hud-speed" aria-label="Speed"><span id="speed-hud">0</span> <span class="unit">km/h</span></div><div id="pit-info" aria-label="Tyres and pit stop"></div></div><div id="lights" role="img" aria-label="Start lights" hidden><span></span><span></span><span></span><span></span><span></span></div><div id="yellow-flag" role="status" aria-live="polite" hidden>SAFETY CAR · FOLLOW · NO OVERTAKING</div><div id="on-foot-overlay" aria-live="polite" hidden><div id="on-foot-reticle" aria-hidden="true"></div><div id="on-foot-prompt"></div><section id="on-foot-emote-menu" role="dialog" aria-modal="false" aria-labelledby="on-foot-emote-title" hidden><h2 id="on-foot-emote-title">Choose an emote</h2><div id="on-foot-emote-list"></div><p>Press 1–9 to play · E or Esc to close</p></section><section id="on-foot-wardrobe-menu" role="dialog" aria-modal="false" aria-labelledby="on-foot-wardrobe-title" hidden><h2 id="on-foot-wardrobe-title">Driver suit</h2><div id="on-foot-suit-list"></div><p>Press 1–9 to change suit · M or Esc to close</p></section></div><div id="exit-hint" role="status" hidden></div><div id="hud-left"><canvas id="minimap" role="img" aria-label="Track map with car positions"></canvas><div id="status" role="status">Ready · W or ↑ to accelerate</div></div></section><aside aria-label="Vehicle telemetry">
 <div id="pause-state" role="status"></div><div class="label">Ground speed · Gear <strong id="gear" aria-label="Selected gear">1</strong></div><div><span class="speed" id="speed">0</span> <span class="unit" id="speed-unit">km/h</span></div>
 <div class="section"><div class="stats"><div><div class="label">Last lap</div><div class="number" id="last-lap">–:––.–––</div></div><div><div class="label">Best lap</div><div class="number" id="best-lap">–:––.–––</div></div></div><div class="sectors" id="sectors"></div><p class="note">Sectors: purple = session best, yellow = slower. Track limits: a lap is deleted when all four tires are beyond the road edge.</p></div>
 <div class="section" id="race-section"><div class="label" id="race-label">Race order · interval to leader</div><ol id="standings" aria-label="Race order"></ol><p class="note">Twenty-one AI opponents run the same physics. Random rain wets the circuit, lowers available grip and slows the AI corner-speed plan. Following within ~30 m gives a tow (up to 35% less drag) but dirty air (up to 25% less downforce); cars collide as rigid footprints. Illustrative values.</p></div>
 <div class="section stats"><div><div class="label">Longitudinal</div><div class="number" id="long">0.00 g</div></div><div><div class="label">Lateral</div><div class="number" id="lat">0.00 g</div></div><div><div class="label">Downforce</div><div class="number" id="aero">0.0 kN</div></div><div><div class="label">Distance</div><div class="number" id="distance">0 m</div></div><div><div class="label">Sim time</div><div class="number" id="time">0.0 s</div></div><div><div class="label">Steering</div><div class="number" id="steer">0.0°</div></div><div><div class="label">Roll / pitch</div><div class="number" id="attitude">0.00° / 0.00°</div></div><div><div class="label">Aero squat</div><div class="number" id="heave">0 mm</div></div><div><div class="label">Ride F / R</div><div class="number" id="ride">40 / 80 mm</div></div><div><div class="label">Aero balance</div><div class="number" id="balance">40.0% F</div></div><div><div class="label">ERS store</div><div class="number" id="ers">4.00 MJ</div></div><div><div class="label">ERS deployed / lap</div><div class="number" id="ers-lap">0.00 / 4.0 MJ</div></div></div><div class="section"><p class="note" style="margin-top:0">ERS: the MGU-K adds up to 120 kW on the throttle above 100 km/h, at most 4 MJ a lap from a 4 MJ store; braking harvests up to 120 kW (2 MJ a lap) and the MGU-H recharges the store from the exhaust. Illustrative values.</p></div>
 <div class="section"><div class="label">Driver input · <span id="input-source">keyboard</span></div><div class="stats" style="margin-top:10px"><div><div class="label">Throttle</div><meter id="in-throttle" min="0" max="1" value="0" style="width:100%;accent-color:#6fffc3" aria-label="Throttle command"></meter></div><div><div class="label">Brake</div><meter id="in-brake" min="0" max="1" value="0" style="width:100%;accent-color:#ff8e86" aria-label="Brake command"></meter></div></div><p class="note">Keyboard pedals ramp in ~0.17 s and release in 0.1 s; keyboard steering moves toward lock at 3/s and returns at 5/s. Gamepad (standard layout): triggers are analog pedals, left stick steers with a deadzone and progressive curve. Steering authority falls with speed for both.</p></div>
-<div class="section"><div class="label">Tire force / peak grip</div><div class="wheels" id="wheels"></div><p class="note">FL / FR / RL / RR · normal load in kN.<br>Bars: force / peak capacity, not remaining grip. SLIDE: combined demand beyond the illustrative force peak; force falls toward 75% of peak. Slip: signed longitudinal slip; + is wheelspin when moving forward. LOCK: stopped wheel above 1 m/s. α: force-producing (relaxed) / kinematic slip angle; the carcass catches up over 0.45 m of travel. Temp: tread / carcass °C · thermal grip (blue cold, green near the 100 °C optimum, red hot); sliding heats the tread, airflow cools it. Wear: tread used · wear grip; sliding energy wears the tread (faster above the optimum), grip fades then falls off a cliff past 75% wear (amber above 37.5%, red above 75%); reset (R) fits new tires. Sim handling has no ABS or traction control; Arcade handling adds grip, stronger slide recovery, and reduces braking in turns.</p></div>
-<div class="section controls"><kbd>W</kbd> / <kbd>↑</kbd> Throttle<br><kbd>S</kbd> / <kbd>↓</kbd> Brake<br>Reverse: stopped, hold the brake (S / LT) and the car backs up; reversing, W / RT brakes and, once stopped, goes forward again. Or hold <kbd>Q</kbd> (reverse) / <kbd>E</kbd> (forward) while stopped on the brake, off throttle<br><kbd>A</kbd> <kbd>D</kbd> / <kbd>←</kbd> <kbd>→</kbd> Steer<br><kbd>X</kbd> / <kbd>Z</kbd> Shift up / down (gamepad RB / LB, once the race is on): switches to the manual gearbox (M beside the gear; the gear flashes red when a shift is refused); <kbd>G</kbd> (gamepad left stick click) back to automatic<br><kbd>F</kbd> DRS (hold; gamepad right stick click). Races: from lap 2, in a DRS zone after being within 1 s of the car ahead at its detection point; braking closes it. Open, it cuts drag 12% and downforce 10%, and both wing flaps open (illustrative)<br><kbd>Space</kbd> Pause · <kbd>R</kbd> Reset<br><kbd>V</kbd> Chase / overview<br><kbd>H</kbd> Hide / show HUD<br><kbd>C</kbd> / <kbd>N</kbd> Cycle cockpit → chase → T-Cam<br><kbd>P</kbd> Autopilot on / off<br><kbd>M</kbd> Sound on / off<br><kbd>O</kbd> Opponents on / off (restarts)<br><kbd>B</kbd> Pit request: box for Soft → Medium → Hard → cancel. On autopilot the car pits at the next entry; driving, take the pit lane on the inside of the main straight (on a real circuit: beside the start/finish straight, entry ~300 m before the line) (80 km/h limiter, +5 s for speeding) and stop on your box (first, green)<br>Start: hold still on the five red lights, go when they go out (moving early: +5 s). On the lights, <kbd>1</kbd>–<kbd>5</kbd> (gamepad LB / RB: one ahead / behind) puts you in the car on that grid position (1 = pole) and takes you off the autopilot; that car takes your slot<br>Race: 10 laps (<kbd>?laps=N</kbd> in the URL); penalties are added at the flag; every finisher must have run two compounds (one stop) or is disqualified. Start tyre: <kbd>?tyre=soft|medium|hard</kbd>. Each car starts with the fuel for the race distance (no refuelling); it burns off, so the car gets lighter<br>Gamepad: touch any button or stick to take control from the autopilot · RT throttle · LT brake (or right stick forward / back, or D-pad up / down) · left stick or D-pad steer · Y pause / resume · Menu (Start, ≡) HUD on / off · B cycles Cockpit / Chase Cam / T-Cam · X full screen · A units · Back (View) reset car · right stick click autopilot off</div>
+<div class="section"><div class="label">Tire force / peak grip</div><div class="wheels" id="wheels"></div><p class="note">FL / FR / RL / RR · normal load in kN.<br>Bars: force / peak capacity, not remaining grip. SLIDE: combined demand beyond the illustrative force peak; force falls toward 75% of peak. Slip: signed longitudinal slip; + is wheelspin when moving forward. LOCK: stopped wheel above 1 m/s. α: force-producing (relaxed) / kinematic slip angle; the carcass catches up over 0.45 m of travel. Temp: tread / carcass °C · thermal grip (blue cold, green near the 100 °C optimum, red hot); sliding heats the tread, airflow cools it. Wear: tread used · wear grip; sliding energy wears the tread (faster above the optimum), grip fades then falls off a cliff past 75% wear (amber above 37.5%, red above 75%); qualifying uses fresh Soft tires with no grip loss; fresh Softs wear and lose grip once the main race starts. Sim handling has no ABS or traction control; Arcade handling adds grip, stronger slide recovery, and reduces braking in turns.</p></div>
+<div class="section controls"><strong>On foot</strong>: spawn beside your car. Click the viewport to capture the mouse; use <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> to walk, double-tap <kbd>W</kbd> to run, press <kbd>Space</kbd> to jump. Aim at your car and press <kbd>L</kbd> to enter, or press <kbd>R</kbd> nearby to enter without aiming. Press <kbd>E</kbd> while standing still to cycle emotes. Q1, Q2, and Q3 run before the race. Set one clean timed lap in each session you advance to; qualifying determines the main-race grid. You can exit with <kbd>L</kbd> only after finishing a race (or completing a lap in practice).<br><br><strong>In the car</strong><br><kbd>W</kbd> / <kbd>↑</kbd> Throttle<br><kbd>S</kbd> / <kbd>↓</kbd> Brake<br>Reverse: stopped, hold the brake (S / LT) and the car backs up; reversing, W / RT brakes and, once stopped, goes forward again. Or hold <kbd>Q</kbd> (reverse) / <kbd>E</kbd> (forward) while stopped on the brake, off throttle<br><kbd>A</kbd> <kbd>D</kbd> / <kbd>←</kbd> <kbd>→</kbd> Steer · steering wheel animation turns up to 180° each way with a smooth hand transfer to the turning side at high lock<br><kbd>X</kbd> / <kbd>Z</kbd> Shift up / down (gamepad RB / LB, once the race is on): switches to the manual gearbox (M beside the gear; the gear flashes red when a shift is refused); <kbd>G</kbd> (gamepad left stick click) back to automatic<br><kbd>F</kbd> DRS (hold; gamepad right stick click). Races: from lap 2, in a DRS zone after being within 1 s of the car ahead at its detection point; braking closes it. Open, it cuts drag 12% and downforce 10%, and both wing flaps open (illustrative)<br><kbd>P</kbd> Pause · <kbd>I</kbd> Autopilot · <kbd>R</kbd> Reset<br><kbd>V</kbd> Chase / overview<br><kbd>H</kbd> Hide / show HUD<br><kbd>C</kbd> / <kbd>N</kbd> Cycle cockpit → chase → T-Cam<br><kbd>M</kbd> Sound on / off<br><kbd>O</kbd> Opponents on / off (restarts)<br><kbd>B</kbd> Pit request: box for Soft → Medium → Hard → cancel. On autopilot the car pits at the next entry; driving, take the pit lane on the inside of the main straight (on a real circuit: beside the start/finish straight, entry ~300 m before the line) (80 km/h limiter, +5 s for speeding) and stop on your box (first, green)<br>Start: hold still on the five red lights, go when they go out (moving early: +5 s). On the lights, <kbd>1</kbd>–<kbd>5</kbd> (gamepad LB / RB: one ahead / behind) puts you in the car on that grid position (1 = pole) and takes you off the autopilot; that car takes your slot<br>Race: 10 laps (<kbd>?laps=N</kbd> in the URL); penalties are added at the flag; all cars start on fresh Soft tires; qualifying tires stay fresh, while race tires wear and lose grip after the start. Qualifying has unlimited fuel. Solo time trial tires can be selected with <kbd>?tyre=soft|medium|hard</kbd><br>Gamepad: touch any button or stick to take control from the autopilot · RT throttle · LT brake (or right stick forward / back, or D-pad up / down) · left stick or D-pad steer · Y pause / resume · Menu (Start, ≡) HUD on / off · B cycles Cockpit / Chase Cam / T-Cam · X full screen · A units · Back (View) reset car · right stick click autopilot off</div>
 <p class="note">Illustrative, uncalibrated dynamics. Body roll, pitch and aero squat are damped spring modes for display; wheel loads are still quasi-static. Surface grip (assumed): kerb 90%, runoff 70%, grass 35%. Walls are rigid: the body footprint rebounds with 25% restitution and scrubs with friction 0.5; no damage model. Tires start at 70 °C (blanket temperature) and have a two-node thermal model and tread wear; no pressure or camber yet. Compounds (assumed): soft +1.5% grip and 2× wear, hard −1.5% grip and 0.55× wear relative to the medium; a pit stop fits a new set at blanket temperature after a 2.1–3.2 s service. Sound is synthesized from engine rpm, throttle, turbo spool, tire sliding power and speed (V6 firing frequency; no recorded samples). This is a handling testbed, not a validated F1 simulator.</p>
 </aside></main>
 <script type="importmap">{ "imports": { "three": "./vendor/three.module.js" } }</script>
@@ -54,18 +79,21 @@ import { RoomEnvironment } from './vendor/RoomEnvironment.js';
 import { DEFAULT_CAR, TIRE_COMPOUNDS, shift } from './src/physics.mjs';
 import { createRace, DEFAULT_GRID } from './src/race.mjs';
 import { buildF1Car } from './src/car3d.mjs';
-import { loadRB22Template, buildRB22Car, STEERING_RATIO } from './src/rb22.mjs';
+import { loadRB22Template, buildRB22Car, STEERING_RATIO, DRIVER_SUIT_STYLES, createDriverSuitTexture } from './src/rb22.mjs';
 import { buildWorld, buildCircuitWorld } from './src/world3d.mjs';
 import { makeMirror } from './src/mirror3d.mjs';
+import { GLTFLoader } from './vendor/GLTFLoader.js';
 import { createStadiumTrack } from './src/track.mjs';
 import { createCircuitTrack } from './src/circuit.mjs';
 import { CIRCUITS } from './src/circuits.mjs';
+import { CIRCUIT_ELEVATION_PROFILES, NIGHT_CIRCUITS, weatherOptionsForTrack } from './src/trackdata.mjs';
 import { createTimeTrial } from './src/trial.mjs';
 import { createLapTimer, formatLapTime } from './src/laptimer.mjs';
 import { applyArcadeSteeringAssist, createDriverInput, readGamepad } from './src/input.mjs';
 import { createSoundModel, createAudioEngine } from './src/audio.mjs';
 import { createWeather } from './src/weather.mjs';
 import { captureHandlingBaseline, applyHandlingMode as applyCarHandlingMode } from './src/handling.mjs';
+import { canExitVehicle, moveOnFootColliding, onFootEmoteAt, ON_FOOT_EMOTES, shouldAutoPauseOnBlur, shouldShowSeatedDriver } from './src/onfoot.mjs';
 const $ = id => document.getElementById(id);
 const canvas = $('track');
 const handlingButton = document.createElement('button');
@@ -77,22 +105,116 @@ originalCarButton.id = 'original-car';
 originalCarButton.setAttribute('aria-pressed', 'false');
 originalCarButton.textContent = 'Original car: off';
 handlingButton.after(originalCarButton);
+const optimizationButton = document.createElement('button');
+optimizationButton.id = 'optimization-mode';
+optimizationButton.type = 'button';
+optimizationButton.title = 'Cycle Default, Mid Optimized, and Max Optimized graphics settings.';
+optimizationButton.textContent = 'Optimization: Default';
+originalCarButton.after(optimizationButton);
+const optimizationProfiles = {
+  default: { label: 'Default', pixelRatio: 1.5, maxPixels: 2_800_000, shadows: true, shadowSize: 1024, mirrors: true },
+  mid: { label: 'Mid Optimized', pixelRatio: 1.2, maxPixels: 2_000_000, shadows: true, shadowSize: 768, mirrors: false },
+  max: { label: 'Max Optimized', pixelRatio: 1, maxPixels: 1_350_000, shadows: false, shadowSize: 512, mirrors: false },
+};
+let optimizationMode = 'default', adaptiveResolution = 1, frameTimeAverage = 16.7, qualityCheckAt = 0;
 let sim, paused = false, overview = false, cockpit = false, tcam = false, look360 = false, previousTime = null, snapCamera = true;
-let lookYaw = 0, lookPitch = 0.18, lookDistance = 6, lookPointer = null;
+let lookYaw = 0, lookPitch = 0.18, lookDistance = 6, lookPointer = null, onFootCameraMode = 'thirdPerson';
+let onFoot = true, canEnterCar = false, avatarLoaded = false, avatarLoadError = null, emoteMenuOpen = false, wardrobeMenuOpen = false;
+let playerSuitIndex = 0, avatarCharacter = null;
+let onFootPosition = { x: 0, y: 0 }, onFootYaw = 0, avatarMixer = null, avatarAction = null, avatarEmote = null;
+let runningOnFoot = false, lastWPressAt = -Infinity;
 let width = 1, height = 1;
 const keys = new Set();
+const emoteMenu = $('on-foot-emote-menu');
+const emoteList = $('on-foot-emote-list');
+const wardrobeMenu = $('on-foot-wardrobe-menu');
+const suitList = $('on-foot-suit-list');
+emoteList.innerHTML = ON_FOOT_EMOTES.map((name, index) =>
+  `<button type="button" data-emote-index="${index}" aria-keyshortcuts="${index + 1}"><kbd>${index + 1}</kbd><span>${name.replaceAll('_', ' ')}</span></button>`
+).join('');
+function closeEmoteMenu() {
+  emoteMenuOpen = false;
+  emoteMenu.hidden = true;
+  closeWardrobeMenu();
+}
+function closeWardrobeMenu() {
+  wardrobeMenuOpen = false;
+  wardrobeMenu.hidden = true;
+}
+function openEmoteMenu() {
+  if (!onFoot || paused || ['KeyW','KeyA','KeyS','KeyD'].some(code => keys.has(code))) return;
+  closeWardrobeMenu();
+  emoteMenuOpen = true;
+  emoteMenu.hidden = false;
+  keys.clear();
+  if (document.pointerLockElement) document.exitPointerLock();
+}
+function applySuitToAvatar(styleIndex) {
+  if (!avatarCharacter) return;
+  avatarCharacter.traverse(object => {
+    if (!object.isMesh || !/M_Clothes/i.test(object.material?.name ?? '')) return;
+    const base = object.userData.baseSuitMaterial ??= object.material;
+    const material = base.clone();
+    material.map = createDriverSuitTexture(base.map, styleIndex);
+    material.needsUpdate = true;
+    object.material = material;
+  });
+}
+function refreshSuitMenu() {
+  suitList.innerHTML = DRIVER_SUIT_STYLES.map((style, index) =>
+    `<button type="button" data-suit-index="${index}" aria-keyshortcuts="${index + 1}" aria-pressed="${index === playerSuitIndex}"><kbd>${index + 1}</kbd><i class="swatch" style="background:${style.swatch}"></i><span>${style.name}</span></button>`
+  ).join('');
+}
+function selectDriverSuit(index) {
+  if (!Number.isInteger(index) || !DRIVER_SUIT_STYLES[index]) return;
+  playerSuitIndex = index;
+  applySuitToAvatar(index);
+  if (model?.setDriverSuit) model.setDriverSuit(index);
+  closeWardrobeMenu();
+  refreshSuitMenu();
+}
+function openWardrobeMenu() {
+  if (!onFoot || paused || ['KeyW','KeyA','KeyS','KeyD'].some(code => keys.has(code))) return;
+  closeEmoteMenu();
+  refreshSuitMenu();
+  wardrobeMenuOpen = true;
+  wardrobeMenu.hidden = false;
+  keys.clear();
+  if (document.pointerLockElement) document.exitPointerLock();
+}
+function toggleWardrobeMenu() {
+  if (wardrobeMenuOpen) closeWardrobeMenu();
+  else openWardrobeMenu();
+}
+function playOnFootEmote(index) {
+  const name = onFootEmoteAt(index);
+  if (!name || !avatarLoaded || paused || !onFoot) return;
+  closeEmoteMenu();
+  playAvatarAction(name, true);
+}
+emoteList.addEventListener('click', event => {
+  const button = event.target.closest('button[data-emote-index]');
+  if (button) playOnFootEmote(Number(button.dataset.emoteIndex));
+});
+suitList.addEventListener('click', event => {
+  const button = event.target.closest('button[data-suit-index]');
+  if (button) selectDriverSuit(Number(button.dataset.suitIndex));
+});
 const halfStraight = 220, radius = 90, roadWidth = 15;
 // ?track=<key> (circuits.mjs) drives a real circuit, as a solo time trial
 // unless ?race (or O) brings in the AI field (pit lane beside the main straight);
 // without it, the stadium test track hosts the race against the AI field.
 const circuitKey = Object.hasOwn(CIRCUITS, new URLSearchParams(location.search).get('track')) ? new URLSearchParams(location.search).get('track') : null;
-const track = circuitKey ? createCircuitTrack(CIRCUITS[circuitKey]) : createStadiumTrack({ halfStraight, radius, roadWidth });
+const nightTrack = NIGHT_CIRCUITS.has(circuitKey);
+const weatherForTrack = () => createWeather({ options: weatherOptionsForTrack(circuitKey) });
+const track = circuitKey ? createCircuitTrack({ ...CIRCUITS[circuitKey], elevationProfile: CIRCUIT_ELEVATION_PROFILES[circuitKey] }) : createStadiumTrack({ halfStraight, radius, roadWidth });
 const { surfaceAt, barrierAt } = track;
-const timer = createLapTimer(track, circuitKey ? { lineProgress: 0 } : undefined);
+let timer = createLapTimer(track, circuitKey ? { lineProgress: 0 } : undefined);
 const handlingModes = Object.freeze(['sim', 'arcade']);
 const requestedHandling = new URLSearchParams(location.search).get('handling');
 let autopilot = false, handlingMode = handlingModes.includes(requestedHandling) ? requestedHandling : 'sim';
 let handlingBaseline = null, command = { throttle: 0, brake: 0, steer: 0 }, opponents = !circuitKey || new URLSearchParams(location.search).has('race');
+let qualifying = null, qualifyingBreakTimer = null;
 const driver = createDriverInput();
 function updateHandlingButton() {
   handlingButton.textContent = `Handling: ${handlingMode}`;
@@ -140,48 +262,236 @@ function gamepadPressed(i) {
   return down && !was;
 }
 function toggleAutopilot() {
+  if (onFoot) return;
   autopilot = !autopilot; keys.clear(); driver.reset();
   if (autopilot) sim.car.config.autoShift = true;
   $('autopilot').textContent = `Autopilot: ${autopilot ? 'on' : 'off'}`;
   $('autopilot').setAttribute('aria-pressed', String(autopilot));
 }
-// The first standard gamepad to appear hands control to the player (once; P / the
+// The first standard gamepad to appear hands control to the player (once; I / the
 // button still work afterwards). Browsers only expose a pad after it is touched.
 let padSeen = false;
 function gamepadTakeover() {
+  if (onFoot) return;
   if (padSeen || !gamepad()) return;
   padSeen = true;
   if (autopilot) toggleAutopilot();
 }
 window.addEventListener('gamepadconnected', gamepadTakeover);
-// The race: the player's car (sim.car) on pole plus the AI field behind it.
+function createQualifyingState(query) {
+  const base = track.length / (circuitKey ? 43 : 40);
+  const aiTimes = Object.fromEntries(['Q1', 'Q2', 'Q3'].map((stage, round) => [stage,
+    DEFAULT_GRID.map((spec, i) => {
+      const pace = (spec.cornerSpeed - 43) * (circuitKey ? 1.15 : 0.7) + (spec.brakeDecel - 26) * 0.25;
+      const variation = (((i * 37 + round * 19) % 13) - 6) * 0.13;
+      return base - pace + variation;
+    }),
+  ]));
+  return {
+    stage: 'Q1', tyre: 'soft', start: !query.has('nostart'),
+    laps: Math.max(1, Math.round(Number(query.get('laps')) || (circuitKey ? 3 : 10))),
+    aiTimes, playerTimes: {}, active: { Q1: [-1, ...DEFAULT_GRID.map((_, i) => i)], Q2: [], Q3: [] },
+    results: {}, recordedLaps: 0,
+  };
+}
+function qualifyingRows(stage) {
+  const active = qualifying?.active[stage] ?? [];
+  return active.map(id => ({
+    id, name: id < 0 ? 'You' : DEFAULT_GRID[id].name,
+    time: id < 0 ? qualifying.playerTimes[stage] ?? Infinity : qualifying.aiTimes[stage][id],
+  })).sort((a, b) => Number.isFinite(a.time)
+    ? Number.isFinite(b.time) ? a.time - b.time : -1
+    : Number.isFinite(b.time) ? 1 : 0).map((row, i) => ({ ...row, position: i + 1 }));
+}
+function prepareFreshSoftTyres(race, { lockGrip = false } = {}) {
+  for (const { car } of race.entries) {
+    car.compound = 'soft';
+    car.tireWear.fill(0);
+    for (const tyre of car.tireTemp) tyre.surface = tyre.carcass = car.config.tireOptimalTemp;
+    if (lockGrip) {
+      car.config.tireWearGripLoss = 0;
+      car.config.tireCliffGripLoss = 0;
+      car.config.tireTempGripLoss = 0;
+    }
+  }
+}
+function startQualifyingStage(stage) {
+  qualifying.stage = stage;
+  qualifying.recordedLaps = 0;
+  sim = createRace(track, { grid: [], start: false, laps: 0, fuel: false, tireWear: false, player: { tyres: ['soft', 'soft'] } });
+  prepareFreshSoftTyres(sim, { lockGrip: true });
+  handlingBaseline = captureHandlingBaseline(sim.entries);
+  applyHandlingMode();
+  timer = createLapTimer(track, circuitKey ? { lineProgress: 0 } : undefined);
+  driver.reset(); command = { throttle: 0, brake: 0, steer: 0 };
+  previousTime = null; snapCamera = true;
+}
+function finishQualifying() {
+  const q1 = qualifying.results.Q1 ?? [], q2 = qualifying.results.Q2 ?? [], q3 = qualifying.results.Q3 ?? [];
+  const q2Ids = new Set(qualifying.active.Q2), q3Ids = new Set(qualifying.active.Q3);
+  const finalIds = [
+    ...q3.map(row => row.id),
+    ...q2.filter(row => !q3Ids.has(row.id)).map(row => row.id),
+    ...q1.filter(row => !q2Ids.has(row.id)).map(row => row.id),
+  ];
+  const playerGridSlot = Math.max(0, finalIds.indexOf(-1));
+  const aiOrder = finalIds.filter(id => id >= 0);
+  sim = createRace(track, {
+    grid: aiOrder.map(id => ({ ...DEFAULT_GRID[id], tyres: ['soft', 'soft'] })), playerGridSlot, start: qualifying.start,
+    laps: qualifying.laps, compoundRule: false, tireWear: true,
+    player: { tyres: ['soft', 'soft'] },
+  });
+  prepareFreshSoftTyres(sim);
+  timer = createLapTimer(track, circuitKey ? { lineProgress: 0 } : undefined);
+  wearSkins([0, ...aiOrder.map(id => id + 1)]);
+  cars.forEach((car, i) => { car.model.group.visible = !i || opponents; });
+  handlingBaseline = captureHandlingBaseline(sim.entries);
+  applyHandlingMode();
+  qualifying.stage = 'race';
+  command = { throttle: 0, brake: 0, steer: 0 };
+  driver.reset(); previousTime = null; snapCamera = true;
+}
+function completeQualifyingStage(stage) {
+  const rows = qualifyingRows(stage);
+  qualifying.results[stage] = rows;
+  const next = stage === 'Q1' ? 'Q2' : stage === 'Q2' ? 'Q3' : null;
+  const cut = stage === 'Q1' ? 16 : stage === 'Q2' ? 10 : rows.length;
+  if (!next) { qualifyingBreak('Q3 complete · fresh Soft tires for the race', finishQualifying); return; }
+  qualifying.active[next] = rows.slice(0, cut).map(row => row.id);
+  if (!qualifying.active[next].includes(-1)) {
+    // The player is classified in the elimination group; run the remaining
+    // AI sessions and use their results to complete the full race grid.
+    qualifyingBreak(`${stage} complete · driver break · fresh Soft tires`, () => {
+      let current = next;
+      while (current) {
+        const sessionRows = qualifyingRows(current);
+        qualifying.results[current] = sessionRows;
+        const following = current === 'Q2' ? 'Q3' : null;
+        if (following) qualifying.active[following] = sessionRows.slice(0, 10).map(row => row.id);
+        current = following;
+      }
+      finishQualifying();
+    });
+  } else qualifyingBreak(`${stage} complete · driver break · fresh Soft tires for ${next}`, () => startQualifyingStage(next));
+}
+function qualifyingBreak(message, resume) {
+  clearTimeout(qualifyingBreakTimer);
+  pause(true);
+  $('pause-state').textContent = `${message} · 5 seconds`;
+  qualifyingBreakTimer = setTimeout(() => {
+    qualifyingBreakTimer = null;
+    if (!qualifying) return;
+    pause(false);
+    resume();
+  }, 5000);
+}
+function recordQualifyingLap() {
+  if (!qualifying || qualifying.stage === 'race' || onFoot || !timer.state.laps.length) return;
+  if (timer.state.laps.length <= qualifying.recordedLaps) return;
+  qualifying.recordedLaps = timer.state.laps.length;
+  const lap = timer.state.laps.at(-1);
+  if (!lap.valid) return;
+  qualifying.playerTimes[qualifying.stage] = Math.min(qualifying.playerTimes[qualifying.stage] ?? Infinity, lap.time);
+  completeQualifyingStage(qualifying.stage);
+}
+// The player runs timed Q1/Q2/Q3 laps; AI pace is simulated for each session,
+// then the full classified order is used to place all cars on the race grid.
 function reset() {
   // A race with opponents begins with the standing-start lights (?nostart skips them).
   // Race distance: ?laps=N (default 10, or 3 on a real circuit); the chequered flag ends the race.
-  // Tyres: start compound ?tyre=soft|medium|hard (default medium); with opponents
-  // the two-compound rule applies (races of 2+ laps).
-  const query = new URLSearchParams(location.search), tyre = TIRE_COMPOUNDS[query.get('tyre')] ? query.get('tyre') : 'medium';
-  weather = createWeather();
-  sim = circuitKey && !opponents ? createTimeTrial(track, { tyre }) : createRace(track, { grid: opponents ? DEFAULT_GRID : [], start: opponents && !query.has('nostart'), laps: opponents ? Math.max(1, Math.round(Number(query.get('laps')) || (circuitKey ? 3 : 10))) : 0,
-    compoundRule: opponents, player: { tyres: [tyre, tyre === 'hard' ? 'medium' : 'hard'] } }); timer.restart();
+  // Qualifying sessions and the main race start on fresh Soft tires; wear and temperature can reduce grip during each session.
+  // Solo time trials honor ?tyre=soft|medium|hard.
+  clearTimeout(qualifyingBreakTimer); qualifyingBreakTimer = null;
+  if (paused) pause(false);
+  onFoot = true; onFootCameraMode = 'thirdPerson'; canEnterCar = false; runningOnFoot = false; closeEmoteMenu(); $('exit-hint').hidden = true;
+  if (document.pointerLockElement) document.exitPointerLock();
+  updateCameraButtons();
+  const query = new URLSearchParams(location.search), requestedTyre = TIRE_COMPOUNDS[query.get('tyre')] ? query.get('tyre') : 'medium';
+  const tyre = opponents ? 'soft' : requestedTyre;
+  weather = weatherForTrack();
+  if (opponents) {
+    qualifying = createQualifyingState(query);
+    sim = createRace(track, { grid: [], start: false, laps: 0, fuel: false, tireWear: false, player: { tyres: ['soft', 'soft'] } });
+    prepareFreshSoftTyres(sim, { lockGrip: true });
+    timer = createLapTimer(track, circuitKey ? { lineProgress: 0 } : undefined);
+  } else {
+    qualifying = null;
+    sim = circuitKey ? createTimeTrial(track, { tyre }) : createRace(track, { grid: [], start: false, laps: 0,
+      player: { tyres: [tyre, tyre === 'hard' ? 'medium' : 'hard'] } });
+    timer = createLapTimer(track, circuitKey ? { lineProgress: 0 } : undefined);
+  }
+  const spawn = onFootSpawn();
+  onFootPosition = spawn.player;
+  onFootYaw = spawn.heading;
+  lookYaw = onFootYaw; lookPitch = -0.12;
   handlingBaseline = captureHandlingBaseline(sim.entries);
   applyHandlingMode();
   wearSkins(cars.map((_, i) => i));
-  cars.forEach((r, i) => { r.model.group.visible = !i || opponents; r.wheelAngle.fill(0); });
+  cars.forEach((r, i) => { r.model.group.visible = !i || (opponents && qualifying?.stage === 'race'); r.wheelAngle.fill(0); });
+  playerAvatar.visible = avatarLoaded;
+  setPlayerDriverVisible(false);
+  avatarEmote = null; avatarAction = null; avatarActionName = null;
+  if (avatarLoaded) playAvatarAction('Idle');
+  $('on-foot-overlay').hidden = false;
+  $('exit-hint').hidden = true;
   broadcastTarget = null; broadcastOrder = new Map(); broadcastOvertake = null; broadcastOvertakeUntil = 0;
-  broadcastShotTime = 0; broadcastShotIndex = 0;
+  broadcastShotTime = 0; broadcastShotIndex = 0; broadcastStation = null;
   keys.clear(); driver.reset(); soundModel.reset(); previousTime = null; snapCamera = true;
+}
+function playerCanExit() {
+  return canExitVehicle({
+    race: opponents,
+    playerFinished: !!sim.entries[0].finish,
+    completedLaps: timer.state.laps.length,
+  });
+}
+function setPlayerDriverVisible(visible) {
+  if (model.setDriverVisible) model.setDriverVisible(visible);
+  else model.driver.forEach(part => { part.visible = visible; });
+}
+function toggleEmoteMenu() {
+  if (emoteMenuOpen) closeEmoteMenu();
+  else openEmoteMenu();
+}
+function enterVehicle(force = false) {
+  if (!onFoot || (!canEnterCar && !force)) return;
+  closeEmoteMenu();
+  runningOnFoot = false;
+  onFoot = false; canEnterCar = false; playerAvatar.visible = false;
+  setPlayerDriverVisible(true);
+  if (autopilot) toggleAutopilot();
+  if (document.pointerLockElement) document.exitPointerLock();
+  overview = cockpit = tcam = look360 = false;
+  previousTime = null; snapCamera = true; keys.clear(); command = { throttle: 0, brake: 0, steer: 0 };
+  updateCameraButtons();
+}
+function exitVehicle() {
+  if (onFoot || !playerCanExit()) return;
+  const finishedRace = opponents && !!sim.entries[0].finish;
+  closeEmoteMenu();
+  const c = sim.car, behind = 4;
+  onFootPosition = { x: c.x - Math.cos(c.heading) * behind, y: c.y - Math.sin(c.heading) * behind };
+  onFootYaw = c.heading; lookYaw = onFootYaw; lookPitch = -0.12;
+  onFoot = true; canEnterCar = false; runningOnFoot = false; playerAvatar.visible = avatarLoaded;
+  setPlayerDriverVisible(false);
+  avatarEmote = null; avatarAction = null; avatarActionName = null;
+  if (avatarLoaded) playAvatarAction('Idle');
+  previousTime = null; snapCamera = true; keys.clear(); command = { throttle: 0, brake: 0, steer: 0 };
+  if (finishedRace) pause(false);
+  updateCameraButtons();
 }
 // Paddle shift: switches your car (only) to the manual gearbox and takes you off
 // the autopilot; a refused shift (over-rev, mid-shift, gear 1/8, reverse) flashes the gear.
 function manualShift(direction) {
+  if (onFoot) return;
   if (autopilot) toggleAutopilot();
   sim.car.config.autoShift = false;
   if (!shift(sim.car, direction)) $('gear').animate([{ color: '#ff5050' }, {}], 300);
 }
-function autoGearbox() { sim.car.config.autoShift = true; }
+function autoGearbox() { if (!onFoot) sim.car.config.autoShift = true; }
 // On the start lights: drive the car on grid position n (1 = pole), in its colours; it swaps places with yours.
 function takeGridSlot(n) {
+  if (onFoot) return;
   const count = sim.entries.length, taken = sim.takeGridSlot?.(((n - 1) % count + count) % count + 1);
   if (taken === false || taken === undefined) return;
   if (taken) wearSkins(skins.map((s, i) => i === 0 ? skins[taken] : i === taken ? skins[0] : s));
@@ -189,7 +499,7 @@ function takeGridSlot(n) {
   timer.restart(); snapCamera = true;
 }
 function pause(value) {
-  paused = value; keys.clear(); previousTime = null;
+  paused = value; keys.clear(); runningOnFoot = false; previousTime = null;
   $('pause').textContent = paused ? 'Resume' : 'Pause';
   $('pause').setAttribute('aria-pressed', String(paused));
   $('pause-state').textContent = paused ? 'SIMULATION PAUSED' : '';
@@ -197,17 +507,26 @@ function pause(value) {
 function updateCameraButtons() {
   $('view').textContent = overview ? 'Chase view' : 'Overview';
   $('view').setAttribute('aria-pressed', String(overview));
-  const mode = overview ? 'Overview' : look360 ? '360 Look' : cockpit ? 'Cockpit' : tcam ? 'T-Cam' : 'Chase Cam';
+  const mode = onFoot ? ({ firstPerson: 'First Person', secondPerson: 'Second Person', thirdPerson: 'Third Person' })[onFootCameraMode]
+    : overview ? 'Overview' : look360 ? '360 Look' : cockpit ? 'Cockpit' : tcam ? 'T-Cam' : 'Chase Cam';
   $('camera-mode').textContent = `Camera: ${mode}`;
-  $('camera-mode').setAttribute('aria-label', `Camera mode: ${mode}. Click to cycle Cockpit, Chase Cam, and T-Cam; press U for 360 Look.`);
+  $('camera-mode').setAttribute('aria-label', `Camera mode: ${mode}. ${onFoot ? 'Click or press C to cycle first, second, and third person.' : 'Click to cycle Cockpit, Chase Cam, and T-Cam; press U for 360 Look.'}`);
   $('camera-mode').title = `Camera: ${mode} · click to cycle`;
 }
 function changeView() {
+  if (onFoot) return;
   overview = !overview;
   if (overview) cockpit = tcam = look360 = false;
   updateCameraButtons();
 }
 function changeCamera() {
+  if (onFoot) {
+    onFootCameraMode = onFootCameraMode === 'thirdPerson' ? 'firstPerson'
+      : onFootCameraMode === 'firstPerson' ? 'secondPerson' : 'thirdPerson';
+    snapCamera = true;
+    updateCameraButtons();
+    return;
+  }
   const mode = overview ? 'overview' : look360 ? 'look360' : cockpit ? 'cockpit' : tcam ? 'tcam' : 'chase';
   const nextMode = mode === 'overview' || mode === 'look360' ? 'cockpit' : mode === 'cockpit' ? 'chase' : mode === 'chase' ? 'tcam' : 'cockpit';
   cockpit = nextMode === 'cockpit';
@@ -217,6 +536,7 @@ function changeCamera() {
   updateCameraButtons();
 }
 function changeLook360() {
+  if (onFoot) return;
   look360 = !look360;
   lookPointer = null;
   canvas.style.touchAction = look360 ? 'none' : '';
@@ -250,6 +570,14 @@ canvas.addEventListener('wheel', event => {
   event.preventDefault();
   lookDistance = THREE.MathUtils.clamp(lookDistance + Math.sign(event.deltaY) * 0.8, 3, 14);
 }, { passive: false });
+canvas.addEventListener('pointerdown', () => {
+  if (onFoot && !document.pointerLockElement) canvas.requestPointerLock?.();
+});
+document.addEventListener('mousemove', event => {
+  if (!onFoot || document.pointerLockElement !== canvas) return;
+  lookYaw -= event.movementX * 0.0025;
+  lookPitch = THREE.MathUtils.clamp(lookPitch - event.movementY * 0.002, -0.5, 0.65);
+});
 $('pause').onclick = () => pause(!paused);
 $('reset').onclick = reset;
 $('view').onclick = changeView;
@@ -268,7 +596,7 @@ const recordingMimeType = window.MediaRecorder && ['video/webm;codecs=vp9', 'vid
 let mediaRecorder = null, recordingChunks = [];
 const recordingUrls = new Set();
 window.addEventListener('pagehide', () => recordingUrls.forEach(url => URL.revokeObjectURL(url)));
-let broadcastCanvas = null, broadcastRenderer = null, broadcastCamera = null;
+let broadcastCanvas = null, broadcastRenderer = null, broadcastCamera = null, broadcastStation = null;
 let broadcastFrameTime = 0, broadcastShotTime = 0, broadcastShotIndex = 0;
 let broadcastTarget = null, broadcastOvertake = null, broadcastOvertakeUntil = 0;
 let broadcastOrder = new Map();
@@ -384,18 +712,50 @@ function cyclePitRequest() { sim.requestPit(PIT_CYCLE[(PIT_CYCLE.indexOf(sim.ent
 const TYRE_COLOR = { soft: '#ff3b30', medium: '#ffd60a', hard: '#f2f2f2' };
 const tyreBadge = c => `<span class="tyre" style="border-color:${TYRE_COLOR[c]};color:${TYRE_COLOR[c]}" title="${c}">${c[0].toUpperCase()}</span>`;
 const title = c => c[0].toUpperCase() + c.slice(1);
-const drivingKeys = ['KeyW','KeyS','KeyA','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','KeyQ','KeyE','KeyF'];
+const drivingKeys = ['KeyW','KeyS','KeyA','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','KeyQ','KeyE','KeyF','KeyL','KeyC','KeyN','KeyI'];
 window.addEventListener('keydown', e => {
   if (e.target.closest('input,select,textarea,[contenteditable="true"]')) return;
-  if (e.target.closest('button') && !drivingKeys.includes(e.code) && !['KeyT','KeyU'].includes(e.code)) return;
-  if ([...drivingKeys,'Space','KeyR','KeyV','KeyP','KeyC','KeyN','KeyM','KeyO','KeyB','KeyH','KeyZ','KeyX','KeyG','KeyT','KeyU'].includes(e.code)) e.preventDefault();
+  const emoteNumberKey = /^(Digit|Numpad)[1-9]$/.test(e.code);
+  if (e.target.closest('button') && !drivingKeys.includes(e.code) && !['KeyT','KeyU'].includes(e.code)
+    && !(onFoot && (emoteMenuOpen || wardrobeMenuOpen) && (emoteNumberKey || e.code === 'Escape' || e.code === 'KeyM'))) return;
+  if ([...drivingKeys,'Space','KeyR','KeyV','KeyP','KeyC','KeyN','KeyM','KeyO','KeyB','KeyH','KeyZ','KeyX','KeyG','KeyT','KeyU','KeyL'].includes(e.code)
+    || (onFoot && ((emoteMenuOpen || wardrobeMenuOpen) && emoteNumberKey || e.code === 'Escape'))) e.preventDefault();
   if (e.repeat) return;
   if (e.code !== 'KeyM') startAudio();
-  if (e.code === 'Space') pause(!paused);
-  else if (e.code === 'KeyR') reset();
+  if (e.code === 'KeyL') {
+    if (onFoot) { if (canEnterCar) enterVehicle(); }
+    else if (playerCanExit()) exitVehicle();
+    return;
+  }
+  if (e.code === 'KeyP') { pause(!paused); return; }
+  if (onFoot) {
+    if (e.code === 'KeyM') toggleWardrobeMenu();
+    else if (e.code === 'KeyE') toggleEmoteMenu();
+    else if (e.code === 'Escape' && (emoteMenuOpen || wardrobeMenuOpen)) closeEmoteMenu();
+    else if (wardrobeMenuOpen && emoteNumberKey) selectDriverSuit(Number(e.code.at(-1)) - 1);
+    else if (emoteMenuOpen && emoteNumberKey) playOnFootEmote(Number(e.code.at(-1)) - 1);
+    else if (e.code === 'KeyC' || e.code === 'KeyN') changeCamera();
+    else if (e.code === 'KeyR') {
+      const distance = Math.hypot(sim.car.x - onFootPosition.x, sim.car.y - onFootPosition.y);
+      if (avatarLoaded && distance < 8 && model.group.visible) enterVehicle(true);
+      else reset();
+    }
+    else if (e.code === 'Space') { if (!paused) playAvatarAction('Jump', true); }
+    else if (e.code === 'KeyH') toggleHud();
+    else if (!paused && !emoteMenuOpen && !wardrobeMenuOpen && ['KeyW','KeyA','KeyS','KeyD'].includes(e.code)) {
+      if (e.code === 'KeyW') {
+        const now = performance.now();
+        if (now - lastWPressAt <= 350) runningOnFoot = true;
+        lastWPressAt = now;
+      }
+      keys.add(e.code);
+    }
+    return;
+  }
+  if (e.code === 'KeyR') reset();
   else if (e.code === 'KeyV') changeView();
   else if (e.code === 'KeyU') changeLook360();
-  else if (e.code === 'KeyP') toggleAutopilot();
+  else if (e.code === 'KeyI') toggleAutopilot();
   else if (e.code === 'KeyC' || e.code === 'KeyN') changeCamera();
   else if (e.code === 'KeyT') toggleRecording();
   else if (e.code === 'KeyM') toggleSound();
@@ -407,9 +767,17 @@ window.addEventListener('keydown', e => {
   else if (e.code === 'KeyG') autoGearbox();
   else if (!paused) keys.add(e.code);
 });
-window.addEventListener('keyup', e => keys.delete(e.code));
-window.addEventListener('blur', () => pause(true));
-document.addEventListener('visibilitychange', () => { if (document.hidden) pause(true); });
+window.addEventListener('keyup', e => {
+  keys.delete(e.code);
+  if (e.code === 'KeyW') runningOnFoot = false;
+});
+function pauseForBlur() {
+  // Exiting the car releases pointer lock and can blur the window. Keep the
+  // race running while the player is on foot; only pause when driving.
+  if (!onFoot && shouldAutoPauseOnBlur({ onFoot, raceFinished: opponents && !!sim.entries[0].finish })) pause(true);
+}
+window.addEventListener('blur', pauseForBlur);
+document.addEventListener('visibilitychange', () => { if (document.hidden) pauseForBlur(); });
 for (let k = 1; k <= 3; k++) {
   const box = document.createElement('div'); box.className = 'sector'; box.id = `sector-${k}`;
   box.innerHTML = `<div class="label">S${k}</div><span>–</span>`; $('sectors').append(box);
@@ -419,16 +787,75 @@ for (const name of ['FL', 'FR', 'RL', 'RR']) {
   box.innerHTML = `${name}<span id="load-${name}">0.0</span><meter id="grip-${name}" min="0" max="1" value="0" aria-label="${name} tire utilization"></meter><div id="slip-${name}" aria-label="${name} longitudinal slip">Slip 0%</div><div id="rpm-${name}" aria-label="${name} wheel rpm">0 rpm</div><div id="state-${name}" aria-label="${name} tire force regime">—</div><div id="alpha-${name}" aria-label="${name} relaxed and kinematic slip angle">α 0.0° / 0.0°</div><div id="temp-${name}" aria-label="${name} tread and carcass temperature, thermal grip">70° / 70° · 91%</div><div id="wear-${name}" aria-label="${name} tread wear and wear grip">Wear 0.0% · 100%</div>`;
   $('wheels').append(box);
 }
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.9;
 renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 const scene = new THREE.Scene();
-scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
-scene.environmentIntensity = 0.4;
-scene.fog = new THREE.Fog(0xc8d8e4, 220, 1700);
-const dryFog = new THREE.Color(0xc8d8e4), rainFog = new THREE.Color(0x72808b);
-let weather = createWeather();
+const environmentGenerator = new THREE.PMREMGenerator(renderer);
+scene.environment = environmentGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
+environmentGenerator.dispose();
+scene.environmentIntensity = nightTrack ? 0.24 : 0.4;
+scene.fog = new THREE.Fog(nightTrack ? 0x10182b : 0xc8d8e4, 220, 1700);
+const playerAvatar = new THREE.Group();
+playerAvatar.name = 'on-foot-player';
+playerAvatar.visible = false;
+scene.add(playerAvatar);
+let avatarActions = new Map(), avatarActionName = null;
+function playAvatarAction(name, emote = false) {
+  const action = avatarActions.get(name);
+  if (!action) return;
+  if (!emote && avatarActionName === name) return;
+  if (avatarAction && avatarAction !== action) avatarAction.fadeOut(0.12);
+  action.reset();
+  action.setLoop(emote ? THREE.LoopOnce : THREE.LoopRepeat, emote ? 1 : Infinity);
+  action.clampWhenFinished = emote;
+  action.fadeIn(0.12).play();
+  avatarAction = action;
+  avatarActionName = name;
+  if (emote) avatarEmote = action;
+}
+async function loadPlayerAvatar() {
+  try {
+    const gltf = await new GLTFLoader().loadAsync('./models/Realistic_Male_F1_Racer_Rigged_Animated.gltf');
+    const character = gltf.scene;
+    avatarCharacter = character;
+    character.updateMatrixWorld(true);
+    const initialBounds = new THREE.Box3().setFromObject(character);
+    const height = initialBounds.getSize(new THREE.Vector3()).y;
+    if (!Number.isFinite(height) || height <= 0) throw new Error('The character model has no measurable height');
+    character.scale.multiplyScalar(1.5 / height);
+    character.updateMatrixWorld(true);
+    const bounds = new THREE.Box3().setFromObject(character);
+    character.position.x -= (bounds.min.x + bounds.max.x) / 2;
+    character.position.y -= bounds.min.y;
+    character.position.z -= (bounds.min.z + bounds.max.z) / 2;
+    applySuitToAvatar(playerSuitIndex);
+    character.traverse(object => {
+      if (!object.isMesh) return;
+      object.castShadow = false;
+      object.receiveShadow = false;
+    });
+    playerAvatar.add(character);
+    avatarMixer = new THREE.AnimationMixer(character);
+    avatarActions = new Map(gltf.animations.map(clip => [clip.name, avatarMixer.clipAction(clip)]));
+    avatarMixer.addEventListener('finished', event => {
+      if (event.action !== avatarEmote) return;
+      avatarEmote = null;
+      const moving = ['KeyW','KeyA','KeyS','KeyD'].some(code => keys.has(code));
+      playAvatarAction(moving ? (runningOnFoot ? 'Standard_Run' : 'Walking') : 'Idle');
+    });
+    avatarLoaded = true;
+    playerAvatar.visible = onFoot;
+    playAvatarAction('Idle');
+  } catch (error) {
+    avatarLoadError = error;
+    console.error('On-foot driver model failed to load', error);
+  }
+}
+void loadPlayerAvatar();
+const dryFog = new THREE.Color(nightTrack ? 0x10182b : 0xc8d8e4), rainFog = new THREE.Color(nightTrack ? 0x20283a : 0x72808b);
+let weather = weatherForTrack();
 const weatherBadge = document.createElement('div');
 weatherBadge.id = 'weather-indicator';
 weatherBadge.setAttribute('role', 'status');
@@ -436,14 +863,14 @@ weatherBadge.setAttribute('aria-live', 'polite');
 weatherBadge.style.cssText = 'position:absolute;top:151px;left:8px;padding:8px 12px;border:1px solid #ffffff2e;border-radius:6px;background:#0b121a9c;color:#e9f0f6;font-size:11px;font-weight:700;letter-spacing:.1em;text-shadow:0 1px 2px #000a;pointer-events:none';
 document.querySelector('.scene').append(weatherBadge);
 const camera = new THREE.PerspectiveCamera(58, 1, 0.1, 4000);
-scene.add(new THREE.HemisphereLight(0xd6e8ff, 0x4a5a32, 0.55));
-const sun = new THREE.DirectionalLight(0xfff0d8, 2.2);
+scene.add(new THREE.HemisphereLight(nightTrack ? 0x7183b1 : 0xd6e8ff, nightTrack ? 0x25283a : 0x4a5a32, nightTrack ? 0.42 : 0.55));
+const sun = new THREE.DirectionalLight(nightTrack ? 0xaabfff : 0xfff0d8, nightTrack ? 0.28 : 2.2);
 sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
 Object.assign(sun.shadow.camera, { left: -14, right: 14, top: 14, bottom: -14, near: 1, far: 140 });
 sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.02;
 scene.add(sun, sun.target);
 const boxColors = [0x39e0ae, ...DEFAULT_GRID.map(g => g.color)];
-const world = circuitKey ? buildCircuitWorld(track, { boxColors }) : buildWorld({ halfStraight, radius, roadWidth, boxColors });
+const world = circuitKey ? buildCircuitWorld(track, { boxColors, night: nightTrack }) : buildWorld({ halfStraight, radius, roadWidth, boxColors });
 scene.add(world);
 const rainCount = 180, rainDrops = Array.from({ length: rainCount }, () => ({
   x: (Math.random() - 0.5) * 44, y: 1 + Math.random() * 28, z: (Math.random() - 0.5) * 44,
@@ -478,14 +905,19 @@ if (new URLSearchParams(location.search).get('car') !== 'procedural') {
   try { carTemplate = await loadRB22Template(); }
   catch (err) { console.warn('rb22 car model failed to load', err); }
 }
-const buildCar = livery => carTemplate ? buildRB22Car(carTemplate, DEFAULT_CAR, livery) : buildF1Car(DEFAULT_CAR, livery);
+const buildCar = (livery = {}, suitIndex = 0) => carTemplate ? buildRB22Car(carTemplate, DEFAULT_CAR, { ...livery, suitIndex }) : buildF1Car(DEFAULT_CAR, livery);
 // One model per livery: the navy car, then each AI opponent's (helmets match the accent;
 // index: its place in the sponsor rotation and race number).
-const cars = [buildCar(), ...DEFAULT_GRID.map((spec, i) => buildCar({ paint: spec.color, accent: spec.accent, helmet: spec.accent, index: i + 1 }))]
+const cars = [buildCar({}, 0), ...DEFAULT_GRID.map((spec, i) => buildCar({ paint: spec.color, accent: spec.accent, helmet: spec.accent, index: i + 1 }, (i + 1) % DRIVER_SUIT_STYLES.length))]
   .map(m => { scene.add(m.group); return { model: m, wheelAngle: [0, 0, 0, 0] }; });
-const safetyCarModel = buildF1Car(DEFAULT_CAR, { paint: 0xf2c230, accent: 0x15191e, helmet: 0x15191e });
+const safetyCarModel = buildCar({ paint: 0xf2c230, accent: 0x15191e, helmet: 0x15191e });
 safetyCarModel.group.name = 'safety-car';
 safetyCarModel.group.visible = false;
+safetyCarModel.group.traverse(object => {
+  if (!object.isMesh) return;
+  object.castShadow = false;
+  object.receiveShadow = false;
+});
 const safetyBeacon = new THREE.Group();
 safetyBeacon.position.set(0, 1.02, 0);
 const beaconBase = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.08, 0.18), new THREE.MeshStandardMaterial({ color: 0x15191e, roughness: 0.5 }));
@@ -504,20 +936,46 @@ scene.add(safetyCarModel.group);
 const skins = cars.map((_, i) => i);
 let model;
 let originalCar = false;
+function applyOptimizationMode(mode, persist = true) {
+  if (!optimizationProfiles[mode]) mode = 'default';
+  optimizationMode = mode;
+  adaptiveResolution = 1;
+  const profile = optimizationProfiles[mode];
+  renderer.shadowMap.enabled = profile.shadows;
+  sun.castShadow = profile.shadows;
+  sun.shadow.map?.dispose(); sun.shadow.map = null;
+  sun.shadow.mapSize.set(profile.shadowSize, profile.shadowSize);
+  model?.mirrors?.forEach(m => m?.userData.mirror?.(profile.mirrors));
+  optimizationButton.textContent = `Optimization: ${profile.label}`;
+  optimizationButton.setAttribute('aria-label', `Optimization mode: ${profile.label}. Click to change.`);
+  if (persist) {
+    try { localStorage.setItem('f1-optimization-mode', mode); } catch {}
+  }
+  resize();
+}
+optimizationButton.onclick = () => {
+  const modes = ['default', 'mid', 'max'];
+  applyOptimizationMode(modes[(modes.indexOf(optimizationMode) + 1) % modes.length]);
+};
 // The player's mirrors reflect the rear view (the rivals keep the environment reflection).
 function wearSkins(list) {
   model?.setOriginalLivery?.(false);
   model?.mirrors?.forEach(m => m?.userData.mirror?.(false));
   model?.driver.forEach(m => { m.visible = true; }); // the cockpit view hides your own driver
   skins.splice(0, skins.length, ...list);
+  list.forEach((skin, entryIndex) => cars[skin].model.setDriverSuit?.(entryIndex === 0 ? playerSuitIndex : entryIndex % DRIVER_SUIT_STYLES.length));
   model = cars[skins[0]].model;
   model.setOriginalLivery?.(originalCar);
+  setPlayerDriverVisible(!onFoot);
   // Hide the player's car from its own mirrors so the rear view is not blocked by bodywork.
   model.mirrors?.forEach(m => m.userData.mirror ? m.userData.mirror(true) : makeMirror(m, {
     hide: [model.group],
   }));
+  model.mirrors?.forEach(m => m.userData.mirror?.(optimizationProfiles[optimizationMode].mirrors));
 }
 wearSkins(skins);
+try { applyOptimizationMode(localStorage.getItem('f1-optimization-mode') ?? 'default', false); }
+catch { applyOptimizationMode('default', false); }
 function updateOriginalCarButton() {
   originalCarButton.hidden = typeof model.setOriginalLivery !== 'function';
   originalCarButton.textContent = `Original car: ${originalCar ? 'on' : 'off'}`;
@@ -542,7 +1000,10 @@ const drsNote = e => !sim.drsZones?.length || sim.finish.flag ? '' : e.car.drs >
 // Pose a car model from its physics state: ground-plane position and heading,
 // sprung-body roll/pitch/heave, wheel spin and front-wheel steer.
 function poseCar(m, c, angles, dt, yellowFlagActive = false) {
-  m.group.position.set(c.x, 0, -c.y); m.group.rotation.y = c.heading;
+  const progress = track.progress(c.x, c.y), height = track.heightAt ? track.heightAt(progress) : 0;
+  const grade = track.heightAt ? Math.atan((track.heightAt(progress + 2) - track.heightAt(progress - 2)) / 4) : 0;
+  m.group.position.set(c.x, height, -c.y);
+  m.group.rotation.order = 'YXZ'; m.group.rotation.set(0, c.heading, grade);
   // Physics roll is left side up (left = -z), pitch is nose down, heave is downward.
   m.body.rotation.set(c.body.roll, 0, -c.body.pitch); m.body.position.y = -c.body.heave;
   m.wheels.forEach((w, i) => {
@@ -576,8 +1037,10 @@ function poseCar(m, c, angles, dt, yellowFlagActive = false) {
 function resize() {
   const bounds = canvas.getBoundingClientRect();
   width = Math.max(bounds.width, 1); height = Math.max(bounds.height, 1);
-  const maxPixels = 4_000_000;
-  renderer.setPixelRatio(Math.min(devicePixelRatio, circuitKey ? 2 : 2.5, Math.sqrt(maxPixels / (width * height))));
+  const profile = optimizationProfiles[optimizationMode];
+  const pixelRatio = Math.min(devicePixelRatio, profile.pixelRatio * adaptiveResolution,
+    Math.sqrt(profile.maxPixels / (width * height)));
+  renderer.setPixelRatio(pixelRatio);
   renderer.setSize(width, height, false);
   camera.aspect = width / height; camera.updateProjectionMatrix();
 }
@@ -606,13 +1069,53 @@ function placeScene(dt) {
   const c = sim.car, g = model.group;
   sun.position.set(c.x + 35, 70, -c.y + 25); sun.target.position.copy(g.position);
   forward.set(Math.cos(c.heading), 0, -Math.sin(c.heading));
+  const footHeight = track.heightAt ? track.heightAt(track.progress(onFootPosition.x, onFootPosition.y)) : 0;
+  playerAvatar.position.set(onFootPosition.x, footHeight, -onFootPosition.y);
+  playerAvatar.rotation.y = onFootYaw + Math.PI / 2;
+  playerAvatar.visible = onFoot && avatarLoaded && onFootCameraMode !== 'firstPerson';
   sim.entries.forEach((e, i) => {
     const car = cars[skins[i]].model;
     car.group.visible = !e.retired && (e.player || opponents);
-    car.driver.forEach(m => { m.visible = !(cockpit && !overview); });
+    const showDriver = shouldShowSeatedDriver({ player: e.player, onFoot, cockpit });
+    if (car.setDriverVisible) car.setDriverVisible(showDriver);
+    else car.driver.forEach(m => { m.visible = showDriver; });
     poseCar(car, e.car, cars[skins[i]].wheelAngle, dt, sim.yellowFlag.active);
   });
-  if (overview) {
+  if (onFoot) {
+    camera.fov = 66; camera.near = 0.1; camera.up.set(0, 1, 0);
+    const fx = Math.cos(lookYaw), fz = -Math.sin(lookYaw);
+    const rx = -fz, rz = fx;
+    if (onFootCameraMode === 'firstPerson') {
+      camera.position.set(
+        playerAvatar.position.x,
+        footHeight + 1.4,
+        playerAvatar.position.z,
+      );
+      camera.lookAt(
+        camera.position.x + fx * 5,
+        footHeight + 1.4 + Math.sin(lookPitch) * 5,
+        camera.position.z + fz * 5,
+      );
+    } else if (onFootCameraMode === 'secondPerson') {
+      camera.position.set(
+        playerAvatar.position.x + fx * 3.2 + rx * 0.25,
+        footHeight + 1.9 + Math.sin(lookPitch) * 1.2,
+        playerAvatar.position.z + fz * 3.2 + rz * 0.25,
+      );
+      camera.lookAt(playerAvatar.position.x, footHeight + 0.95, playerAvatar.position.z);
+    } else {
+      camera.position.set(
+        playerAvatar.position.x - fx * 3.2 + rx * 0.25,
+        footHeight + 1.9 + Math.sin(lookPitch) * 1.6,
+        playerAvatar.position.z - fz * 3.2 + rz * 0.25,
+      );
+      camera.lookAt(
+        playerAvatar.position.x + fx * 2.5,
+        footHeight + 0.95 + Math.sin(lookPitch) * 2,
+        playerAvatar.position.z + fz * 2.5,
+      );
+    }
+  } else if (overview) {
     camera.fov = 42; camera.near = 0.1;
     if (circuitKey) { const [x, y] = world.userData.center, e = world.userData.extent; camera.position.set(x, 1.6 * e, -y + 1.2 * e); camera.lookAt(x, 0, -y); }
     else { camera.position.set(0, 300, 420); camera.lookAt(0, 0, 0); }
@@ -646,6 +1149,9 @@ function placeScene(dt) {
   }
   snapCamera = false;
   camera.updateProjectionMatrix();
+  scene.updateMatrixWorld(true);
+  camera.updateMatrixWorld(true);
+  updateOnFootInteraction();
   renderer.render(scene, camera);
   renderBroadcast(performance.now());
 }
@@ -657,6 +1163,42 @@ const stadiumPoint = s => {
   if (s < 2 * straight + arc) return [halfStraight - (s - straight - arc), radius];
   const a = Math.PI / 2 + (s - 2 * straight - arc) / radius; return [-halfStraight + radius * Math.cos(a), radius * Math.sin(a)];
 };
+function stadiumHeading(s) {
+  const [x0, y0] = stadiumPoint(s - 0.1), [x1, y1] = stadiumPoint(s + 0.1);
+  return Math.atan2(y1 - y0, x1 - x0);
+}
+function onFootSpawn() {
+  const car = sim.car, side = 2.4;
+  const heading = car.heading;
+  return {
+    player: { x: car.x - Math.sin(heading) * side, y: car.y + Math.cos(heading) * side },
+    heading: heading - Math.PI / 2,
+  };
+}
+const interactionRaycaster = new THREE.Raycaster();
+function updateOnFootInteraction() {
+  const prompt = $('on-foot-prompt'), exitHint = $('exit-hint');
+  if (onFoot) {
+    $('on-foot-overlay').hidden = false;
+    exitHint.hidden = true;
+    const distance = Math.hypot(sim.car.x - onFootPosition.x, sim.car.y - onFootPosition.y);
+    interactionRaycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+    canEnterCar = avatarLoaded && distance < 8 && model.group.visible
+      && interactionRaycaster.intersectObject(model.group, true).length > 0;
+    prompt.innerHTML = avatarLoadError ? 'Driver model failed to load · reload to retry'
+      : !avatarLoaded ? 'Loading driver model…'
+          : canEnterCar ? '<strong>L</strong> · enter car · <strong>R</strong> enter without aiming'
+          : onFootCameraMode === 'secondPerson' ? 'Press <strong>C</strong> to aim at your car'
+          : document.pointerLockElement === canvas ? 'Aim at your car to enter'
+            : 'Click the viewport to look · point at your car';
+  } else {
+    $('on-foot-overlay').hidden = true;
+    canEnterCar = false;
+    const allowed = playerCanExit();
+    exitHint.hidden = !allowed;
+    if (allowed) exitHint.innerHTML = '<strong>L</strong> · exit car';
+  }
+}
 function placeSafetyCar() {
   const flag = sim.yellowFlag;
   const pace = sim.safetyCar;
@@ -670,8 +1212,10 @@ function placeSafetyCar() {
     const before = stadiumPoint((progress - 1 + track.length) % track.length), after = stadiumPoint((progress + 1) % track.length);
     heading = Math.atan2(after[1] - before[1], after[0] - before[0]);
   }
-  safetyCarModel.group.position.set(x, 0, -y);
+  safetyCarModel.group.position.set(x, track.heightAt ? track.heightAt(progress) : 0, -y);
   safetyCarModel.group.rotation.y = heading;
+  const wheelRotation = progress / DEFAULT_CAR.wheelRadius;
+  safetyCarModel.wheels.forEach(wheel => { wheel.spin.rotation.z = -wheelRotation; });
   beaconMaterial.emissiveIntensity = Math.floor(sim.time * 4) % 2 === 0 ? 2 : 0.1;
 }
 function renderBroadcast(now) {
@@ -714,7 +1258,7 @@ function renderBroadcast(now) {
 
   const c = broadcastTarget.car, forwardX = Math.cos(c.heading), forwardZ = -Math.sin(c.heading);
   const rightX = Math.sin(c.heading), rightZ = Math.cos(c.heading);
-  const position = new THREE.Vector3(c.x, 0.9, -c.y);
+  const position = new THREE.Vector3(c.x, (track.heightAt ? track.heightAt(track.progress(c.x, c.y)) : 0) + 0.9, -c.y);
   const shots = [
     { side: 21, along: 1, height: 5.5, fov: 34 },
     { side: -17, along: 9, height: 7, fov: 36 },
@@ -722,13 +1266,16 @@ function renderBroadcast(now) {
     { side: -23, along: 13, height: 11, fov: 40 },
   ];
   const shot = shots[(broadcastShotIndex - 1) % shots.length];
+  // Plant each shot at a trackside station when the director cuts. The tripod
+  // stays put for the shot while its pan follows the racing action.
+  if (cut || !broadcastStation) {
+    const s = track.progress(c.x, c.y), side = shot.side < 0 ? -1 : 1;
+    const [sx, sy] = track.point ? track.point(s, side * 26) : stadiumPoint(s);
+    broadcastStation = new THREE.Vector3(sx, (track.heightAt ? track.heightAt(s) : 0) + shot.height, -sy);
+  }
   const camera = broadcastCamera;
   camera.fov = shot.fov;
-  camera.position.set(
-    position.x + rightX * shot.side + forwardX * shot.along,
-    shot.height,
-    position.z + rightZ * shot.side + forwardZ * shot.along,
-  );
+  camera.position.copy(broadcastStation);
   camera.lookAt(position.x + forwardX * 1.5, position.y, position.z + forwardZ * 1.5);
   camera.updateProjectionMatrix();
   sun.position.set(position.x + 35, 70, position.z + 25);
@@ -780,7 +1327,7 @@ function render(dt = 0) {
   $('yellow-flag').hidden = !sim.yellowFlag.active || !opponents;
   weatherBadge.textContent = `${conditions.label.toUpperCase()} · GRIP ${Math.round(conditions.grip * 100)}%`;
   scene.fog.color.copy(dryFog).lerp(rainFog, conditions.intensity * 0.65);
-  sun.intensity = 2.8 - conditions.intensity * 1.5;
+  sun.intensity = (nightTrack ? 0.28 : 2.8) - conditions.intensity * (nightTrack ? 0.12 : 1.5);
   $('speed').textContent = $('speed-hud').textContent = Math.round(c.telemetry.speed * (mph ? 2.23694 : 3.6));
   $('gear').textContent = (c.gear < 0 ? 'R' : String(c.gear)) + (c.config.autoShift ? '' : ' M');
   $('long').textContent = `${(c.ax / 9.81).toFixed(2)} g`;
@@ -818,7 +1365,7 @@ function render(dt = 0) {
     $(`wear-${name}`).style.color = wear > c.config.tireCliffWear ? '#ff8e86' : wear > c.config.tireCliffWear / 2 ? '#ffc86f' : '#b8c8d5';
   });
   const ts = timer.state, delta = timer.delta(c);
-  $('lap-label').textContent = !ts.started ? 'Out lap' : `Lap ${ts.lap}${ts.valid ? '' : ' · deleted'}`;
+  $('lap-label').textContent = qualifying && qualifying.stage !== 'race' ? `${qualifying.stage} · ${ts.laps.length ? `lap ${ts.laps.length + 1}` : 'out lap'}` : !ts.started ? 'Out lap' : `Lap ${ts.lap}${ts.valid ? '' : ' · deleted'}`;
   $('lap-label').classList.toggle('invalid', ts.started && !ts.valid);
   $('lap-time').textContent = formatLapTime(timer.current(c));
   $('lap-delta').textContent = delta === null ? '' : `${delta < 0 ? '−' : '+'}${Math.abs(delta).toFixed(3)}`;
@@ -837,7 +1384,16 @@ function render(dt = 0) {
   const finish = sim.finish;
   let result = null;
   const swatch = s => `<i style="background:${skinColor(s)}"></i>`;
-  if (opponents && finish.flag) {
+  if (qualifying && qualifying.stage !== 'race') {
+    const stage = qualifying.stage, rows = qualifyingRows(stage), cutoff = stage === 'Q1' ? 16 : stage === 'Q2' ? 10 : 10;
+    $('race-label').textContent = `${stage} qualifying · ${rows.length} drivers · top ${cutoff} advance`;
+    const playerRow = rows.find(row => row.id === -1);
+    $('race-pos').textContent = `${stage}${playerRow ? ` · P${playerRow.position}` : ''} · complete a clean lap`;
+    $('standings').innerHTML = rows.map(row => {
+      const color = row.id < 0 ? '#39e0ae' : `#${DEFAULT_GRID[row.id].color.toString(16).padStart(6, '0')}`;
+      return `<li class="${row.id < 0 ? 'you' : ''}"><span>${row.position}</span><i style="background:${color}"></i>${row.name}<b>${Number.isFinite(row.time) ? formatLapTime(row.time) : '—'}${row.position === cutoff ? ' · cut line' : ''}</b></li>`;
+    }).join('');
+  } else if (opponents && finish.flag) {
     // After the chequered flag: the classification (race time + penalties).
     const rows = sim.classification(); result = rows.find(r => r.player);
     $('race-label').textContent = `Classification · ${finish.laps} lap${finish.laps > 1 ? 's' : ''}${finish.done ? '' : ' · finishing'}`;
@@ -860,17 +1416,30 @@ function render(dt = 0) {
   const pitNote = c.fuel === 0 ? 'Out of fuel · engine starved' : service ? `Pit stop · fitting ${title(service.compound)} · ${Math.max(0, service.end - sim.time).toFixed(1)} s remaining`
     : lane ? `Pit lane · ${Math.round(sim.pit.speedLimit * 3.6)} km/h limiter${me.pitVisit?.speeding ? ` · speeding +${sim.options.pitSpeedingPenalty} s` : !me.pitVisit?.served && me.pit?.phase !== 'out' ? ' · stop in your box (green)' : ''}`
     : me.pitRequest && !result ? `Box this lap · ${title(me.pitRequest)}${autopilot ? '' : circuitKey ? ` · pit entry on the ${sim.pit?.side > 0 ? 'left' : 'right'} before the line` : ' · pit entry on the inside of the main straight'}` : null;
-  $('lights').hidden = !(start.enabled && start.sinceLightsOut < 1.5);
+  $('lights').hidden = onFoot || !(start.enabled && start.sinceLightsOut < 1.5);
   [...$('lights').children].forEach((el, k) => el.classList.toggle('on', start.phase === 'lights' && k < start.lit));
   const startNote = !start.enabled || start.sinceLightsOut > 4 ? null : start.phase === 'lights' ? (me.jumpStart ? `Jump start · +${me.penalty} s penalty` : 'Lights · hold the brake, go when they go out')
     : me.jumpStart ? `Jump start · +${me.penalty} s penalty` : me.reaction !== null ? `Lights out · reaction ${me.reaction.toFixed(3)} s` : 'Lights out · go!';
   const flagNote = !result ? null : result.dsq ? 'Chequered flag · disqualified: one compound all race (pit for a different one) · R to restart' : result.finished ? `Chequered flag · P${result.position} · ${formatLapTime(result.total)}${result.penalty ? ` incl. ${result.penalty} s penalty` : ''} · R to restart` : 'Chequered flag · complete this lap to finish';
-  $('status').textContent = paused ? 'Paused · Space or Resume to continue' : c.gear < 0 ? 'Reverse · hold the brake to back up · W / RT brakes, then goes forward' : startNote ? startNote : flagNote ? flagNote : pitNote ? pitNote : impact ? `Wall impact · ${Math.round(impact.speed * 3.6)} km/h into the barrier · R to reset` : contact ? `Contact · ${Math.round(contact.speed * 3.6)} km/h closing speed` : !['asphalt', 'pit'].includes(surface) ? `On the ${surface} · reduced grip · R to reset` : autopilot ? 'Autopilot · P to take control' : c.telemetry.speed < 0.5 ? 'Ready · W or ↑ to accelerate' : `${circuitKey ? track.name : 'Test circuit'} · ${driver.source} input`;
+  $('status').textContent = paused ? 'Paused · P or Resume to continue' : onFoot ? avatarLoadError ? 'Driver model failed to load · reload the page' : !avatarLoaded ? 'Loading the on-foot driver model…' : qualifying && qualifying.stage !== 'race' ? `On foot · ${qualifying.stage} qualifying · enter the car to set your lap` : 'On foot · WASD walk · double-tap W run · Space jump · R enter · E emotes · M suit menu · L enter' : c.gear < 0 ? 'Reverse · hold the brake to back up · W / RT brakes, then goes forward' : qualifying && qualifying.stage !== 'race' ? `${qualifying.stage} qualifying · complete a clean lap` : startNote ? startNote : flagNote ? flagNote : pitNote ? pitNote : impact ? `Wall impact · ${Math.round(impact.speed * 3.6)} km/h into the barrier · R to reset` : contact ? `Contact · ${Math.round(contact.speed * 3.6)} km/h closing speed` : !['asphalt', 'pit'].includes(surface) ? `On the ${surface} · reduced grip · R to reset` : autopilot ? 'Autopilot · I to take control' : c.telemetry.speed < 0.5 ? 'Ready · W or ↑ to accelerate' : `${circuitKey ? track.name : 'Test circuit'} · ${driver.source} input`;
   $('input-source').textContent = autopilot ? 'autopilot' : driver.source;
   $('in-throttle').value = command.throttle ?? 0; $('in-brake').value = command.brake ?? 0;
 }
 function frame(now) {
   const dt = previousTime !== null && !paused ? Math.min((now - previousTime) / 1000, 0.1) : 0;
+  if (previousTime !== null && !paused) {
+    const frameMs = Math.min(100, Math.max(1, now - previousTime));
+    frameTimeAverage += (frameMs - frameTimeAverage) * 0.06;
+    // Default trades a small amount of resolution for steady frame delivery
+    // when the GPU is under load, then restores it after performance recovers.
+    if (optimizationMode === 'default' && now - qualityCheckAt > 1500) {
+      qualityCheckAt = now;
+      const nextScale = frameTimeAverage > 20
+        ? Math.max(0.75, adaptiveResolution - 0.1)
+        : frameTimeAverage < 15.5 ? Math.min(1, adaptiveResolution + 0.05) : adaptiveResolution;
+      if (nextScale !== adaptiveResolution) { adaptiveResolution = nextScale; resize(); }
+    }
+  }
   gamepadTakeover();
   // Gamepad buttons: Y pause / resume, Menu (Start) HUD, B cycles cameras, X full screen, A units, Back (View) reset.
   if (gamepadPressed(3)) pause(!paused);
@@ -887,45 +1456,77 @@ function frame(now) {
   // Right stick click turns the autopilot off (held while driving it is DRS).
   if (gamepadPressed(11) && autopilot) toggleAutopilot();
   if (previousTime !== null && !paused) {
-    const elapsed = (now - previousTime) / 1000;
-    weather.update(elapsed);
-    // Keyboard or D-pad (up throttle, down brake, left / right steer): both use the keyboard ramps.
     const has = (...codes) => codes.some(code => keys.has(code));
-    // Ramp over the same elapsed time the simulation accepts (it caps a frame at 0.25 s).
-    command = autopilot ? null : driver.update(Math.min((now - previousTime) / 1000, 0.25), {
-      throttle: has('KeyW', 'ArrowUp') || !!gamepadButton(12), brake: has('KeyS', 'ArrowDown') || !!gamepadButton(13),
-      left: has('KeyA', 'ArrowLeft') || !!gamepadButton(14), right: has('KeyD', 'ArrowRight') || !!gamepadButton(15),
-    }, gamepad(), sim.car.telemetry.speed);
-    if (command) {
-      // Direction: Q / E when held; otherwise the pedals. Stopped in forward, holding the
-      // brake (not on the start lights) selects reverse. In reverse the brake backs the car
-      // up and the throttle brakes; held at a stop it selects forward.
-      const c = sim.car, stopped = c.telemetry.speed < 0.2, lights = sim.start.enabled && sim.start.phase === 'lights';
-      const manual = has('KeyQ') && !has('KeyE') ? true : has('KeyE') && !has('KeyQ') ? false : undefined;
-      if (manual !== undefined) command.reverse = manual;
-      else if (c.gear < 0) {
-        const { throttle, brake } = command;
-        command.throttle = brake; command.brake = throttle;
-        command.reverse = stopped && throttle > 0.95 ? false : undefined;
-      } else command.reverse = stopped && !lights && command.brake > 0.95 && !command.throttle ? true : undefined;
+    if (onFoot) {
+      // Bound catch-up work after a slow frame so the 240 Hz field physics
+      // cannot trigger a long frame that causes another backlog.
+      const elapsed = dt;
+      const forward = Number(has('KeyW')) - Number(has('KeyS'));
+      const strafe = Number(has('KeyD')) - Number(has('KeyA'));
+      const running = runningOnFoot && forward > 0;
+      onFootPosition = moveOnFootColliding(onFootPosition, lookYaw, { forward, strafe }, dt, {
+        speed: running ? 5.6 : undefined,
+        barrierAt,
+        cars: sim.entries.filter(entry => !entry.retired).map(entry => entry.car),
+      });
+      onFootYaw = lookYaw;
+      // After the player takes the chequered flag, keep the complete race
+      // simulation advancing while they walk around the circuit.
+      if (opponents && sim.entries[0].finish) {
+        weather.update(elapsed);
+        sim.advance(elapsed, null, (x, y) => weather.surfaceGrip(surfaceAt(x, y)), barrierAt, weather.state.grip);
+      }
+      avatarMixer?.update(dt);
+      if ((forward || strafe) && avatarEmote && avatarActionName !== 'Jump') {
+        avatarEmote.stop();
+        avatarEmote = null;
+        avatarAction = null;
+        avatarActionName = null;
+      }
+      if (!avatarEmote) playAvatarAction(forward || strafe ? (running ? 'Standard_Run' : 'Walking') : 'Idle');
+    } else {
+      const elapsed = dt;
+      weather.update(elapsed);
+      // Ramp over the same elapsed time the simulation accepts (it caps a frame at 0.25 s).
+      command = autopilot ? null : driver.update(Math.min(elapsed, 0.25), {
+        throttle: has('KeyW', 'ArrowUp') || !!gamepadButton(12), brake: has('KeyS', 'ArrowDown') || !!gamepadButton(13),
+        left: has('KeyA', 'ArrowLeft') || !!gamepadButton(14), right: has('KeyD', 'ArrowRight') || !!gamepadButton(15),
+      }, gamepad(), sim.car.telemetry.speed);
+      if (command) {
+        // Direction: Q / E when held; otherwise the pedals. Stopped in forward, holding the
+        // brake (not on the start lights) selects reverse. In reverse the brake backs the car
+        // up and the throttle brakes; held at a stop it selects forward.
+        const c = sim.car, stopped = c.telemetry.speed < 0.2, lights = sim.start.enabled && sim.start.phase === 'lights';
+        const manual = has('KeyQ') && !has('KeyE') ? true : has('KeyE') && !has('KeyQ') ? false : undefined;
+        if (manual !== undefined) command.reverse = manual;
+        else if (c.gear < 0) {
+          const { throttle, brake } = command;
+          command.throttle = brake; command.brake = throttle;
+          command.reverse = stopped && throttle > 0.95 ? false : undefined;
+        } else command.reverse = stopped && !lights && command.brake > 0.95 && !command.throttle ? true : undefined;
+      }
+      if (command) command.drs = has('KeyF') || !!gamepadButton(11);
+      const forwardRecovery = autopilot && sim.car.gear < 0;
+      if (forwardRecovery) command = { throttle: 0, brake: 1, steer: 0, reverse: false };
+      if (handlingMode === 'arcade' && command && !autopilot && sim.car.gear > 0)
+        command = applyArcadeSteeringAssist(command, sim.car);
+      const inQualifying = qualifying && qualifying.stage !== 'race';
+      sim.advance(elapsed, command,
+        (x, y) => inQualifying ? surfaceAt(x, y) : weather.surfaceGrip(surfaceAt(x, y)),
+        barrierAt, inQualifying ? 1 : weather.state.grip);
+      if (autopilot && !forwardRecovery) command = sim.entries[0].command ?? { throttle: 0, brake: 0, steer: 0 };
+      timer.update(sim.car);
+      recordQualifyingLap();
     }
-    // DRS: hold F (or gamepad right stick click); the race opens the flap only where it is allowed.
-    if (command) command.drs = has('KeyF') || !!gamepadButton(11);
-    // Taking over from manual reverse: stop before selecting forward. Never
-    // send a forward-path autopilot's throttle through a reverse gearbox.
-    const forwardRecovery = autopilot && sim.car.gear < 0;
-    if (forwardRecovery) command = { throttle: 0, brake: 1, steer: 0, reverse: false };
-    if (handlingMode === 'arcade' && command && !autopilot && sim.car.gear > 0)
-      command = applyArcadeSteeringAssist(command, sim.car);
-    sim.advance(elapsed, command, (x, y) => weather.surfaceGrip(surfaceAt(x, y)), barrierAt, weather.state.grip);
-    // On autopilot the race's traffic-aware driver chooses the player's inputs.
-    if (autopilot && !forwardRecovery) command = sim.entries[0].command ?? { throttle: 0, brake: 0, steer: 0 };
-    timer.update(sim.car);
   }
   if (audio) {
     // Quieter from the overview camera; silent while paused or muted.
-    soundParams = soundModel.update(dt, sim.car.telemetry, command);
-    if (soundOn && !paused) { if (audioCtx.state === 'suspended') audioCtx.resume(); audio.apply(soundParams, overview ? 0.3 : cockpit ? 0.9 : 0.7); } else audio.silence();
+    if (onFoot || paused || !soundOn) { soundParams = null; audio.silence(); }
+    else {
+      soundParams = soundModel.update(dt, sim.car.telemetry, command);
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      audio.apply(soundParams, overview ? 0.3 : cockpit ? 0.9 : 0.7);
+    }
   }
   previousTime = now; render(dt); requestAnimationFrame(frame);
 }
@@ -944,7 +1545,7 @@ window.f1Lab = {
     const result = cars.map(car => car.model.setRearFlap({ pivotOffset, angle }))[0];
     return result;
   },
-  snapshot: () => ({ car: structuredClone(sim.car), timing: structuredClone(timer.state), paused, overview, cockpit, tcam, look360, recording: mediaRecorder?.state === 'recording', broadcastTarget: broadcastTarget?.name ?? null, broadcastShot: broadcastShotIndex, keys: [...keys], command: { ...command }, inputSource: autopilot ? 'autopilot' : driver.source }),
+  snapshot: () => ({ car: structuredClone(sim.car), timing: structuredClone(timer.state), paused, onFoot, onFootPosition: { ...onFootPosition }, avatarLoaded, avatarAnimation: avatarActionName, canEnterCar, canExit: playerCanExit(), avatarError: avatarLoadError?.message ?? null, overview, cockpit, tcam, look360, recording: mediaRecorder?.state === 'recording', broadcastTarget: broadcastTarget?.name ?? null, broadcastShot: broadcastShotIndex, keys: [...keys], command: { ...command }, inputSource: autopilot ? 'autopilot' : driver.source }),
   track: () => ({ key: circuitKey, name: circuitKey ? track.name : 'Stadium test track', length: track.length, surface: track.surface(sim.car.x, sim.car.y), offset: track.offset(sim.car.x, sim.car.y), progress: track.progress(sim.car.x, sim.car.y) }),
   race: () => ({ opponents, finish: sim.finish, yellowFlag: sim.yellowFlag, safetyCar: sim.safetyCar, safetyCarVisible: safetyCarModel.group.visible, classification: sim.classification(), standings: opponents ? sim.standings() : [], cars: sim.entries.map(e => ({ name: e.name, x: e.car.x, y: e.car.y, speed: e.car.telemetry.speed, lane: e.lane, compound: e.car.compound, pit: e.pit?.phase ?? null, pitRequest: e.pitRequest, stops: structuredClone(e.stops), compounds: [...e.compounds], penalty: e.penalty, wake: e.car.wake.strength ?? 0, contact: e.car.contact ?? null, drs: e.car.drs, drsAllowed: !!e.drsAllowed, drsGap: e.drsGap, retired: !!e.retired, ...(m => ({ visible: m.group.visible, drawn: [m.group.position.x, -m.group.position.z], flap: m.drsFlap.rotation.x, frontFlap: m.frontWingFlap?.rotation.x ?? null, holderSteer: m.wheels[0].pivot.rotation.y }))(cars[skins[e.index]].model) })) }),
   start: () => (m => ({ ...sim.start, jumpStart: m.jumpStart, penalty: m.penalty, reaction: m.reaction, shown: !$('lights').hidden, litShown: $('lights').querySelectorAll('.on').length, status: $('status').textContent }))(sim.entries[0]),
