@@ -15,6 +15,13 @@ real racing-line data.
 > testbed, not an official or validated Formula 1 simulator. Vehicle
 > specifications and physics values are illustrative, not measured F1 data.
 
+> **Proprietary software:** This project is not open source or free to reuse.
+> Copyright is reserved. Viewing the code does not grant permission to use,
+> modify, or redistribute it outside rights provided by GitHub's Terms of
+> Service. Contact the maintainer for a separate license. Third-party assets
+> retain their own terms; see [models/CREDITS.md](models/CREDITS.md) and
+> [LICENSE](LICENSE).
+
 ## Highlights
 
 - **Driving and handling:** keyboard or standard gamepad input, automatic or
@@ -203,3 +210,15 @@ Project credits: **C1**, **CursorRacing**, **notparthyt**, and **CR**.
 Three.js is MIT licensed; see [`vendor/LICENSE-three`](vendor/LICENSE-three).
 Third-party models and textures retain their own licenses and attributions;
 see [models/CREDITS.md](models/CREDITS.md).
+
+## License and reuse
+
+The original project code is proprietary and all rights are reserved; it is
+not licensed for general use, modification, or redistribution. A public GitHub
+repository cannot disable cloning, downloading, or forking, and code delivered
+to a browser can be inspected. GitHub allows users to view and fork public
+repositories under its platform terms. The notice and [LICENSE](LICENSE)
+describe the project's rights; they cannot technically prevent copies. For
+code that is not publicly accessible, the source repository must be private,
+which requires a GitHub plan that supports public Pages from a private repo or
+a separate public-site deployment.
