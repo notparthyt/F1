@@ -228,7 +228,7 @@ export const inDrsZone = (track, z, p) => { const L = track.length, a = d => ((d
 // when their tread wear passes pitWear (or the player requests a stop).
 // fuel: in a race with a distance every car carries the fuel for it (unless
 // its car spec sets fuelLoad); the burn-off makes the cars lighter lap by lap.
-export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = {}, playerGridSlot = null, start = false, laps = 0, compoundRule = false, fuel = true, tireWear = true, drs = true } = {}) {
+export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = {}, playerGridSlot = null, start = false, laps = 0, compoundRule = false, fuel = true, tireWear = true, drs = true, aiPitStrategy = true } = {}) {
   const o = { ...RACE_DEFAULTS, ...options };
   const rand = random(start?.seed ?? (Math.random() * 2 ** 32));
   // Separate stream for AI form, mistakes and wear (fixed when unseeded, so
@@ -403,6 +403,7 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
   function wantsStop(e) {
     const lap = Math.round(e.covered / length), remaining = laps ? laps - lap : Infinity;
     if (!pit || remaining < 1 || e.finish || flagTime !== null) return false;
+    if (!e.player && !aiPitStrategy) return false;
     if (e.pitRequest) return true;
     // A planned stop waits a lap rather than queue behind a car just ahead
     // that is boxing too, unless this is the last lap it can be made.

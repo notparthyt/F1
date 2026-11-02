@@ -97,7 +97,7 @@ function racingLine(xs, ys, headings, limit) {
 // room; the side needing the smaller slide gets it (left on a tie). No room
 // either side: null (no pit stops). The placement is illustrative: the
 // traced layouts carry no pit lane, so it is not each circuit's real one.
-function circuitPitLane({ half, point, offset, progress, signed, curvatureAt }, { reach = 700, minInsideRadius = 20, entryAt = 300, toLimit = 120, limitLength = 260, toMerge = 40, mergeLength = 130 } = {}) {
+function circuitPitLane({ half, point, offset, progress, signed, curvatureAt }, { reach = 700, minInsideRadius = 20, entryAt = 300, toLimit = 120, limitLength = 260, toMerge = 40, mergeLength = 130, side: preferredSide = null, tunnel: tunnelConfig = null } = {}) {
   const layout = { inner: half + 1.2, outer: half + 11, lane: -(half + 1.5), boxOffset: -(half + 9.5), boxSpacing: 11, speedLimit: 80 / 3.6 };
   const total = toLimit + limitLength + toMerge + mergeLength, edge = layout.outer + 1;
   const fits = (s, side) => {
@@ -106,7 +106,8 @@ function circuitPitLane({ half, point, offset, progress, signed, curvatureAt }, 
     return Math.abs(offset(x, y) - o) < 1 && Math.abs(signed(progress(x, y) - s)) < 20 && (k === 0 || 1 / k - edge >= minInsideRadius);
   };
   let best = null;
-  for (const side of [1, -1]) {
+  const sides = preferredSide === 1 || preferredSide === -1 ? [preferredSide, -preferredSide] : [1, -1];
+  for (const side of sides) {
     if (!fits(0, side)) continue;
     let a = 0, b = 0;
     while (a > -reach && fits(a - 10, side)) a -= 10;
@@ -118,13 +119,16 @@ function circuitPitLane({ half, point, offset, progress, signed, curvatureAt }, 
   if (!best) return null;
   const { side, entry } = best, limitStart = entry + toLimit, limitEnd = limitStart + limitLength;
   // Five boxes centred between the limit lines.
-  return Object.freeze({ ...layout, side, entry, limitStart, limitEnd, mergeStart: limitEnd + toMerge, exit: limitEnd + toMerge + mergeLength,
+  const exit = limitEnd + toMerge + mergeLength;
+  const tunnel = tunnelConfig ? Object.freeze({ start: exit - tunnelConfig.beforeExit, end: exit - tunnelConfig.endBeforeExit,
+    depth: tunnelConfig.depth, ramp: tunnelConfig.ramp }) : null;
+  return Object.freeze({ ...layout, side, entry, limitStart, limitEnd, mergeStart: limitEnd + toMerge, exit, tunnel,
     boxStart: (limitStart + limitEnd) / 2 - 10.5 * layout.boxSpacing });
 }
 
 export function createCircuitTrack({ name = 'Circuit', points, length: officialLength, roadWidth = 13, wallOffset = roadWidth / 2 + 12,
   step = 2, smoothing = 40, kerbCurvature = 1 / 600, kerbReach = 30, lineMargin = 1.6, minRadius = 15, pitLane = true, timingLine = 0, drs = null,
-  elevationProfile = [] }) {
+  elevationProfile = [], pitSide = null, pitTunnel = null }) {
   const pairs = points.length && typeof points[0] === 'number' ? Array.from({ length: points.length / 2 }, (_, i) => [points[2 * i], points[2 * i + 1]]) : points;
   let poly = spline(pairs, step);
   const polyLength = () => poly.reduce((L, a, i) => { const b = poly[(i + 1) % poly.length]; return L + Math.hypot(b[0] - a[0], b[1] - a[1]); }, 0);
@@ -255,7 +259,19 @@ export function createCircuitTrack({ name = 'Circuit', points, length: officialL
   const progress = (x, y) => locate(x, y).progress;
   const offset = (x, y) => locate(x, y).offset;
   const signed = s => (s = wrap(s)) > length / 2 ? s - length : s;
-  const pit = pitLane ? circuitPitLane({ length, half, wallOffset, point, offset, progress, signed, curvatureAt: s => curvature[index(s)] }) : null;
+  const pit = pitLane ? circuitPitLane({ length, half, wallOffset, point, offset, progress, signed, curvatureAt: s => curvature[index(s)] }, { side: pitSide, tunnel: pitTunnel }) : null;
+  const pitHeightAt = s => {
+    const height = elevationAt(s);
+    if (!pit?.tunnel) return height;
+    const u = signed(s), { start, end, ramp, depth } = pit.tunnel;
+    const rise = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+    return height - depth * rise(start, start + ramp, u) * (1 - rise(end - ramp, end, u));
+  };
+  const heightAtPosition = (x, y) => {
+    const q = locate(x, y), pitOffset = pit ? pit.side * q.offset : 0, p = signed(q.progress);
+    return pit?.tunnel && pitOffset < -pit.inner && pitOffset > -pit.outer && p >= pit.tunnel.start && p <= pit.tunnel.end
+      ? pitHeightAt(q.progress) : elevationAt(q.progress);
+  };
   const surface = (x, y) => {
     const q = nearest(x, y), d = q.d;
     // The pit apron, and its entry and exit roads from the road edge.
@@ -269,7 +285,7 @@ export function createCircuitTrack({ name = 'Circuit', points, length: officialL
     // along the trace (the lap here still starts at its first point).
     drsZones: drs && drs.map(z => z.map(f => ((f * length + timingLine) % length + length) % length)),
     samples: { x: xs, y: ys, z: elevation, s: ss, heading: headings, curvature, kerb, line, lineStep, lineCurvature },
-    heightAt: elevationAt,
+    heightAt: elevationAt, pitHeightAt, heightAtPosition,
     heading: s => headings[index(s)], curvatureAt: s => curvature[index(s)],
     // Racing-line offset (m, + right) at arc length s, interpolated.
     lineOffset: s => { const i = index(s), f = (wrap(s) - ss[i]) / (ss[i + 1] - ss[i]); return line[i] + (line[(i + 1) % n] - line[i]) * f; },
@@ -278,16 +294,6 @@ export function createCircuitTrack({ name = 'Circuit', points, length: officialL
     // circuit run closer than that, the boundary is the midline between them.
     barrierAt: (x, y) => {
       const q = nearest(x, y), depth = q.d - wallOffset;
-      if (pit) {
-        const s = signed(ss[q.i] + (ss[q.i + 1] - ss[q.i]) * q.f);
-        const dividerOffset = -pit.side * (half + 1.2);
-        const penetration = 0.55 - Math.abs(q.offset - dividerOffset);
-        if (s > pit.entry + 18 && s < pit.exit - 18 && penetration > 0) {
-          const nx = -Math.sin(headings[q.i]), ny = Math.cos(headings[q.i]);
-          const direction = q.offset < dividerOffset ? -pit.side : pit.side;
-          return { depth: penetration, nx: nx * direction, ny: ny * direction };
-        }
-      }
       return depth > 0 ? { depth, nx: (q.px - x) / q.d, ny: (q.py - y) / q.d } : null;
     },
   };

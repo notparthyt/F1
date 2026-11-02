@@ -17,6 +17,7 @@ export function stadiumPitLane(halfStraight, radius, roadWidth) {
   const half = roadWidth / 2, straight = 2 * halfStraight, turn = straight + Math.PI * radius;
   const limitStart = 0.15 * straight, limitEnd = 0.85 * straight, boxSpacing = 12;
   return Object.freeze({ entry: 0.07 * straight, limitStart, limitEnd, mergeStart: turn + 40, exit: turn + 0.4 * straight,
+    side: 1,
     inner: half + 1.2, outer: half + 11, lane: -(half + 1.5), boxOffset: -(half + 9.5),
     boxStart: (limitStart + limitEnd) / 2 - 10.5 * boxSpacing, boxSpacing, speedLimit: 80 / 3.6 });
 }
@@ -51,11 +52,6 @@ export function createStadiumTrack({ halfStraight, radius, roadWidth, wallOffset
     // Outer and inner walls; the normal points back towards the circuit.
     barrierAt: (x, y) => {
       const { r, ux, uy } = local(x, y);
-      const p = progress(x, y), dividerRadius = radius - pit.inner, dividerPenetration = 0.55 - Math.abs(r - dividerRadius);
-      if (p > pit.entry + 18 && p < pit.exit - 18 && dividerPenetration > 0) {
-        const direction = r < dividerRadius ? -1 : 1;
-        return { depth: dividerPenetration, nx: ux * direction, ny: uy * direction };
-      }
       const outer = r - (radius + wallOffset);
       if (outer > 0) return { depth: outer, nx: -ux, ny: -uy };
       const inner = radius - wallOffset - r;

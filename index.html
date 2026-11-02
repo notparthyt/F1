@@ -86,6 +86,7 @@ import { GLTFLoader } from './vendor/GLTFLoader.js';
 import { createStadiumTrack } from './src/track.mjs';
 import { createCircuitTrack } from './src/circuit.mjs';
 import { CIRCUITS } from './src/circuits.mjs';
+import { CIRCUIT_PIT_SIDES, CIRCUIT_PIT_TUNNELS } from './src/pitconfig.mjs';
 import { CIRCUIT_ELEVATION_PROFILES, NIGHT_CIRCUITS, weatherOptionsForTrack } from './src/trackdata.mjs';
 import { createTimeTrial } from './src/trial.mjs';
 import { createLapTimer, formatLapTime } from './src/laptimer.mjs';
@@ -207,7 +208,7 @@ const halfStraight = 220, radius = 90, roadWidth = 15;
 const circuitKey = Object.hasOwn(CIRCUITS, new URLSearchParams(location.search).get('track')) ? new URLSearchParams(location.search).get('track') : null;
 const nightTrack = NIGHT_CIRCUITS.has(circuitKey);
 const weatherForTrack = () => createWeather({ options: weatherOptionsForTrack(circuitKey) });
-const track = circuitKey ? createCircuitTrack({ ...CIRCUITS[circuitKey], elevationProfile: CIRCUIT_ELEVATION_PROFILES[circuitKey] }) : createStadiumTrack({ halfStraight, radius, roadWidth });
+const track = circuitKey ? createCircuitTrack({ ...CIRCUITS[circuitKey], pitSide: CIRCUIT_PIT_SIDES[circuitKey], pitTunnel: CIRCUIT_PIT_TUNNELS[circuitKey], elevationProfile: CIRCUIT_ELEVATION_PROFILES[circuitKey] }) : createStadiumTrack({ halfStraight, radius, roadWidth });
 const { surfaceAt, barrierAt } = track;
 let timer = createLapTimer(track, circuitKey ? { lineProgress: 0 } : undefined);
 const handlingModes = Object.freeze(['sim', 'arcade']);
@@ -318,7 +319,7 @@ function prepareFreshSoftTyres(race, { lockGrip = false } = {}) {
 function startQualifyingStage(stage) {
   qualifying.stage = stage;
   qualifying.recordedLaps = 0;
-  sim = createRace(track, { grid: [], start: false, laps: 0, fuel: false, tireWear: false, player: { tyres: ['soft', 'soft'] } });
+  sim = createRace(track, { grid: [], start: false, laps: 0, fuel: false, tireWear: false, aiPitStrategy: false, player: { tyres: ['soft', 'soft'] } });
   prepareFreshSoftTyres(sim, { lockGrip: true });
   handlingBaseline = captureHandlingBaseline(sim.entries);
   applyHandlingMode();
@@ -1000,7 +1001,7 @@ const drsNote = e => !sim.drsZones?.length || sim.finish.flag ? '' : e.car.drs >
 // Pose a car model from its physics state: ground-plane position and heading,
 // sprung-body roll/pitch/heave, wheel spin and front-wheel steer.
 function poseCar(m, c, angles, dt, yellowFlagActive = false) {
-  const progress = track.progress(c.x, c.y), height = track.heightAt ? track.heightAt(progress) : 0;
+  const progress = track.progress(c.x, c.y), height = track.heightAtPosition ? track.heightAtPosition(c.x, c.y) : track.heightAt ? track.heightAt(progress) : 0;
   const grade = track.heightAt ? Math.atan((track.heightAt(progress + 2) - track.heightAt(progress - 2)) / 4) : 0;
   m.group.position.set(c.x, height, -c.y);
   m.group.rotation.order = 'YXZ'; m.group.rotation.set(0, c.heading, grade);
@@ -1069,7 +1070,7 @@ function placeScene(dt) {
   const c = sim.car, g = model.group;
   sun.position.set(c.x + 35, 70, -c.y + 25); sun.target.position.copy(g.position);
   forward.set(Math.cos(c.heading), 0, -Math.sin(c.heading));
-  const footHeight = track.heightAt ? track.heightAt(track.progress(onFootPosition.x, onFootPosition.y)) : 0;
+  const footHeight = track.heightAtPosition ? track.heightAtPosition(onFootPosition.x, onFootPosition.y) : track.heightAt ? track.heightAt(track.progress(onFootPosition.x, onFootPosition.y)) : 0;
   playerAvatar.position.set(onFootPosition.x, footHeight, -onFootPosition.y);
   playerAvatar.rotation.y = onFootYaw + Math.PI / 2;
   playerAvatar.visible = onFoot && avatarLoaded && onFootCameraMode !== 'firstPerson';
@@ -1170,8 +1171,10 @@ function stadiumHeading(s) {
 function onFootSpawn() {
   const car = sim.car, side = 2.4;
   const heading = car.heading;
+  const pitSide = track.pit?.side ?? 1;
+  const acrossTrack = pitSide > 0 ? -side : side;
   return {
-    player: { x: car.x - Math.sin(heading) * side, y: car.y + Math.cos(heading) * side },
+    player: { x: car.x - Math.sin(heading) * acrossTrack, y: car.y + Math.cos(heading) * acrossTrack },
     heading: heading - Math.PI / 2,
   };
 }
@@ -1258,7 +1261,7 @@ function renderBroadcast(now) {
 
   const c = broadcastTarget.car, forwardX = Math.cos(c.heading), forwardZ = -Math.sin(c.heading);
   const rightX = Math.sin(c.heading), rightZ = Math.cos(c.heading);
-  const position = new THREE.Vector3(c.x, (track.heightAt ? track.heightAt(track.progress(c.x, c.y)) : 0) + 0.9, -c.y);
+  const position = new THREE.Vector3(c.x, (track.heightAtPosition ? track.heightAtPosition(c.x, c.y) : track.heightAt ? track.heightAt(track.progress(c.x, c.y)) : 0) + 0.9, -c.y);
   const shots = [
     { side: 21, along: 1, height: 5.5, fov: 34 },
     { side: -17, along: 9, height: 7, fov: 36 },

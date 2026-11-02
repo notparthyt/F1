@@ -110,9 +110,6 @@ export function buildWorld({ halfStraight, radius, roadWidth, boxColors = [] }) 
   const along = (a, b) => pts.filter(p => p.s >= a && p.s <= b);
   world.add(ribbon(along(pit.entry, pit.exit), pit.inner, pit.outer, 0.006, asphaltMaterial(Math.abs(pit.outer - pit.inner)), 30));
   world.add(ribbon(along(pit.entry, pit.exit), pit.inner, pit.inner + 0.25, 0.009, std({ color: 0xf2f2ee, roughness: 0.6 }), 10));
-  // Physical pit divider, with short gaps at entry and exit so cars can join
-  // and leave the lane. It matches the perimeter wall and catch fence.
-  const pitDivider = along(pit.entry + 18, pit.exit - 18);
   const paint = (s, offset, length, width, color, y = 0.01) => {
     const m = new THREE.Mesh(new THREE.PlaneGeometry(length, width), std({ color, roughness: 0.6 }));
     m.rotation.x = -Math.PI / 2; m.position.set(s - halfStraight, y, radius + offset); world.add(m); m.receiveShadow = true;
@@ -185,11 +182,6 @@ export function buildWorld({ halfStraight, radius, roadWidth, boxColors = [] }) 
     g.beginPath(); g.moveTo(0, 0); g.lineTo(s, s); g.moveTo(s, 0); g.lineTo(0, s); g.stroke();
   }, 20, 1);
   const fenceMat = new THREE.MeshStandardMaterial({ map: meshTex, alphaTest: 0.4, side: THREE.DoubleSide, metalness: 0.6, roughness: 0.5 });
-  if (pitDivider.length > 1) {
-    const dividerWall = ribbon(pitDivider, pit.inner, 0, 0, std({ map: wall, roughness: 0.8 }), 6, 1.1);
-    dividerWall.castShadow = true; world.add(dividerWall);
-    world.add(ribbon(pitDivider, pit.inner, 0, 1.1, fenceMat, 0.16, 4.2));
-  }
   const postSpots = [];
   for (const s of [-1, 1]) {
     world.add(ribbon(pts, s * (half + 12), 0, 1.1, fenceMat, 0.16, 4.2));
@@ -345,7 +337,8 @@ export function buildCircuitWorld(track, { boxColors = [], night = false } = {})
       }
     }
     const distance = Math.sqrt(bestD2), fade = 1 - THREE.MathUtils.smoothstep(distance, wallAt + 20, 190);
-    const height = (bestD2 < Infinity ? track.heightAt(progress) * fade : 0) - 0.055;
+    const localHeight = bestD2 < Infinity ? track.pit?.tunnel ? track.heightAtPosition(x, y) : track.heightAt(progress) : 0;
+    const height = (bestD2 < Infinity ? localHeight * fade : 0) - 0.055;
     terrainPositions.push(x, height, -y);
     terrainUvs.push(i / terrainSegments * size / 8, j / terrainSegments * size / 8);
     if (i && j) {
@@ -521,7 +514,7 @@ export function buildCircuitWorld(track, { boxColors = [], night = false } = {})
       const path = strip(a, b), positions = [], uvs = [], indices = [];
       path.forEach(p => {
         const s = a + p.s, inner = track.point(s, -pit.side * half), outer = track.point(s, -pit.side * pit.outer);
-        const h = track.heightAt(s) + yOffset;
+        const h = (track.pitHeightAt?.(s) ?? track.heightAt(s)) + yOffset;
         positions.push(inner[0], h, -inner[1], outer[0], h, -outer[1]);
         uvs.push(0, p.s / 30, 1, p.s / 30);
       });
@@ -533,16 +526,34 @@ export function buildCircuitWorld(track, { boxColors = [], night = false } = {})
     };
     const pitSurface = asphaltMaterial(Math.abs(pit.outer - half));
     world.add(pitRoadMesh(pit.entry, pit.exit, pitSurface));
-    const dividerStart = pit.entry + 18;
-    const divider = strip(dividerStart, pit.exit - 18).map(p => {
-      const [x, y] = track.point(dividerStart + p.s, -pit.side * pit.inner);
-      return { ...p, x, y };
-    });
-    if (divider.length > 1) {
-      const barrier = ribbon(divider, 0, 0, 0, std({ map: wallTex, roughness: 0.8 }), 6, 1.1);
-      barrier.castShadow = true; world.add(barrier);
-      world.add(ribbon(divider, 0, 0, 1.1, fenceMat, 0.16, 4.2));
-      divider.forEach((p, k) => { if (k % 4 === 0) postSpots.push([p.x, p.y, p.h]); });
+    if (pit.tunnel) {
+      const tunnelPath = strip(pit.tunnel.start, pit.tunnel.end);
+      const centreOffset = pit.side * pit.lane;
+      const innerOffset = -pit.side * pit.inner, outerOffset = -pit.side * pit.outer;
+      const innerFromCentre = centreOffset - innerOffset, outerFromCentre = centreOffset - outerOffset;
+      const tunnelConcrete = std({ color: 0x777c80, roughness: 0.92 });
+      const wallBottom = -pit.tunnel.depth + 0.04, wallTop = -0.12;
+      const tunnelWallA = ribbon(tunnelPath, innerFromCentre, innerFromCentre, wallBottom, tunnelConcrete, 12, wallTop);
+      const tunnelWallB = ribbon(tunnelPath, outerFromCentre, outerFromCentre, wallBottom, tunnelConcrete, 12, wallTop);
+      tunnelWallA.castShadow = tunnelWallB.castShadow = true;
+      world.add(tunnelWallA, tunnelWallB);
+      const tunnelRoof = ribbon(tunnelPath, innerFromCentre, outerFromCentre, wallTop, tunnelConcrete, 12);
+      tunnelRoof.castShadow = true; world.add(tunnelRoof);
+      // Concrete portal frames make both ends of the lowered exit visibly read
+      // as an underpass rather than an ordinary covered pit-road section.
+      for (const s of [pit.tunnel.start, pit.tunnel.end]) {
+        const [x, y] = track.point(s, centreOffset), h = track.heightAt(s), heading = track.heading(s);
+        const portal = new THREE.Group();
+        const halfWidth = Math.abs(outerFromCentre - innerFromCentre) / 2;
+        const midLeft = (innerFromCentre + outerFromCentre) / 2;
+        const jamb = new THREE.Mesh(new THREE.BoxGeometry(0.9, pit.tunnel.depth, 0.9), tunnelConcrete);
+        const lintel = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.9, halfWidth * 2 + 0.9), tunnelConcrete);
+        jamb.position.set(0, -pit.tunnel.depth / 2, -midLeft - halfWidth);
+        const jamb2 = jamb.clone(); jamb2.position.z += halfWidth * 2;
+        lintel.position.set(0, -0.45, -midLeft);
+        portal.add(jamb, jamb2, lintel); portal.position.set(x, h, -y); portal.rotation.y = heading;
+        portal.traverse(node => { if (node.isMesh) node.castShadow = node.receiveShadow = true; }); world.add(portal);
+      }
     }
     const linePath = strip(pit.limitStart, pit.limitEnd), linePositions = [], lineUvs = [], lineIndices = [];
     linePath.forEach(p => {
