@@ -82,7 +82,7 @@ export function buildWorld({ halfStraight, radius, roadWidth, boxColors = [] }) 
   sky.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
   world.add(new THREE.Mesh(sky, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide, fog: false, depthWrite: false })));
 
-  const grass = texture(256, (g, s) => {
+  const grass = urban ? null : texture(256, (g, s) => {
     noise(g, s, '#3f6b2e', 0.25, 9000);
     for (let i = 0; i < s; i += 64) { g.fillStyle = 'rgba(255,255,255,0.035)'; g.fillRect(0, i, s, 32); }
   }, 300, 300);
@@ -147,7 +147,7 @@ export function buildWorld({ halfStraight, radius, roadWidth, boxColors = [] }) 
   }
   // Grandstands outside the main straight: seated crowd on the treads/risers,
   // concrete end walls, back wall, roof columns so nothing floats.
-  const crowd = texture(512, (g, s) => {
+  const crowd = urban ? null : texture(512, (g, s) => {
     g.fillStyle = '#2a3440'; g.fillRect(0, 0, s, s);
     const seat = s / 16;
     for (let i = 0; i < 16; i++) {
@@ -160,9 +160,9 @@ export function buildWorld({ halfStraight, radius, roadWidth, boxColors = [] }) 
       g.beginPath(); g.arc(x + seat / 2, s * 0.26, seat * 0.26, 0, Math.PI * 2); g.fill();
     }
   }, 110 / 8, 1);
-  const concrete = new THREE.MeshStandardMaterial({ map: texture(128, (g, s) => noise(g, s, '#a7aaa6', 0.18, 3000), 4, 2), roughness: 0.95 });
-  const crowdMat = new THREE.MeshStandardMaterial({ map: crowd, roughness: 0.9 });
-  const stepMats = [concrete, concrete, crowdMat, concrete, concrete, crowdMat];
+  const concrete = urban ? null : new THREE.MeshStandardMaterial({ map: texture(128, (g, s) => noise(g, s, '#a7aaa6', 0.18, 3000), 4, 2), roughness: 0.95 });
+  const crowdMat = urban ? null : new THREE.MeshStandardMaterial({ map: crowd, roughness: 0.9 });
+  const stepMats = urban ? [] : [concrete, concrete, crowdMat, concrete, concrete, crowdMat];
   const roofMat = new THREE.MeshStandardMaterial({ color: 0xe6e9ec, roughness: 0.5, side: THREE.DoubleSide });
   const z0 = radius + half + 18, zFront = z0 - 1, zBack = z0 + 15, roofY = 14;
   const endShape = new THREE.Shape();
@@ -285,7 +285,7 @@ export function buildWorld({ halfStraight, radius, roadWidth, boxColors = [] }) 
 // wallOffset (left out where another part of the circuit runs closer), a
 // start/finish line and light gantry at s = 0, a grandstand beside it,
 // hoardings, trees off the circuit and a hill ring sized to the layout.
-export function buildCircuitWorld(track, { boxColors = [], night = false } = {}) {
+export function buildCircuitWorld(track, { boxColors = [], night = false, urban = false } = {}) {
   const world = new THREE.Group(), half = track.roadWidth / 2, wallAt = track.wallOffset;
   world.userData.detailLod = [];
   const { x: X, y: Y, z: Z, s: S, heading: H, kerb } = track.samples, n = X.length;
@@ -360,7 +360,10 @@ export function buildCircuitWorld(track, { boxColors = [], night = false } = {})
   terrainGeometry.setAttribute('position', new THREE.Float32BufferAttribute(terrainPositions, 3));
   terrainGeometry.setAttribute('uv', new THREE.Float32BufferAttribute(terrainUvs, 2));
   terrainGeometry.setIndex(terrainIndices); terrainGeometry.computeVertexNormals();
-  const ground = new THREE.Mesh(terrainGeometry, new THREE.MeshStandardMaterial({ map: grass, roughness: 1, side: THREE.DoubleSide }));
+  const groundMaterial = urban
+    ? new THREE.MeshStandardMaterial({ color: 0x888781, roughness: 1, side: THREE.DoubleSide })
+    : new THREE.MeshStandardMaterial({ map: grass, roughness: 1, side: THREE.DoubleSide });
+  const ground = new THREE.Mesh(terrainGeometry, groundMaterial);
   ground.receiveShadow = true; world.add(ground);
 
   const kerbTex = texture(64, (g, s) => { g.fillStyle = '#d8dad6'; g.fillRect(0, 0, s, s); g.fillStyle = '#c3302b'; g.fillRect(0, 0, s, s / 2); });
@@ -426,8 +429,8 @@ export function buildCircuitWorld(track, { boxColors = [], night = false } = {})
   const stepMats = [concrete, concrete, crowdMat, concrete, concrete, crowdMat];
   const room = side => [-120, -60, 0].every(d => { const [x, y] = track.point(d, side * (wallAt + 20)); return Math.abs(track.offset(x, y)) > wallAt + 10; });
   // Across the straight from the pit lane where there is room for it.
-  const pit = track.pit, standSide = [pit ? pit.side : -1, pit ? -pit.side : 1].find(room) ?? 0;
-  if (standSide) {
+  const pit = track.pit, standSide = urban ? 0 : [pit ? pit.side : -1, pit ? -pit.side : 1].find(room) ?? 0;
+  if (!urban && standSide) {
     const stand = new THREE.Group(); stand.position.copy(start.position); stand.rotation.y = H[0]; world.add(stand);
     const z0 = wallAt + 6;
     for (let r = 0; r < 8; r++) {
@@ -441,7 +444,7 @@ export function buildCircuitWorld(track, { boxColors = [], night = false } = {})
 
   // Additional spectator blocks at separate sectors make each circuit read
   // as a race venue from the cockpit, not an empty ribbon with distant trees.
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; !urban && i < 4; i++) {
     const s = track.length * (0.13 + i * 0.19), side = i % 2 ? 1 : -1;
     const [x, y] = track.point(s, side * (wallAt + 31)), h = track.heightAt(s);
     if (Math.abs(track.offset(x, y)) < wallAt + 18) continue;
@@ -584,7 +587,7 @@ export function buildCircuitWorld(track, { boxColors = [], night = false } = {})
       const s = pit.boxStart + pit.boxSpacing * i;
       flat(s, pit.boxOffset, 7, 4.5, 0xf2f2ee); flat(s, pit.boxOffset, 6.6, 4.1, boxColors[i] ?? 0x3a4450, 0.012);
       const [x, y] = track.point(s, pit.side * garageAt);
-      if (standSide === -pit.side || Math.abs(track.offset(x, y)) < wallAt + 3) continue;
+      if (urban || standSide === -pit.side || Math.abs(track.offset(x, y)) < wallAt + 3) continue;
       const g = new THREE.Mesh(new THREE.BoxGeometry(pit.boxSpacing - 0.5, 6, 7), concreteGarage);
       g.position.set(x, track.heightAt(s) + 3, -y); g.rotation.y = track.heading(s); g.castShadow = g.receiveShadow = true; world.add(g);
     }
@@ -616,54 +619,114 @@ export function buildCircuitWorld(track, { boxColors = [], night = false } = {})
   });
   boards.castShadow = true; world.add(boards);
 
-  // Hill ring beyond the circuit.
-  const hillGeo = new THREE.BufferGeometry(), hp = [], hc = [], hi = [], A = 160, R = 7, r0 = extent + 450;
-  const forest = new THREE.Color(0x2c4a2a), meadow = new THREE.Color(0x5d7a3e);
-  for (let a = 0; a <= A; a++) for (let r = 0; r < R; r++) {
-    const th = a / A * Math.PI * 2, rr = r0 + r * 90;
-    const h = (45 + 30 * Math.sin(th * 3 + 1) + 20 * Math.sin(th * 7 + 2) + 10 * Math.sin(th * 17)) * Math.pow(r / (R - 1), 0.7);
-    hp.push(cx + Math.cos(th) * rr, h - 1, -cy + Math.sin(th) * rr);
-    const c = meadow.clone().lerp(forest, Math.min(1, r / 2 + 0.2 * Math.sin(th * 23))); hc.push(c.r, c.g, c.b);
-    if (a && r) { const k = a * R + r, j = k - R; hi.push(j - 1, k - 1, j, j, k - 1, k); }
-  }
-  hillGeo.setAttribute('position', new THREE.Float32BufferAttribute(hp, 3));
-  hillGeo.setAttribute('color', new THREE.Float32BufferAttribute(hc, 3));
-  hillGeo.setIndex(hi); hillGeo.computeVertexNormals();
-  world.add(new THREE.Mesh(hillGeo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, side: THREE.DoubleSide })));
+  if (urban) {
+    const palette = [0xe7d8c6, 0xf0e8d8, 0xd7c4ae, 0xe9e1d3, 0xcbbba8];
+    const blocks = [];
+    for (let i = 0; i < 72; i++) {
+      const s = track.length * (i + 0.5) / 72, side = i % 2 ? -1 : 1;
+      const width = 25 + i % 4 * 6, depth = 14 + i % 3 * 3, floors = 3 + i % 3, height = floors * 3.2;
+      const offset = side * (wallAt + 45 + depth / 2), [x, y] = track.point(s, offset), heading = track.heading(s);
+      const clear = [-1, 1].every(along => [-1, 1].every(across => {
+        const lx = along * width / 2, lz = across * depth / 2;
+        const px = x + Math.cos(heading) * lx + Math.sin(heading) * lz;
+        const py = y + Math.sin(heading) * lx - Math.cos(heading) * lz;
+        return Math.abs(track.offset(px, py)) > wallAt + 20;
+      }));
+      if (clear) blocks.push({ x, y, s, heading, side, width, depth, floors, height, color: palette[i % palette.length] });
+    }
 
-  // Tree clusters anywhere at least 20 m clear of the road.
-  const rng = (() => { let s = 11; return () => (s = (s * 16807) % 2147483647) / 2147483647; })();
-  const spots = [];
-  for (let tries = 0; spots.length < 900 && tries < 600; tries++) {
-    const tx = cx + (rng() - 0.5) * (maxX - minX + 300), ty = cy + (rng() - 0.5) * (maxY - minY + 300), m = 3 + Math.floor(rng() * 9);
-    for (let i = 0; i < m; i++) {
-      const x = tx + (rng() - 0.5) * 40, y = ty + (rng() - 0.5) * 40;
-      if (Math.abs(track.offset(x, y)) > half + 20) spots.push([x, y, 0.75 + rng() * 0.6, rng() * Math.PI * 2, rng()]);
+    if (blocks.length) {
+      const buildings = new THREE.InstancedMesh(
+        new THREE.BoxGeometry(1, 1, 1),
+        new THREE.MeshStandardMaterial({ roughness: 0.9 }),
+        blocks.length,
+      );
+      const windowsMesh = new THREE.InstancedMesh(
+        new THREE.BoxGeometry(1.5, 1.8, 0.16),
+        new THREE.MeshStandardMaterial({ color: 0x607786, roughness: 0.35, metalness: 0.15 }),
+        blocks.reduce((count, b) => count + Math.floor(b.width / 6) * (b.floors - 1), 0),
+      );
+      const windowTransform = new THREE.Object3D();
+      let windowIndex = 0;
+      blocks.forEach((b, i) => {
+        const groundHeight = track.heightAt(b.s);
+        dummy.position.set(b.x, groundHeight + b.height / 2, -b.y);
+        dummy.rotation.set(0, b.heading, 0);
+        dummy.scale.set(b.width, b.height, b.depth);
+        dummy.updateMatrix();
+        buildings.setMatrixAt(i, dummy.matrix);
+        buildings.setColorAt(i, new THREE.Color(b.color));
+        const columns = Math.floor(b.width / 6);
+        for (let row = 1; row < b.floors; row++) for (let column = 0; column < columns; column++) {
+          const localX = (column - (columns - 1) / 2) * (b.width / columns);
+          const localZ = -b.side * (b.depth / 2 + 0.09);
+          const wx = b.x + Math.cos(b.heading) * localX + Math.sin(b.heading) * localZ;
+          const wy = b.y + Math.sin(b.heading) * localX - Math.cos(b.heading) * localZ;
+          windowTransform.position.set(wx, groundHeight + row * 3.2 + 1.55, -wy);
+          windowTransform.rotation.set(0, b.heading + (b.side > 0 ? Math.PI : 0), 0);
+          windowTransform.updateMatrix();
+          windowsMesh.setMatrixAt(windowIndex++, windowTransform.matrix);
+        }
+      });
+      buildings.instanceMatrix.needsUpdate = true;
+      buildings.instanceColor.needsUpdate = true;
+      buildings.castShadow = buildings.receiveShadow = true;
+      windowsMesh.count = windowIndex;
+      windowsMesh.instanceMatrix.needsUpdate = true;
+      world.add(buildings, windowsMesh);
     }
   }
-  const treeMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 });
-  const treeGeometries = [treeGeometry('conifer'), treeGeometry('broadleaf')];
-  const treeCells = new Map(), cellSize = 400;
-  for (const spot of spots) {
-    const [x, y] = spot, species = spot[4] < 0.45 ? 0 : 1;
-    const key = `${species}:${Math.floor(x / cellSize)}:${Math.floor(y / cellSize)}`;
-    (treeCells.get(key) ?? treeCells.set(key, { species, spots: [] }).get(key)).spots.push(spot);
-  }
-  for (const { species, spots: cellSpots } of treeCells.values()) {
-    const mesh = new THREE.InstancedMesh(treeGeometries[species], treeMat, cellSpots.length);
-    cellSpots.forEach(([x, y, sc, rot, v], i) => {
-      const h = track.heightAt(track.progress(x, y));
-      dummy.position.set(x, h, -y); dummy.rotation.set(0, rot, 0); dummy.scale.set(sc, sc * (0.85 + v * 0.3), sc);
-      dummy.updateMatrix(); mesh.setMatrixAt(i, dummy.matrix);
-      const tint = 0.8 + rng() * 0.35; mesh.setColorAt(i, new THREE.Color(tint * (0.95 + rng() * 0.15), tint, tint * (0.85 + rng() * 0.15)));
-    });
-    mesh.instanceMatrix.needsUpdate = true;
-    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
-    mesh.castShadow = mesh.receiveShadow = false;
-    const center = cellSpots.reduce((sum, spot) => { sum.x += spot[0]; sum.z -= spot[1]; return sum; }, new THREE.Vector3());
-    if (cellSpots.length) center.multiplyScalar(1 / cellSpots.length);
-    world.userData.detailLod.push({ mesh, center, maxDistance: 1000, radius: cellSize * Math.SQRT2 / 2 });
-    world.add(mesh);
+
+  // Hill ring beyond the circuit.
+  if (!urban) {
+    const hillGeo = new THREE.BufferGeometry(), hp = [], hc = [], hi = [], A = 160, R = 7, r0 = extent + 450;
+    const forest = new THREE.Color(0x2c4a2a), meadow = new THREE.Color(0x5d7a3e);
+    for (let a = 0; a <= A; a++) for (let r = 0; r < R; r++) {
+      const th = a / A * Math.PI * 2, rr = r0 + r * 90;
+      const h = (45 + 30 * Math.sin(th * 3 + 1) + 20 * Math.sin(th * 7 + 2) + 10 * Math.sin(th * 17)) * Math.pow(r / (R - 1), 0.7);
+      hp.push(cx + Math.cos(th) * rr, h - 1, -cy + Math.sin(th) * rr);
+      const c = meadow.clone().lerp(forest, Math.min(1, r / 2 + 0.2 * Math.sin(th * 23))); hc.push(c.r, c.g, c.b);
+      if (a && r) { const k = a * R + r, j = k - R; hi.push(j - 1, k - 1, j, j, k - 1, k); }
+    }
+    hillGeo.setAttribute('position', new THREE.Float32BufferAttribute(hp, 3));
+    hillGeo.setAttribute('color', new THREE.Float32BufferAttribute(hc, 3));
+    hillGeo.setIndex(hi); hillGeo.computeVertexNormals();
+    world.add(new THREE.Mesh(hillGeo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, side: THREE.DoubleSide })));
+
+    // Tree clusters anywhere at least 20 m clear of the road.
+    const rng = (() => { let s = 11; return () => (s = (s * 16807) % 2147483647) / 2147483647; })();
+    const spots = [];
+    for (let tries = 0; spots.length < 900 && tries < 600; tries++) {
+      const tx = cx + (rng() - 0.5) * (maxX - minX + 300), ty = cy + (rng() - 0.5) * (maxY - minY + 300), m = 3 + Math.floor(rng() * 9);
+      for (let i = 0; i < m; i++) {
+        const x = tx + (rng() - 0.5) * 40, y = ty + (rng() - 0.5) * 40;
+        if (Math.abs(track.offset(x, y)) > half + 20) spots.push([x, y, 0.75 + rng() * 0.6, rng() * Math.PI * 2, rng()]);
+      }
+    }
+    const treeMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 });
+    const treeGeometries = [treeGeometry('conifer'), treeGeometry('broadleaf')];
+    const treeCells = new Map(), cellSize = 400;
+    for (const spot of spots) {
+      const [x, y] = spot, species = spot[4] < 0.45 ? 0 : 1;
+      const key = `${species}:${Math.floor(x / cellSize)}:${Math.floor(y / cellSize)}`;
+      (treeCells.get(key) ?? treeCells.set(key, { species, spots: [] }).get(key)).spots.push(spot);
+    }
+    for (const { species, spots: cellSpots } of treeCells.values()) {
+      const mesh = new THREE.InstancedMesh(treeGeometries[species], treeMat, cellSpots.length);
+      cellSpots.forEach(([x, y, sc, rot, v], i) => {
+        const h = track.heightAt(track.progress(x, y));
+        dummy.position.set(x, h, -y); dummy.rotation.set(0, rot, 0); dummy.scale.set(sc, sc * (0.85 + v * 0.3), sc);
+        dummy.updateMatrix(); mesh.setMatrixAt(i, dummy.matrix);
+        const tint = 0.8 + rng() * 0.35; mesh.setColorAt(i, new THREE.Color(tint * (0.95 + rng() * 0.15), tint, tint * (0.85 + rng() * 0.15)));
+      });
+      mesh.instanceMatrix.needsUpdate = true;
+      if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+      mesh.castShadow = mesh.receiveShadow = false;
+      const center = cellSpots.reduce((sum, spot) => { sum.x += spot[0]; sum.z -= spot[1]; return sum; }, new THREE.Vector3());
+      if (cellSpots.length) center.multiplyScalar(1 / cellSpots.length);
+      world.userData.detailLod.push({ mesh, center, maxDistance: 1000, radius: cellSize * Math.SQRT2 / 2 });
+      world.add(mesh);
+    }
   }
   Object.assign(world.userData, { center: [cx, cy], extent });
   return world;

@@ -226,7 +226,7 @@ import { DEFAULT_CAR, TIRE_COMPOUNDS, shift } from './src/physics.mjs?v=20261103
 import { createRace, DEFAULT_GRID } from './src/race.mjs?v=20261103-5';
 import { buildF1Car } from './src/car3d.mjs';
 import { loadRB22Template, buildRB22Car, STEERING_RATIO, DRIVER_SUIT_STYLES, createDriverSuitTexture } from './src/rb22.mjs?v=20261103';
-import { buildWorld, buildCircuitWorld, updateWorldDetailLod, worldDetailsInRadius } from './src/world3d.mjs?v=20261103-3';
+import { buildWorld, buildCircuitWorld, updateWorldDetailLod, worldDetailsInRadius } from './src/world3d.mjs?v=20261103-8';
 import { mergeGeometries } from './vendor/BufferGeometryUtils.js';
 import { makeMirror } from './src/mirror3d.mjs';
 import { GLTFLoader } from './vendor/GLTFLoader.js';
@@ -1197,7 +1197,7 @@ Object.assign(sun.shadow.camera, { left: -14, right: 14, top: 14, bottom: -14, n
 sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.02;
 scene.add(sun, sun.target);
 const boxColors = [0x39e0ae, ...DEFAULT_GRID.map(g => g.color)];
-const world = circuitKey ? buildCircuitWorld(track, { boxColors, night: nightTrack }) : buildWorld({ halfStraight, radius, roadWidth, boxColors });
+const world = circuitKey ? buildCircuitWorld(track, { boxColors, night: nightTrack, urban: circuitKey === 'monaco' }) : buildWorld({ halfStraight, radius, roadWidth, boxColors });
 scene.add(world);
 const rainCount = 180, rainDrops = Array.from({ length: rainCount }, () => ({
   x: (Math.random() - 0.5) * 44, y: 1 + Math.random() * 28, z: (Math.random() - 0.5) * 44,
