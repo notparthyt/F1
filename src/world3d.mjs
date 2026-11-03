@@ -82,7 +82,7 @@ export function buildWorld({ halfStraight, radius, roadWidth, boxColors = [] }) 
   sky.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
   world.add(new THREE.Mesh(sky, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide, fog: false, depthWrite: false })));
 
-  const grass = urban ? null : texture(256, (g, s) => {
+  const grass = texture(256, (g, s) => {
     noise(g, s, '#3f6b2e', 0.25, 9000);
     for (let i = 0; i < s; i += 64) { g.fillStyle = 'rgba(255,255,255,0.035)'; g.fillRect(0, i, s, 32); }
   }, 300, 300);
@@ -147,7 +147,7 @@ export function buildWorld({ halfStraight, radius, roadWidth, boxColors = [] }) 
   }
   // Grandstands outside the main straight: seated crowd on the treads/risers,
   // concrete end walls, back wall, roof columns so nothing floats.
-  const crowd = urban ? null : texture(512, (g, s) => {
+  const crowd = texture(512, (g, s) => {
     g.fillStyle = '#2a3440'; g.fillRect(0, 0, s, s);
     const seat = s / 16;
     for (let i = 0; i < 16; i++) {
@@ -160,9 +160,9 @@ export function buildWorld({ halfStraight, radius, roadWidth, boxColors = [] }) 
       g.beginPath(); g.arc(x + seat / 2, s * 0.26, seat * 0.26, 0, Math.PI * 2); g.fill();
     }
   }, 110 / 8, 1);
-  const concrete = urban ? null : new THREE.MeshStandardMaterial({ map: texture(128, (g, s) => noise(g, s, '#a7aaa6', 0.18, 3000), 4, 2), roughness: 0.95 });
-  const crowdMat = urban ? null : new THREE.MeshStandardMaterial({ map: crowd, roughness: 0.9 });
-  const stepMats = urban ? [] : [concrete, concrete, crowdMat, concrete, concrete, crowdMat];
+  const concrete = new THREE.MeshStandardMaterial({ map: texture(128, (g, s) => noise(g, s, '#a7aaa6', 0.18, 3000), 4, 2), roughness: 0.95 });
+  const crowdMat = new THREE.MeshStandardMaterial({ map: crowd, roughness: 0.9 });
+  const stepMats = [concrete, concrete, crowdMat, concrete, concrete, crowdMat];
   const roofMat = new THREE.MeshStandardMaterial({ color: 0xe6e9ec, roughness: 0.5, side: THREE.DoubleSide });
   const z0 = radius + half + 18, zFront = z0 - 1, zBack = z0 + 15, roofY = 14;
   const endShape = new THREE.Shape();
