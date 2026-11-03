@@ -198,6 +198,23 @@ header{position:absolute;top:0;left:0;right:0;z-index:20}main{height:100vh}.tag,
   </section>
   <div class="menu-bottom"><div class="menu-credit"><details><summary>Credits</summary><p>C1 · CursorRacing · notparthyt · CR<br>Built with Three.js and original vehicle simulation code.</p></details></div><span>CURSORRACING</span></div>
 </div>
+<script>
+(() => {
+  const showMenu = screen => {
+    document.getElementById('home-screen').hidden = screen !== 'home';
+    document.getElementById('singleplayer-screen').hidden = screen !== 'singleplayer';
+    document.getElementById('settings-screen').hidden = screen !== 'settings';
+    document.getElementById('menu-screen').hidden = false;
+  };
+  document.getElementById('menu-singleplayer').addEventListener('click', () => showMenu('singleplayer'));
+  document.getElementById('menu-settings').addEventListener('click', () => showMenu('settings'));
+  document.querySelectorAll('[data-menu-back]').forEach(button => button.addEventListener('click', () => showMenu('home')));
+  document.querySelectorAll('[data-settings-tab]').forEach(button => button.addEventListener('click', () => {
+    document.querySelectorAll('[data-settings-tab]').forEach(tab => tab.setAttribute('aria-selected', String(tab === button)));
+    document.querySelectorAll('[data-settings-pane]').forEach(pane => { pane.hidden = pane.dataset.settingsPane !== button.dataset.settingsTab; });
+  }));
+})();
+</script>
 <div id="loading-screen" hidden role="status" aria-live="polite">
   <div class="loading-card"><strong>Loading circuit</strong><span id="loading-detail">Preparing race assets…</span><div class="loading-track"><div id="loading-progress"></div></div><b id="loading-percent">0%</b></div>
 </div>
@@ -2499,6 +2516,8 @@ $('start-race').onclick = () => {
   location.search = query.toString();
 };
 $('save-settings').onclick = saveSettings;
+if (!$('singleplayer-screen').hidden) $('menu-singleplayer').onclick();
+else if (!$('settings-screen').hidden) populateSettingsForm();
 renderKeybinds(settingsDraft);
 const startupQuery = new URLSearchParams(location.search);
 if (startupQuery.has('start')) {
