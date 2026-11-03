@@ -506,6 +506,7 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
     const others = entries.filter(other => other !== e && !other.retired && (pitApron(other.car) === pitApron(car) || (e.pit?.phase === 'in' && pitApron(other.car)))).map(other => {
       const otherPosition = position(other.car);
       return { gap: signed(other.covered - e.covered), offset: circuit ? otherPosition.offset - track.lineOffset(otherPosition.progress) : otherPosition.offset, s: circuit && otherPosition.progress, centre: otherPosition.offset, pitOffset: pit ? pitSide * otherPosition.offset : 0, lane: other.lane, pitIn: other.pit?.phase === 'in', index: other.index, ax: other.car.ax,
+        incident: time >= lightsOut && !other.pit && other.car.contact?.speed >= o.yellowFlagContactSpeed && time - other.car.contact.time <= 3,
         // Diving down the inside of this car, alongside (it must yield), or of any car.
         claim: other.dive?.rival === e.index && other.dive.overlap, diving: !!other.dive,
         // Committed to a dive on this car: it will be alongside within diveReach s.
@@ -516,12 +517,14 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
         speed: Math.max(0, other.car.telemetry.speed + Math.min(0, other.car.ax
           + (circuit ? e.drive.brakeDecel(car.config, other.car.telemetry.speed) : 0)) * o.anticipation) };
     });
+    const incidentAhead = others.filter(x => x.incident && x.gap > 0 && x.gap < lookAhead)
+      .sort((a, b) => a.gap - b.gap)[0] ?? null;
     const { toCorner, fromCorner } = corners(car);
     // A slow car (e.g. stuck behind a stopped one) may move anywhere; on a
     // circuit only where its plan is not slow anyway (not in a hairpin, where
     // that would let cars run side by side through the corner).
     const slow = speed < 30 && (!circuit || e.drive.planSpeed(car, progressOf(car)) > 30);
-    const canMove = !underSafetyCar && (toCorner > o.passCutoff || slow);
+    const canMove = !underSafetyCar && !incidentAhead && (toCorner > o.passCutoff || slow);
     // No new lane change in the first exitClear metres of a straight (still
     // unwinding the steering under power out of the corner) unless slow.
     const canChange = canMove && (fromCorner > o.exitClear || slow);
@@ -776,7 +779,10 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
     // Also respect whoever is in the strip the car is steering for, and (down
     // to a nose-to-tail gap, then creeping) the strip it actually occupies.
     const occupied = Math.max(o.creepSpeed, cap(rel(car), car.config.bodyFront + car.config.bodyRear + 1));
-    const maxSpeed = Math.min(current, cap(e.offset), occupied, e.finish ? o.coolDownSpeed : Infinity, safetyCarSpeedLimit(e));
+    const incidentSpeed = incidentAhead
+      ? follow(incidentAhead.speed, incidentAhead.gap - carLength - o.followGap)
+      : Infinity;
+    const maxSpeed = Math.min(current, cap(e.offset), occupied, incidentSpeed, e.finish ? o.coolDownSpeed : Infinity, safetyCarSpeedLimit(e));
     return e.drive(car, { offset: path, lane: circuit ? e.lane : 0, late: !!e.dive, maxSpeed, grip });
   }
 

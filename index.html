@@ -171,7 +171,7 @@ header{position:absolute;top:0;left:0;right:0;z-index:20}main{height:100vh}.tag,
     <section class="settings-pane" data-settings-pane="graphics" hidden>
       <label class="menu-field">Graphics quality<select id="setting-graphics"><option value="ultra">Ultra Max Graphics</option><option value="max">Max</option><option value="high">High</option><option value="default">Default</option><option value="mid">Low (Mid Optimized)</option><option value="max-optimized">Max Optimized</option></select></label>
       <label class="menu-switch"><span>Original car</span><input id="setting-original-car" type="checkbox"></label>
-      <label class="menu-field">Custom livery<input id="setting-livery" type="file" accept="image/*"><small>Choose an image to crop and preview as your car livery. Works together with Your Name Livery.</small><canvas id="livery-preview" hidden></canvas></label>
+      <label class="menu-field">Custom livery<input id="setting-livery" type="file" accept="image/*"><button id="remove-livery" type="button" disabled>Remove custom livery</button><small>Choose an image to crop and preview as your car livery. Works together with Your Name Livery.</small><canvas id="livery-preview" hidden></canvas></label>
       <label class="menu-switch"><span>Your Name Livery <small>Use your profile name on the car alongside a custom livery</small></span><input id="setting-name-livery" type="checkbox"></label>
     </section>
     <section class="settings-pane" data-settings-pane="gameplay" hidden>
@@ -223,7 +223,7 @@ header{position:absolute;top:0;left:0;right:0;z-index:20}main{height:100vh}.tag,
 import * as THREE from './vendor/three.module.js';
 import { RoomEnvironment } from './vendor/RoomEnvironment.js';
 import { DEFAULT_CAR, TIRE_COMPOUNDS, shift } from './src/physics.mjs?v=20261103-2';
-import { createRace, DEFAULT_GRID } from './src/race.mjs?v=20261103-3';
+import { createRace, DEFAULT_GRID } from './src/race.mjs?v=20261103-5';
 import { buildF1Car } from './src/car3d.mjs';
 import { loadRB22Template, buildRB22Car, STEERING_RATIO, DRIVER_SUIT_STYLES, createDriverSuitTexture } from './src/rb22.mjs?v=20261103';
 import { buildWorld, buildCircuitWorld, updateWorldDetailLod, worldDetailsInRadius } from './src/world3d.mjs?v=20261103-3';
@@ -235,7 +235,7 @@ import { createCircuitTrack } from './src/circuit.mjs';
 import { CIRCUITS } from './src/circuits.mjs';
 import { CIRCUIT_PIT_SIDES, CIRCUIT_PIT_TUNNELS } from './src/pitconfig.mjs';
 import { CIRCUIT_ELEVATION_PROFILES, NIGHT_CIRCUITS, startingTyreForTrack, weatherOptionsForTrack } from './src/trackdata.mjs';
-import { createTimeTrial } from './src/trial.mjs?v=20261103-2';
+import { createTimeTrial } from './src/trial.mjs?v=20261103-3';
 import { createLapTimer, formatLapTime } from './src/laptimer.mjs';
 import { applyArcadeSteeringAssist, createDriverInput, readGamepad } from './src/input.mjs';
 import { createSoundModel, createAudioEngine } from './src/audio.mjs?v=20261103';
@@ -835,7 +835,7 @@ function changeLook360() {
   canvas.style.touchAction = look360 ? 'none' : '';
   if (look360) {
     overview = cockpit = tcam = false;
-    lookYaw = sim.car.heading - Math.PI / 2;
+    lookYaw = 0;
   }
   snapCamera = true;
   updateCameraButtons();
@@ -1457,6 +1457,21 @@ function setTcam({ mount, lookAt, fov } = {}) {
   }
   return { mount: tcamConfig.mount.toArray(), lookAt: tcamConfig.lookAt.toArray(), fov: tcamConfig.fov };
 }
+function visorCameraPosition() {
+  model.group.updateMatrixWorld(true);
+  return model.group.worldToLocal(model.visor.getWorldPosition(new THREE.Vector3())).toArray();
+}
+function setVisorCamera(position) {
+  if (!Array.isArray(position) || position.length !== 3 || !position.every(Number.isFinite))
+    throw new TypeError('Visor camera position must be a three-number array in metres');
+  for (const car of cars) {
+    car.model.group.updateMatrixWorld(true);
+    const worldPosition = car.model.group.localToWorld(new THREE.Vector3(...position));
+    car.model.visor.parent.worldToLocal(worldPosition);
+    car.model.visor.position.copy(worldPosition);
+  }
+  return visorCameraPosition();
+}
 function placeScene(dt) {
   const c = sim.car, g = model.group;
   sun.position.set(c.x + 35, 70, -c.y + 25); sun.target.position.copy(g.position);
@@ -1518,13 +1533,14 @@ function placeScene(dt) {
     else { camera.position.set(0, 300, 420); camera.lookAt(0, 0, 0); }
   } else if (look360) {
     camera.fov = 58; camera.near = 0.1; camera.up.set(0, 1, 0);
-    const target = look.copy(g.position).setY(0.85);
+    g.updateMatrixWorld(true);
+    const target = look.copy(g.localToWorld(chase.set(0, 0.85, 0)));
     const horizontal = lookDistance * Math.cos(lookPitch);
-    camera.position.set(
-      target.x + Math.sin(lookYaw) * horizontal,
-      target.y + lookDistance * Math.sin(lookPitch),
-      target.z + Math.cos(lookYaw) * horizontal,
-    );
+    camera.position.copy(g.localToWorld(chase.set(
+      -Math.cos(lookYaw) * horizontal,
+      lookDistance * Math.sin(lookPitch),
+      Math.sin(lookYaw) * horizontal,
+    )));
     camera.lookAt(target);
   } else if (cockpit) {
     camera.fov = 72; camera.near = 0.03;
@@ -1539,10 +1555,10 @@ function placeScene(dt) {
   } else {
     camera.near = 0.1;
     camera.fov = 58;
-    const target = look.copy(g.position).addScaledVector(forward, -7).setY(2.2);
-    chase.copy(target);
-    camera.position.copy(chase);
-    camera.lookAt(look.copy(g.position).addScaledVector(forward, 4).setY(0.8));
+    g.updateMatrixWorld(true);
+    camera.position.copy(g.localToWorld(chase.set(-7, 2.2, 0)));
+    const focus = g.localToWorld(look.set(4, 0.8, 0));
+    camera.lookAt(focus);
   }
   snapCamera = false;
   camera.updateProjectionMatrix();
@@ -2263,6 +2279,7 @@ function populateSettingsForm(source = gameSettings) {
   $('setting-trackside').checked = settingsDraft.trackside;
   $('setting-driver-name').value = settingsDraft.driverName;
   $('setting-livery').disabled = settingsDraft.originalCar;
+  $('remove-livery').disabled = !settingsDraft.customLivery;
   drawLiveryPreview(settingsDraft.customLivery);
   $('settings-notice').textContent = '';
   renderKeybinds(settingsDraft);
@@ -2437,6 +2454,7 @@ $('setting-livery').addEventListener('change', async event => {
     pendingCustomLiveryTexture.colorSpace = THREE.SRGBColorSpace;
     pendingCustomLiveryTexture.anisotropy = 8;
     drawLiveryPreview(settingsDraft.customLivery);
+    $('remove-livery').disabled = false;
     setSettingsDirty();
   } catch (error) {
     console.error('Could not process custom livery image', error);
@@ -2445,6 +2463,17 @@ $('setting-livery').addEventListener('change', async event => {
     URL.revokeObjectURL(url);
   }
 });
+$('remove-livery').onclick = () => {
+  settingsDraft.customLivery = null;
+  pendingCustomLiveryTexture?.dispose();
+  pendingCustomLiveryTexture = null;
+  $('setting-livery').value = '';
+  $('remove-livery').disabled = true;
+  const preview = $('livery-preview');
+  preview.getContext('2d').clearRect(0, 0, preview.width, preview.height);
+  preview.hidden = true;
+  setSettingsDirty();
+};
 $('menu-track-select').onchange = updateMenuMapPreview;
 $('start-race').onclick = () => {
   const laps = Math.max(3, Math.min(99, Math.round(Number($('menu-laps').value) || 3)));
@@ -2485,6 +2514,8 @@ if (loadingScreenRequested && assetsLoaded) setTimeout(() => { $('loading-screen
 window.f1Lab = {
   tcam: () => setTcam(),
   setTcam,
+  visorCamera: visorCameraPosition,
+  setVisorCamera,
   rearFlap: () => ({ pivotOffset: [...model.drsFlap.userData.pivotOffset], angle: model.drsFlap.userData.angleDegrees }),
   setRearFlap: ({ pivotOffset = [0, 0.095, -0.145], angle = -210 } = {}) => {
     const result = cars.map(car => car.model.setRearFlap({ pivotOffset, angle }))[0];

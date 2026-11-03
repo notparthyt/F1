@@ -64,6 +64,7 @@ test('finished-race on-foot mode is not auto-paused on blur', () => {
 
 test('time-trial pit staging resets the car pose and progress baseline', () => {
   const track = createCircuitTrack(CIRCUITS.monza), trial = createTimeTrial(track);
+  assert.deepEqual(trial.entries[0].penaltyEvents, []);
   const progress = track.pit.boxStart, offset = track.pit.side * track.pit.boxOffset;
   const [x, y] = track.point(progress, offset), heading = track.heading(progress);
   trial.car.vx = 15; trial.car.vy = 4;

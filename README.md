@@ -30,14 +30,16 @@ real racing-line data.
   standings, pit stops, tyre compounds, fuel, ERS, DRS, changing weather, and
   safety-car periods. Q1, Q2, and Q3 set the race grid; each player session
   starts on fresh Soft tyres, and tyre wear begins with the main race.
-- **3D cameras:** cockpit, chase, T-Cam, overview, and 360 Look. A separate
-  trackside TV camera can record the race to WebM.
+- **3D cameras:** cockpit, chase, T-Cam, overview, and a car-following 360
+  Look. Chase and free cameras follow track elevation. A separate trackside TV
+  camera can record the race to WebM.
 - **Car details:** animated driver and steering wheel, cockpit mirrors, and
-  player livery selection.
+  player livery selection with an option to remove a saved custom livery.
 - **Telemetry:** live speed, lap times, vehicle dynamics, and tyre information.
 - **Graphics:** Default, Mid Optimized, and Max Optimized performance presets.
 - **Race control:** penalty and safety-car notices, a text-only team engineer,
-  position-redress checks, and pit-lane speed assistance.
+  position-redress checks, pit-lane speed assistance, and AI caution near a
+  recent severe collision.
 
 ## Run locally
 
@@ -143,6 +145,12 @@ complete a lap first.
 DRS, brake-only, ERS, emote, dress, and camera keys can be reassigned in Settings.
 WASD throttle and steering keys remain fixed. Pedals and keyboard steering
 ramp up and down rather than switching instantly.
+
+To adjust the visor camera live, open the browser developer console and inspect
+`window.f1Lab.visorCamera()` for its current position in car-local metres
+(forward, up, sideways). Set a new position with
+`window.f1Lab.setVisorCamera([x, y, z])`; the adjustment applies to every car
+model for the current page session.
 
 ## Gamepad controls
 

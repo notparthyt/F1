@@ -130,6 +130,42 @@ test('AI cars pass a car stopped on the racing line', () => {
   assert.ok(standings.slice(0, -1).every(s => s.lap >= 4), JSON.stringify(standings));
 });
 
+test('AI slows and holds its lane when approaching a recent major collision', () => {
+  const race = createRace(track, { grid: DEFAULT_GRID.slice(0, 1), drs: false });
+  const [player, ai] = race.entries;
+  Object.assign(player.car, { x: 20, y: -track.radius, heading: 0 });
+  Object.assign(ai.car, { x: -20, y: -track.radius, heading: 0, vx: 45, vy: 0 });
+  player.covered = 100;
+  ai.covered = 60;
+  player.car.contact = { speed: RACE_DEFAULTS.yellowFlagContactSpeed, time: 0 };
+  ai.car.telemetry.speed = 45;
+  ai.lane = 0;
+  ai.offset = 0;
+
+  const command = race.aiCommand(ai.index);
+
+  assert.equal(ai.lane, 0);
+  assert.ok(command.brake > 0, `brake ${command.brake.toFixed(2)}`);
+});
+
+test('AI incident avoidance does not alter its standing-start behavior', () => {
+  const createStart = withIncident => {
+    const race = createRace(track, { grid: DEFAULT_GRID.slice(0, 1), start: { seed: 7 }, drs: false });
+    const [player, ai] = race.entries;
+    player.car.contact = withIncident
+      ? { speed: RACE_DEFAULTS.yellowFlagContactSpeed, time: race.time }
+      : null;
+    Object.assign(ai.car, { vx: 45, vy: 0 });
+    ai.car.telemetry.speed = 45;
+    ai.lane = 0;
+    ai.offset = 0;
+    return { race, ai };
+  };
+  const control = createStart(false), incident = createStart(true);
+  assert.deepEqual(incident.race.aiCommand(incident.ai.index), control.race.aiCommand(control.ai.index));
+  assert.equal(incident.ai.lane, control.ai.lane);
+});
+
 function runStart(seconds, input, seed = 7, options = {}) {
   const race = createRace(track, { start: { seed }, options });
   const lit = new Map();

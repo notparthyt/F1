@@ -24,7 +24,7 @@ export function createTimeTrial(track, { tyre = 'medium', runUp = 150, car: carS
   const drsZones = findDrsZones(track);
   let accumulator = 0, last = track.progress(car.x, car.y);
   const entry = { name: 'You', player: true, index: 0, car, command: null, stops: [], compounds: [tyre], pit: null, pitVisit: null, pitRequest: null,
-    jumpStart: false, reaction: null, penalty: 0, lane: 0, drsAllowed: false, drsGap: null };
+    jumpStart: false, reaction: null, penalty: 0, penaltyEvents: [], lane: 0, drsAllowed: false, drsGap: null };
   return {
     car, entries: [entry], drive, time: 0, pit: null, options: {}, drsZones, drsEnabled: true,
     start: { enabled: false, phase: 'race', lit: 0, lightsOut: 0, sinceLightsOut: Infinity },
