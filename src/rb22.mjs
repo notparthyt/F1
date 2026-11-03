@@ -677,6 +677,7 @@ export function buildRB22Car(template, config, { paint = 0x0e1626, accent = 0x39
   const eye = driverHead
     ? car.worldToLocal(driverHead.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0, 0.07, 0)))
     : new THREE.Vector3(sc.x - 0.55, 0.77, 0);
+  const visorEye = new THREE.Vector3(0.6, 0.8, 0.005);
 
   const gameAppearance = new Map();
   root.traverse(o => {
@@ -763,7 +764,7 @@ export function buildRB22Car(template, config, { paint = 0x0e1626, accent = 0x39
   const visor = new THREE.Object3D();
   if (driverHead) {
     car.updateMatrixWorld(true);
-    visor.position.copy(driverHead.worldToLocal(car.localToWorld(new THREE.Vector3(...eye))));
+    visor.position.copy(driverHead.worldToLocal(car.localToWorld(visorEye)));
     const cameraTilt = new THREE.Quaternion().setFromEuler(
       new THREE.Euler(-4 * Math.PI / 180, -Math.PI / 2, 0, 'YXZ'),
     );
@@ -772,7 +773,7 @@ export function buildRB22Car(template, config, { paint = 0x0e1626, accent = 0x39
     visor.quaternion.copy(headRotationAtRest.multiply(cameraRotationAtRest));
     driverHead.add(visor);
   } else {
-    visor.position.copy(eye);
+    visor.position.copy(visorEye);
     body.add(visor);
   }
   visor.name = 'driver-visor-camera';
