@@ -595,8 +595,8 @@ function finishQualifying() {
 }
 function raceOptions(query) {
   return {
-    penaltiesEnabled: opponents || !query.has('nopenalties'),
-    ...(!opponents && query.has('noretire') ? { crashRetireSpeed: Infinity, retireAfter: Infinity, recoveryTimeout: Infinity } : {}),
+    penaltiesEnabled: opponents && !query.has('nopenalties'),
+    ...(opponents && query.has('noretire') ? { crashRetireSpeed: Infinity, retireAfter: Infinity, recoveryTimeout: Infinity } : {}),
   };
 }
 function completeQualifyingStage(stage) {
@@ -667,10 +667,38 @@ function reset() {
   const query = new URLSearchParams(location.search), requestedTyre = TIRE_COMPOUNDS[query.get('tyre')] ? query.get('tyre') : 'medium';
   const tyre = opponents ? 'soft' : requestedTyre;
   weather = weatherForTrack();
-  if (opponents) {
+  let raceSkins = cars.map((_, i) => i);
+  if (opponents && !query.has('noqual')) {
     qualifying = createQualifyingState(query);
     sim = createRace(track, { grid: [], start: false, laps: 0, fuel: false, tireWear: false, player: { tyres: ['soft', 'soft'] } });
     prepareFreshSoftTyres(sim, { lockGrip: true });
+    timer = createLapTimer(track, circuitKey ? { lineProgress: 0 } : undefined);
+  } else if (opponents) {
+    qualifying = null;
+    const gridOrder = DEFAULT_GRID.map((spec, id) => ({ spec, id }));
+    for (let i = gridOrder.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [gridOrder[i], gridOrder[j]] = [gridOrder[j], gridOrder[i]];
+    }
+    const grid = gridOrder.map(({ spec }) => {
+      const startingTyre = startingTyreForTrack(circuitKey);
+      return { ...spec, tyres: [startingTyre, startingTyre === 'soft' ? 'hard' : 'soft'] };
+    });
+    const playerGridSlot = Math.random() < 0.05
+      ? Math.floor(Math.random() * 6)
+      : 6 + Math.floor(Math.random() * (grid.length - 5));
+    const startingTyre = startingTyreForTrack(circuitKey);
+    sim = createRace(track, {
+      grid,
+      playerGridSlot,
+      start: true,
+      laps: Math.max(3, Number(query.get('laps')) || (circuitKey ? 3 : 10)),
+      compoundRule: true,
+      tireWear: true,
+      options: raceOptions(query),
+      player: { name: gameSettings.driverName, tyres: [startingTyre, startingTyre === 'soft' ? 'hard' : 'soft'] },
+    });
+    raceSkins = [0, ...gridOrder.map(({ id }) => id + 1)];
     timer = createLapTimer(track, circuitKey ? { lineProgress: 0 } : undefined);
   } else {
     qualifying = null;
@@ -685,7 +713,7 @@ function reset() {
   lastOnFootPoseAt = 0;
   handlingBaseline = captureHandlingBaseline(sim.entries);
   applyHandlingMode();
-  wearSkins(cars.map((_, i) => i));
+  wearSkins(raceSkins);
   cars.forEach((r, i) => { r.model.group.visible = !i || (opponents && qualifying?.stage === 'race'); r.wheelAngle.fill(0); });
   playerAvatar.visible = avatarLoaded;
   setPlayerDriverVisible(false);
@@ -2345,11 +2373,11 @@ $('menu-singleplayer').onclick = () => {
   showMenu('singleplayer');
 };
 function updateOpponentOptions() {
-  const required = $('menu-opponents').checked;
+  const enabled = $('menu-opponents').checked;
   for (const id of ['menu-qualifying', 'menu-retirements', 'menu-penalties']) {
     const option = $(id);
-    if (required) option.checked = true;
-    option.disabled = required;
+    if (!enabled) option.checked = false;
+    option.disabled = !enabled;
   }
 }
 $('menu-opponents').onchange = () => { updateOpponentOptions(); updateMenuMapPreview(); };
@@ -2434,9 +2462,9 @@ $('start-race').onclick = () => {
   }
   query.set('laps', String(laps));
   query.set('start', '1');
-  if (hasOpponents || $('menu-qualifying').checked) query.delete('noqual'); else query.set('noqual', '');
-  if (hasOpponents || $('menu-retirements').checked) query.delete('noretire'); else query.set('noretire', '');
-  if (hasOpponents || $('menu-penalties').checked) query.delete('nopenalties'); else query.set('nopenalties', '');
+  if (hasOpponents && $('menu-qualifying').checked) query.delete('noqual'); else query.set('noqual', '');
+  if (hasOpponents && $('menu-retirements').checked) query.delete('noretire'); else query.set('noretire', '');
+  if (hasOpponents && $('menu-penalties').checked) query.delete('nopenalties'); else query.set('nopenalties', '');
   location.search = query.toString();
 };
 $('save-settings').onclick = saveSettings;

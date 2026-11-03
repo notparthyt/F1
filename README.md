@@ -66,12 +66,14 @@ the files excluded from that deployment are listed in `.assetsignore`.
 ## Getting started
 
 1. Choose **Singleplayer**, select a circuit, and set at least three laps.
-   Turning opponents on requires qualifying, DNF retirements, and penalties;
-   turn opponents off to configure those options independently. Multiplayer
-   is marked as coming soon. Use the gear icon for controls, graphics,
+   With opponents on, configure qualifying, DNF retirements, and penalties
+   independently. Turning opponents off disables and locks those options;
+   races without qualifying use a randomized grid. Multiplayer is marked as
+   coming soon. Use the gear icon for controls, graphics,
    gameplay, keybind, and driver-profile settings.
-2. With opponents enabled, Q1–Q3 set the grid. Your driver spawns beside the
-   car; click the viewport to aim at it and press **L** to enter.
+2. With qualifying enabled, Q1–Q3 set the grid; otherwise, the AI grid is
+   randomized. Your driver spawns beside the car; click the viewport to aim at
+   it and press **L** to enter.
 3. Drive with **W / ↑** to accelerate, **S / ↓** to brake and select reverse
    at a stop, and **A / D** or **← / →** to steer. Press **Esc** to pause;
    choose **Exit to main menu** in the pause menu to return.
