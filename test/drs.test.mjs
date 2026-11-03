@@ -46,32 +46,26 @@ function run(race, seconds, input = () => null) {
   return { opened, allowed };
 }
 
-test('a car within a second at the detection point gets DRS in the zone; the car ahead does not', () => {
-  const race = behind({ drsEnableLaps: 0 });
-  const zone = race.drsZones[1], follower = race.entries[0];
-  const { opened } = run(race, 20);
-  assert.ok(follower.drsGap > 0 && follower.drsGap < 1, `gap ${follower.drsGap}`);
-  assert.deepEqual(opened, [true, false]);
-  assert.ok(zone.start > 440 && zone.end > zone.start, 'back straight zone');
+test('race DRS opens anywhere on request without a lap or one-second-gap restriction', () => {
+  const race = behind(), player = race.entries[0];
+  [player.car.x, player.car.y] = [-100, -90];
+  race.advance(1 / 240, { throttle: 1, drs: true }, track.surfaceAt, track.barrierAt);
+  assert.equal(player.drsAllowed, true);
+  assert.ok(player.car.drs > 0);
 });
 
-test('DRS waits for the enabling laps and is absent when the race turns it off', () => {
-  assert.deepEqual(run(behind(), 40).opened, [false, false], 'not on the opening laps');
+test('DRS is absent when the race turns it off', () => {
   const off = behind({ drsEnableLaps: 0 }, { drs: false });
   assert.equal(off.drsZones.length, 0);
   assert.deepEqual(run(off, 20).opened, [false, false]);
 });
 
-test('a driving player opens DRS only on request and only where it is allowed', () => {
+test('a driving player opens DRS only on request', () => {
   for (const want of [false, true]) {
-    const race = behind({ drsEnableLaps: 0 });
-    const { opened } = run(race, 20, r => r.entries[0].drsAllowed ? { ...r.aiCommand(0), drs: want } : null);
+    const race = behind();
+    const { opened } = run(race, 3, () => ({ ...race.aiCommand(0), drs: want }));
     assert.equal(opened[0], want);
   }
-  // A request outside a zone (on the first straight, no detection yet) is ignored.
-  const race = behind({ drsEnableLaps: 0 });
-  const { opened } = run(race, 3, () => ({ throttle: 1, drs: true }));
-  assert.equal(opened[0], false);
 });
 
 test('solo races allow manually requested DRS on any part of the track', () => {

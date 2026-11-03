@@ -36,9 +36,12 @@ export const RACE_DEFAULTS = Object.freeze({
   formSpread: 0.015, mistakeChance: 0.3, mistakeLoss: 0.8, mistakeTime: 1.5, wearSpread: 0.3,
   recoveryDelay: 2, recoveryTimeout: 20, recoveryMinDistance: 3, recoveryDistance: 20, recoveryAlign: 0.35, recoverySpeed: 2, recoveryAttempts: 2,
   yellowFlagDuration: 45, yellowFlagContactSpeed: 25, crashRetireSpeed: 25,
-  safetyCarSpeed: 28, safetyCarStartGap: 80, safetyCarFollowGap: 45, safetyCarTrainGap: 18, safetyCarLookAhead: 160,
+  safetyCarSpeed: 28, safetyCarStartGap: 80, safetyCarFollowGap: 45, safetyCarTrainGap: 18, safetyCarLookAhead: 160, safetyCarOvertakePenalty: 5,
   safetyCarCatchTime: 4, safetyCarMinSpeed: 5, safetyCarMaxSpeed: 40,
   safetyCarPitServiceFactor: 0.65,
+  trackLimitAdvantageDistance: 5, trackLimitPenalty: 5, repeatedTrackLimitPenalty: 10,
+  contactPenaltySpeed: 18, intentionalContactSpeed: 25, contactPenalty: 5, intentionalContactPenalty: 10,
+  penaltiesEnabled: true,
   // Pit stops (illustrative): planning decelerations to the speed-limit line
   // and to the box marks (m/s²), stationary time range (s), the window either
   // side of the box marks where the crew services a stopped car (m), the
@@ -57,18 +60,8 @@ export const RACE_DEFAULTS = Object.freeze({
   // rejoins over at least mergeSlope m per metre across to the racing line.
   pitCornerAccel: 12, pitPreview: 150, pitLimitMargin: 1.5, mergeSlope: 6,
   pitDecel: 14, boxDecel: 5, stopTimeMin: 2.1, stopTimeMax: 3.2, boxWindow: 4, pitSpeedingPenalty: 5, pitWear: 0.6, pitGap: 5, pitHeadway: 0.3, queueDistance: 200,
-  // DRS (after the 2011-25 sporting rules): a car within drsGap s of the car
-  // ahead at a zone's detection point may open its flap in that zone, once
-  // the leader has completed drsEnableLaps laps (one, as since 2024; it was
-  // two) and until the chequered flag.
-  // A circuit with real zones (track.drsZones, from race telemetry) uses
-  // them, detection drsDetection m before each opening (the real detection
-  // points are not in the data). Otherwise (illustrative placement) zones open
-  // drsZoneDelay m after a corner exit and close at the next corner: on the
-  // stadium its two straights, on a circuit the drsZones longest straights of
-  // at least drsMinStraight m, a straight being where the racing line curves
-  // no tighter than drsCurvature (1/m; looser than cornerCurvature so a zone
-  // runs on to the braking zone).
+  // Retained for visualization and track metadata; DRS is driver-requested
+  // anywhere on track and no longer requires a detection gap or zone.
   drsGap: 1, drsEnableLaps: 1, drsZoneDelay: 60, drsDetection: 150, drsZones: 2, drsMinStraight: 450, drsCurvature: 1 / 200,
 });
 
@@ -279,10 +272,11 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
     // speed and braking relative to the player's (43 m/s, 26 m/s²).
     const drive = createDrive(spec);
     return { ...spec, index: i, car, lane: 0, offset: circuit ? lane - track.lineOffset(p) : lane, last: p, covered: signed(p - startLine), grid: signed(p - startLine),
-      reactionTime: o.reactionMin + rand() * (o.reactionMax - o.reactionMin), reaction: null, jumpStart: false, penalty: 0, finish: null,
+      reactionTime: o.reactionMin + rand() * (o.reactionMax - o.reactionMin), reaction: null, jumpStart: false, penalty: 0, finish: null, safetyCarDsq: false,
+      trackLimitStart: null, trackLimitViolations: 0, contactIncidentActive: false,
       // Pit stops: own box, compounds used, completed stops, the stop in
       // progress (phase in/service/out), this pit-lane visit, player request.
-      tyres, box: pit ? pit.boxStart + pit.boxSpacing * i : null, compounds: [tyres[0]], stops: [], pit: null, pitVisit: null, pitRequest: null, drive,
+      tyres, box: pit ? pit.boxStart + pit.boxSpacing * i : null, compounds: [tyres[0]], stops: [], pit: null, pitVisit: null, pitRequest: null, penaltyEvents: [], servedPenalty: 0, safetyCarPassed: new Set(), drive,
       // DRS: zones this car may open its flap in, its latest detection gap (s).
       drsArmed: new Set(), drsGap: null,
       // AI variation: lap the form was drawn for, form, pending mistake (covered m), mistake end (s).
@@ -293,6 +287,16 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
   const passTimes = new Map(); // first time any car reached each 10 m milestone
   let accumulator = 0, time = 0, flagTime = null, environmentGrip = 1;
   let yellowFlagUntil = 0, yellowFlag = null, safetyCarProgress = null;
+  const pendingSafetyCarPasses = [], pendingCollisionReviews = [];
+  const addPenalty = (entry, seconds, reason) => {
+    if (!o.penaltiesEnabled) return;
+    entry.penalty += seconds;
+    entry.penaltyEvents.push({ time, seconds, reason });
+    if (entry.pit?.phase === 'service') {
+      entry.pit.penaltyTime += seconds;
+      entry.pit.end += seconds;
+    }
+  };
   const safetyCarActive = () => time < yellowFlagUntil;
   const deploySafetyCar = (e, reason) => {
     if (!safetyCarActive() || safetyCarProgress === null) {
@@ -308,10 +312,15 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
     const gapLimit = o.safetyCarSpeed + (gap - o.safetyCarFollowGap) / o.safetyCarCatchTime;
     const carAheadLimit = entries.reduce((limit, other) => {
       const carGap = other.covered - e.covered;
-      if (other === e || other.retired || carGap <= 0 || carGap >= o.safetyCarLookAhead) return limit;
+      const otherSafetyGap = safetyCarProgress - other.covered;
+      if (other === e || other.retired || otherSafetyGap < 0 || otherSafetyGap > o.safetyCarLookAhead
+        || carGap <= 0 || carGap >= o.safetyCarLookAhead) return limit;
       return Math.min(limit, Math.max(0, other.car.telemetry.speed + (carGap - o.safetyCarTrainGap) / o.safetyCarCatchTime));
     }, Infinity);
-    return Math.min(o.safetyCarSpeed, clamp(gapLimit, o.safetyCarMinSpeed, o.safetyCarMaxSpeed), carAheadLimit);
+    const safetyLimit = gap >= 0 && gap <= o.safetyCarLookAhead
+      ? Math.min(o.safetyCarSpeed, clamp(gapLimit, o.safetyCarMinSpeed, o.safetyCarMaxSpeed))
+      : Infinity;
+    return Math.min(safetyLimit, carAheadLimit);
   };
   const retire = (e, reason) => {
     if (e.retired) return;
@@ -340,9 +349,11 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
   const crossing = (before, after, point) => Math.floor((after - point) / length) > Math.floor((before - point) / length)
     ? (after - (Math.floor((after - point) / length) * length + point)) / (after - before) : null;
   const solo = entries.length === 1 && drs;
-  const drsEnabled = () => solo || flagTime === null && time >= lightsOut && Math.max(...entries.map(e => e.covered)) >= o.drsEnableLaps * length;
-  const drsAllowed = e => !safetyCarActive() && !e.finish && !e.pit && !e.retired
-    && (solo || drsEnabled() && [...e.drsArmed].some(z => inDrsZone(track, z, progressOf(e.car))));
+  const drsEnabled = () => drs && !safetyCarActive() && (solo || flagTime === null && time >= lightsOut);
+  const aiDrsEnabled = () => drsEnabled()
+    && (solo || Math.max(...entries.map(e => e.covered)) >= o.drsEnableLaps * length);
+  const drsAllowed = e => drsEnabled() && !e.finish && !e.pit && !e.retired
+    && (e.player || solo || aiDrsEnabled() && [...e.drsArmed].some(z => inDrsZone(track, z, progressOf(e.car))));
   function corners(car) {
     const s = progressOf(car);
     if (bends) { const i = Math.floor(s / bends.step) % bends.n; return { toCorner: bends.to[i], fromCorner: bends.since[i] }; }
@@ -368,6 +379,8 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
   const inPitLane = (car, s = pitS(car)) => s !== null && s >= pit.limitStart && s <= pit.limitEnd && pitOff(car) < -pit.inner;
   // On the pit apron side of the white line (on a circuit, only beside the pit lane).
   const pitApron = car => !!pit && pitOff(car) < -pit.inner && (!circuit || pitS(car) !== null);
+  const safetyCarPassExempt = (entry, other) => !!entry.pit || !!other.pit
+    || inPitLane(entry.car) || inPitLane(other.car) || pitApron(entry.car) || pitApron(other.car);
   // The compound a car fits at its next stop.
   const nextCompound = e => e.pitRequest ?? e.tyres[e.stops.length + 1] ?? (e.car.compound === 'hard' ? 'medium' : 'hard');
   // Path offset of a stopping car at lap progress s: from its line into the
@@ -420,7 +433,7 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
     if (s === null) e.pitVisit = null;
     if (lane) {
       e.pitVisit ??= { speeding: false, served: false };
-      if (!e.pitVisit.speeding && speed > pit.speedLimit + 0.5) { e.pitVisit.speeding = true; e.penalty += o.pitSpeedingPenalty; }
+      if (!e.pitVisit.speeding && speed > pit.speedLimit + 0.5) { e.pitVisit.speeding = true; addPenalty(e, o.pitSpeedingPenalty, 'pit speeding'); }
     }
     const p = e.pit;
     if (p?.phase === 'service') {
@@ -432,7 +445,8 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
       });
       if (time >= p.end && !unsafe) {
         fitTires(car, p.compound); e.compounds.push(p.compound); e.pitRequest = null;
-        e.stops.push({ lap: p.lap, compound: p.compound, service: p.end - p.begin, stationary: time - p.begin });
+        e.servedPenalty += p.penaltyTime;
+        e.stops.push({ lap: p.lap, compound: p.compound, service: p.serviceDuration, stationary: time - p.begin, penalty: p.penaltyTime });
         p.phase = 'out';
       }
       return;
@@ -441,8 +455,10 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
       e.pitVisit.served = true;
       const serviceTime = o.stopTimeMin + rand() * (o.stopTimeMax - o.stopTimeMin);
       const serviceFactor = safetyCarActive() ? o.safetyCarPitServiceFactor : 1;
+      const penaltyTime = Math.max(0, e.penalty - e.servedPenalty);
       e.pit = { from: 0, ...p, phase: 'service', compound: p?.compound ?? nextCompound(e), begin: time,
-        end: time + serviceTime * serviceFactor, lap: Math.max(0, Math.floor(e.covered / length)) + 1 };
+        serviceDuration: serviceTime * serviceFactor, penaltyTime,
+        end: time + serviceTime * serviceFactor + penaltyTime, lap: Math.max(0, Math.floor(e.covered / length)) + 1 };
       return;
     }
     if (p?.phase === 'in' && s !== null && s > e.box + o.boxWindow) p.phase = 'out'; // missed the box
@@ -841,14 +857,14 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
     }
     for (const e of entries) e.manual = !!(e.player && input);
     const commands = entries.map((e, i) => {
-      let command = e.pit?.phase === 'service' || e.retired ? hold : e.player && input ? input
+      let command = e.pit?.phase === 'service' || e.retired || e.parked ? hold : e.player && input ? input
         : time < lightsOut + (start ? e.reactionTime : 0) ? hold : recoveryCommand(e, barrierAt) ?? aiCommand(i);
       // Pit limiter: no drive above the speed limit in the pit lane.
       if (command.throttle > 0 && pit && e.car.telemetry.speed > pit.speedLimit && inPitLane(e.car)) command = { ...command, throttle: 0 };
-      // DRS: the AI (and the player's autopilot) opens it wherever allowed;
-      // the player's own request (input.drs) is ignored where it is not.
+      // DRS is available anywhere during a green-flag race; braking closes it
+      // in the physics step, and safety-car/pit states disable it here.
       e.drsAllowed = drsAllowed(e);
-      const autoDrsAllowed = solo ? drsZones.some(z => inDrsZone(track, z, progressOf(e.car))) : e.drsAllowed;
+      const autoDrsAllowed = e.drsAllowed;
       command = { ...command, drs: e.manual ? e.drsAllowed && command.drs === true : autoDrsAllowed };
       const safetySpeed = safetyCarSpeedLimit(e);
       if (e.manual && Number.isFinite(safetySpeed)) {
@@ -864,8 +880,12 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
     entries.forEach((e, i) => { if (!e.retired) step(e.car, commands[i], FIXED_DT, surfaceAt, barrierAt); });
     for (let i = 0; i < entries.length; i++)
       for (let j = i + 1; j < entries.length; j++)
-        if (!entries[i].retired && !entries[j].retired) resolveCarContact(entries[i].car, entries[j].car, o);
+        if (!entries[i].retired && !entries[j].retired && !entries[i].parked && !entries[j].parked)
+          resolveCarContact(entries[i].car, entries[j].car, o);
     time += FIXED_DT;
+    const previousSafetyCarProgress = safetyCarProgress;
+    const previousCovered = entries.map(e => e.covered);
+    const trackLimitCompletions = [];
     if (safetyCarActive() && safetyCarProgress !== null) safetyCarProgress += o.safetyCarSpeed * FIXED_DT;
     for (const e of entries) {
       if (e.retired) continue;
@@ -873,6 +893,14 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
       let d = p - e.last; if (d < -length / 2) d += length; else if (d > length / 2) d -= length;
       const before = e.covered;
       e.covered += d; e.last = p;
+      const outsideTrack = !e.pit && track.roadWidth && Math.abs(rel(e.car)) > track.roadWidth / 2 + 0.5;
+      if (outsideTrack) {
+        e.trackLimitStart ??= { covered: before, positions: previousCovered };
+      } else if (e.trackLimitStart) {
+        const gained = e.covered - e.trackLimitStart.covered;
+        trackLimitCompletions.push({ entry: e, start: e.trackLimitStart, gained });
+        e.trackLimitStart = null;
+      }
       // Crossing the line starts the ERS lap allowances afresh.
       if (Math.floor(e.covered / length) > Math.floor(before / length)) newErsLap(e.car);
       // Finish: the leader at the race distance drops the flag; after that a car
@@ -900,21 +928,76 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
       e.stuck = !e.player && !e.pit && !e.recovery && !e.finish && !e.retired && time > lightsOut + 2 && e.car.telemetry.speed < 1 ? (e.stuck ?? 0) + FIXED_DT : 0;
       const impact = e.car.impact && time - e.car.impact.time <= FIXED_DT * 1.1 ? e.car.impact.speed : 0;
       const contact = e.car.contact?.time === e.car.time ? e.car.contact.speed : 0;
-      const crashSpeed = Math.max(impact, contact);
-      if (crashSpeed >= o.yellowFlagContactSpeed && time - (e.lastIncidentTime ?? -Infinity) >= 1.5) {
+      const collisionPartner = contact >= o.contactPenaltySpeed ? entries.find(other => other !== e
+        && other.car.contact?.time === other.car.time && Math.abs(other.car.contact.speed - contact) < 0.01) : null;
+      const majorContact = !!collisionPartner;
+      if (majorContact && !e.contactIncidentActive)
+        pendingCollisionReviews.push({ entry: e, other: collisionPartner, until: time + 3,
+          seconds: contact >= o.intentionalContactSpeed ? o.intentionalContactPenalty : o.contactPenalty });
+      e.contactIncidentActive = majorContact;
+      if (contact >= o.yellowFlagContactSpeed && time - (e.lastIncidentTime ?? -Infinity) >= 1.5) {
         e.lastIncidentTime = time;
         deploySafetyCar(e, 'crash');
       }
+      const crashSpeed = Math.max(impact, contact);
       if (!e.player && crashSpeed >= o.crashRetireSpeed) retire(e, 'crash');
       if (!e.player && e.stuck > o.retireAfter) retire(e, 'stuck');
-      if (start && !e.jumpStart && time < lightsOut && e.covered - e.grid > o.jumpDistance) { e.jumpStart = true; e.penalty += o.jumpPenalty; }
+      if (start && !e.jumpStart && time < lightsOut && e.covered - e.grid > o.jumpDistance) { e.jumpStart = true; addPenalty(e, o.jumpPenalty, 'jump start'); }
       // Reaction: from lights out to the first firm throttle (> 50%).
       if (start && e.reaction === null && time >= lightsOut && commands[e.index].throttle > 0.5) e.reaction = time - lightsOut;
       const m = Math.floor(e.covered / 10);
       if (m > (e.milestone ?? -Infinity)) { e.milestone = m; e.milestoneTime = time; if (!passTimes.has(m)) passTimes.set(m, time); }
     }
+    for (let i = pendingCollisionReviews.length - 1; i >= 0; i--) {
+      const review = pendingCollisionReviews[i];
+      if (review.entry.covered <= review.other.covered) pendingCollisionReviews.splice(i, 1);
+      else if (time >= review.until) {
+        addPenalty(review.entry, review.seconds, 'major collision');
+        pendingCollisionReviews.splice(i, 1);
+      }
+    }
+    for (const { entry, start, gained } of trackLimitCompletions) {
+      const passed = entries.some((other, index) => other !== entry
+        && start.positions[index] > start.covered && other.covered < entry.covered);
+      if (gained >= o.trackLimitAdvantageDistance && passed) {
+        entry.trackLimitViolations++;
+        addPenalty(entry, entry.trackLimitViolations === 1 ? o.trackLimitPenalty : o.repeatedTrackLimitPenalty, 'track limits');
+      }
+    }
+    if (safetyCarActive()) {
+      for (let i = 0; i < entries.length; i++) {
+        const entry = entries[i];
+        if (entry.retired) continue;
+        if (o.penaltiesEnabled && previousSafetyCarProgress !== null && previousCovered[i] <= previousSafetyCarProgress
+          && entry.covered > safetyCarProgress) entry.safetyCarDsq = true;
+        for (let j = i + 1; j < entries.length; j++) {
+          const other = entries[j];
+          if (other.retired || safetyCarPassExempt(entry, other)) continue;
+          const wasBehind = previousCovered[i] < previousCovered[j];
+          const nowAhead = entry.covered > other.covered;
+          if (wasBehind && nowAhead
+            && !entry.safetyCarPassed.has(other)
+            && !pendingSafetyCarPasses.some(p => p.entry === entry && p.other === other))
+            pendingSafetyCarPasses.push({ entry, other, decision: entry.player ? null : 'yield', until: time + 3 });
+          if (previousCovered[j] < previousCovered[i] && other.covered > entry.covered
+            && !other.safetyCarPassed.has(entry)
+            && !pendingSafetyCarPasses.some(p => p.entry === other && p.other === entry))
+            pendingSafetyCarPasses.push({ entry: other, other: entry, decision: other.player ? null : 'yield', until: time + 3 });
+        }
+      }
+    }
+    for (let i = pendingSafetyCarPasses.length - 1; i >= 0; i--) {
+      const pass = pendingSafetyCarPasses[i];
+      if (pass.decision === 'yield' && pass.entry.covered <= pass.other.covered) {
+        pass.entry.safetyCarPassed.add(pass.other);
+        pendingSafetyCarPasses.splice(i, 1);
+      } else if (pass.decision === 'yield' && time >= pass.until) {
+        addPenalty(pass.entry, o.safetyCarOvertakePenalty, 'safety-car overtake');
+        pass.entry.safetyCarPassed.add(pass.other);
+        pendingSafetyCarPasses.splice(i, 1);
+      }
+    }
   }
-
   return {
     entries, options: o, aiCommand, pit, compoundRule: rule, drsZones,
     setAiPace(pace = null) {
@@ -926,6 +1009,25 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
     get drsEnabled() { return drsEnabled(); }, inPitLane: car => inPitLane(car),
     get yellowFlag() { return { active: safetyCarActive(), remaining: Math.max(0, yellowFlagUntil - time), ...yellowFlag }; },
     get safetyCar() { return { active: safetyCarActive(), progress: safetyCarProgress, speed: o.safetyCarSpeed }; },
+    get pendingSafetyCarPass() {
+      const pass = pendingSafetyCarPasses.find(item => item.entry.player && item.decision === null);
+      return pass ? { other: pass.other.name } : null;
+    },
+    chooseSafetyCarPass(choice) {
+      if (choice !== 'yield' && choice !== 'penalty')
+        throw new RangeError('Safety-car overtake choice must be yield or penalty');
+      const pass = pendingSafetyCarPasses.find(item => item.entry.player && item.decision === null);
+      if (!pass) return false;
+      if (choice === 'penalty') {
+        addPenalty(pass.entry, o.safetyCarOvertakePenalty, 'safety-car overtake');
+        pass.entry.safetyCarPassed.add(pass.other);
+        pendingSafetyCarPasses.splice(pendingSafetyCarPasses.indexOf(pass), 1);
+      } else {
+        pass.decision = 'yield';
+        pass.until = time + 3;
+      }
+      return true;
+    },
     // Stage the player at a pit box without swapping or moving a grid opponent.
     placePlayerAt(x, y, heading) {
       if (![x, y, heading].every(Number.isFinite)) throw new TypeError('Player position and heading must be finite');
@@ -992,15 +1094,18 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
     // under the compound rule. gap is seconds behind
     // the winner on the lead lap, lapsDown otherwise.
     classification() {
-      const total = e => e.finish.time + e.penalty;
-      const dsq = e => rule && !!e.finish && new Set(e.compounds).size < 2;
-      const group = e => !e.finish ? (e.retired ? 2 : 1) : dsq(e) ? 3 : 0;
+      const unservedPenalty = e => Math.max(0, e.penalty - e.servedPenalty);
+      const total = e => e.finish.time + unservedPenalty(e);
+      const dsq = e => !!e.safetyCarDsq || (rule && !!e.finish && new Set(e.compounds).size < 2);
+      const dsqReason = e => e.safetyCarDsq ? 'overtook safety car' : dsq(e) ? 'failed tyre rule' : null;
+      const group = e => dsq(e) ? 3 : !e.finish ? (e.retired ? 2 : 1) : 0;
       const ranked = [...entries].sort((a, b) => group(a) - group(b)
         || (a.finish ? b.finish.laps - a.finish.laps || total(a) - total(b) : b.covered - a.covered));
       const winner = ranked[0].finish && !dsq(ranked[0]) ? ranked[0] : null;
       return ranked.map((e, k) => ({
         position: k + 1, name: e.name, player: !!e.player, index: e.index, finished: !!e.finish, penalty: e.penalty,
-        dsq: dsq(e), retired: !!e.retired && !e.finish, stops: e.stops.length, compounds: [...e.compounds],
+        dsq: dsq(e), dsqReason: dsqReason(e), retired: !!e.retired && !e.finish, stops: e.stops.length, compounds: [...e.compounds],
+        unservedPenalty: unservedPenalty(e), servedPenalty: e.servedPenalty,
         laps: e.finish?.laps ?? Math.max(0, Math.floor(e.covered / length)), time: e.finish?.time ?? null, total: e.finish ? total(e) : null,
         lapsDown: e.finish && winner && !dsq(e) ? winner.finish.laps - e.finish.laps : null,
         gap: e.finish && winner && !dsq(e) && e.finish.laps === winner.finish.laps ? total(e) - total(winner) : null,

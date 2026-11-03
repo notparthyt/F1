@@ -68,6 +68,7 @@ function ribbon(pts, a, b, y0, material, vScale, y1) {
 // boxColors: one paint colour per pit box (car index order).
 export function buildWorld({ halfStraight, radius, roadWidth, boxColors = [] }) {
   const world = new THREE.Group();
+  world.userData.detailLod = [];
   const pts = centerline(halfStraight, radius);
   const half = roadWidth / 2, pit = stadiumPitLane(halfStraight, radius, roadWidth);
   const std = (o) => new THREE.MeshStandardMaterial({ side: THREE.DoubleSide, ...o });
@@ -241,7 +242,7 @@ export function buildWorld({ halfStraight, radius, roadWidth, boxColors = [] }) 
   hillGeo.setIndex(hi); hillGeo.computeVertexNormals();
   world.add(new THREE.Mesh(hillGeo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, side: THREE.DoubleSide })));
 
-  // Trees: two species (conifer, broadleaf) built from jittered low-poly parts, planted in clusters.
+  // Spatial tree cells let the spawn area be preloaded before the player turns the camera.
   const rng = (() => { let s = 7; return () => (s = (s * 16807) % 2147483647) / 2147483647; })();
   const spots = [];
   const clear = (x, y) => {
@@ -256,18 +257,26 @@ export function buildWorld({ halfStraight, radius, roadWidth, boxColors = [] }) 
     }
   }
   const treeMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 });
-  const species = [treeGeometry('conifer'), treeGeometry('broadleaf')].map((geo, k) => {
-    const list = spots.filter(t => (t[4] < 0.45) === (k === 0));
-    const mesh = new THREE.InstancedMesh(geo, treeMat, list.length);
-    list.forEach(([x, y, sc, rot, v], i) => {
+  const treeGeometries = [treeGeometry('conifer'), treeGeometry('broadleaf')];
+  const treeCells = new Map(), cellSize = 300;
+  for (const spot of spots) {
+    const [x, y] = spot, species = spot[4] < 0.45 ? 0 : 1;
+    const key = `${species}:${Math.floor(x / cellSize)}:${Math.floor(y / cellSize)}`;
+    (treeCells.get(key) ?? treeCells.set(key, { species, spots: [] }).get(key)).spots.push(spot);
+  }
+  for (const { species, spots: cellSpots } of treeCells.values()) {
+    const mesh = new THREE.InstancedMesh(treeGeometries[species], treeMat, cellSpots.length);
+    cellSpots.forEach(([x, y, sc, rot, v], i) => {
       dummy.position.set(x, 0, -y); dummy.rotation.set(0, rot, 0); dummy.scale.set(sc, sc * (0.85 + v * 0.3), sc);
       dummy.updateMatrix(); mesh.setMatrixAt(i, dummy.matrix);
       const tint = 0.8 + rng() * 0.35; mesh.setColorAt(i, new THREE.Color(tint * (0.95 + rng() * 0.15), tint, tint * (0.85 + rng() * 0.15)));
     });
     mesh.castShadow = mesh.receiveShadow = true;
-    return mesh;
-  });
-  world.add(...species);
+    const center = cellSpots.reduce((sum, spot) => { sum.x += spot[0]; sum.z -= spot[1]; return sum; }, new THREE.Vector3());
+    if (cellSpots.length) center.multiplyScalar(1 / cellSpots.length);
+    world.userData.detailLod.push({ mesh, center, maxDistance: 750, radius: cellSize * Math.SQRT2 / 2 });
+    world.add(mesh);
+  }
   return world;
 }
 
@@ -278,6 +287,7 @@ export function buildWorld({ halfStraight, radius, roadWidth, boxColors = [] }) 
 // hoardings, trees off the circuit and a hill ring sized to the layout.
 export function buildCircuitWorld(track, { boxColors = [], night = false } = {}) {
   const world = new THREE.Group(), half = track.roadWidth / 2, wallAt = track.wallOffset;
+  world.userData.detailLod = [];
   const { x: X, y: Y, z: Z, s: S, heading: H, kerb } = track.samples, n = X.length;
   const pts = Array.from({ length: n + 1 }, (_, k) => { const i = k % n; return { x: X[i], y: Y[i], h: Z?.[i] ?? 0, nx: -Math.sin(H[i]), ny: Math.cos(H[i]), s: k < n ? S[i] : track.length, i }; });
   // Consecutive runs of samples meeting a predicate (each run shares its end point).
@@ -650,10 +660,25 @@ export function buildCircuitWorld(track, { boxColors = [], night = false } = {})
     mesh.instanceMatrix.needsUpdate = true;
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
     mesh.castShadow = mesh.receiveShadow = false;
+    const center = cellSpots.reduce((sum, spot) => { sum.x += spot[0]; sum.z -= spot[1]; return sum; }, new THREE.Vector3());
+    if (cellSpots.length) center.multiplyScalar(1 / cellSpots.length);
+    world.userData.detailLod.push({ mesh, center, maxDistance: 1000, radius: cellSize * Math.SQRT2 / 2 });
     world.add(mesh);
   }
-  world.userData = { center: [cx, cy], extent };
+  Object.assign(world.userData, { center: [cx, cy], extent });
   return world;
+}
+
+export function updateWorldDetailLod(world, camera) {
+  for (const { mesh, center, maxDistance, radius = 0 } of world.userData.detailLod ?? [])
+    mesh.visible = camera.position.distanceToSquared(center) <= (maxDistance + radius) ** 2;
+}
+
+export function worldDetailsInRadius(world, center, radius) {
+  if (!center?.isVector3 || !Number.isFinite(radius) || radius < 0)
+    throw new RangeError('World detail center and radius must be valid');
+  return (world.userData.detailLod ?? []).filter(({ center: cellCenter, radius: cellRadius = 0 }) =>
+    center.distanceToSquared(cellCenter) <= (radius + cellRadius) ** 2);
 }
 
 // "Cursor Racing" wordmark with a two-ring loop mark; transparent background when bg is false.
@@ -699,7 +724,7 @@ function treeGeometry(kind) {
       if (jitter) { const k = 1 + n * jitter; p.setXYZ(i, center.x + (x - center.x) * k, y + n * jitter * 0.6, center.z + (z - center.z) * k); }
     }
     geo.computeVertexNormals();
-    const g = geo.toNonIndexed(), q = g.attributes.position, nr = g.attributes.normal, col = [];
+    const g = geo.index ? geo.toNonIndexed() : geo, q = g.attributes.position, nr = g.attributes.normal, col = [];
     for (let i = 0; i < q.count; i++) {
       const y = q.getY(i);
       let shade = 1;

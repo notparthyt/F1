@@ -34,7 +34,7 @@ Technical notes for CursorRacing. Back to the [README](../README.md); the cycle-
   6 mm/g lateral, clamped to 40/30 mm, 80 ms first-order lag) — an illustrative
   neck-compliance cue, not a measured driver model.
 * Limits: the shape is hand-modelled from public proportions, not CAD of any real
-  car; body roll/pitch/heave are rigid-body rotations of the sprung body (no
+  car; body roll/pitch/heave are rigid-body rotations of the sprung body (nox
   per-corner suspension travel), and there is no tire deformation, damage or
   livery editor. Kerbs are drawn
   but the physics still treats them as off-track grip.

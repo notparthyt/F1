@@ -72,7 +72,7 @@ export const DEFAULT_CAR = Object.freeze({
   // of the ICE power into the store, not lap-limited. Deployment starts at
   // ersMinSpeed (the 100 km/h race-start rule, applied everywhere here, which
   // also keeps it out of first-gear wheelspin). ers: false = no ERS.
-  ers: true, ersPower: 120000, ersMaxTorque: 200, ersCapacity: 4e6, ersStartCharge: 1,
+  ers: true, ersPower: 120000, ersNormalPower: 45000, ersMaxTorque: 200, ersCapacity: 4e6, ersStartCharge: 1,
   ersDeployPerLap: 4e6, ersHarvestPerLap: 2e6, ersHeatShare: 0.06, ersMinSpeed: 100 / 3.6, ersSpeedBlend: 5,
   // DRS (illustrative, after the 2011-25 rules): input.drs true opens the
   // rear-wing flap at drsRate of full travel per second; braking (> drsBrake)
@@ -396,8 +396,10 @@ export function step(car, input = {}, dt = FIXED_DT, surfaceAt = () => 1, barrie
   const ers = car.ers, crankOmega = Math.max(rpm, 1) / RPM;
   let ersTorque = 0, ersHarvest = 0;
   if (ers) {
-    if (direction > 0 && !shifting && throttle > 0 && input.ers !== false) {
-      const want = throttle * Math.min(c.ersMaxTorque, c.ersPower / crankOmega) * clamp((c.maxRpm - rpm) / c.limiterBand, 0, 1)
+    const ersMode = input.ersMode ?? (input.ers === false ? 'off' : 'overtake');
+    const ersPower = ersMode === 'normal' ? c.ersNormalPower : ersMode === 'overtake' ? c.ersPower : 0;
+    if (direction > 0 && !shifting && throttle > 0 && brake <= c.drsBrake && ersPower > 0) {
+      const want = throttle * Math.min(c.ersMaxTorque, ersPower / crankOmega) * clamp((c.maxRpm - rpm) / c.limiterBand, 0, 1)
         * clamp((speed - c.ersMinSpeed) / c.ersSpeedBlend, 0, 1);
       const energy = Math.max(0, Math.min(ers.charge, c.ersDeployPerLap - ers.deployed));
       ersTorque = Math.min(want, energy / (crankOmega * dt));

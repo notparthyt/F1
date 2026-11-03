@@ -25,6 +25,7 @@
 <link rel="icon" href="data:,">
 <style>
 :root{color-scheme:dark;font:14px system-ui,sans-serif;background:#080d14;color:#e9f0f6}*{box-sizing:border-box}body{margin:0}header{height:76px;padding:15px 26px;margin:8px;display:flex;align-items:center;justify-content:space-between;background:#0b121a8c;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid #ffffff1f;border-radius:10px;text-shadow:0 1px 2px #000a}h1{font-size:19px;margin:0;letter-spacing:.12em}h1 span{color:#6fffc3}.subtitle{font-size:11px;letter-spacing:.12em;color:#91a4b6;margin-top:6px}button{background:#0b121a8c;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#e9f0f6;border:1px solid #ffffff1f;border-radius:7px;padding:9px 13px;cursor:pointer}select{background:#0b121a8c;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#e9f0f6;border:1px solid #ffffff1f;border-radius:7px;padding:8px 10px;width:220px}a.btn{display:inline-flex;align-items:center;gap:6px;background:#0b121a8c;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#e9f0f6;border:1px solid #ffffff1f;border-radius:7px;padding:9px 13px;font-size:13.33px;text-decoration:none}a.btn:hover,a.btn:focus-visible{border-color:#6fffc3;outline:2px solid #6fffc344}@media(max-width:760px){a.btn{padding:6px 8px;font-size:11px}}button:disabled{opacity:.5;cursor:default}button:hover,button:focus-visible{border-color:#6fffc3;outline:2px solid #6fffc344}nav{display:flex;gap:8px}main{height:calc(100vh - 92px);position:relative}.scene{position:absolute;inset:0;overflow:hidden;background:#162923}canvas{display:block;width:100%;height:100%}.tag{position:absolute;top:20px;left:8px;background:#0b121a8c;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid #ffffff1f;text-shadow:0 1px 2px #000a;border-radius:6px;padding:10px 14px;color:#b0c1cb;font-size:11px;letter-spacing:.1em}.tag strong{color:#6fffc3}#hud-left{position:absolute;bottom:12px;left:8px;width:300px;display:flex;flex-direction:column;gap:8px;pointer-events:none}#minimap{width:100%;height:220px;background:#0b121a59;-webkit-backdrop-filter:blur(14px) saturate(140%);backdrop-filter:blur(14px) saturate(140%);border:1px solid #ffffff2e;border-radius:10px;box-shadow:inset 0 1px 0 #ffffff1a,0 8px 24px #0006}#status{background:#0b121a59;-webkit-backdrop-filter:blur(14px) saturate(140%);backdrop-filter:blur(14px) saturate(140%);border:1px solid #ffffff2e;border-radius:10px;box-shadow:inset 0 1px 0 #ffffff1a,0 8px 24px #0006;text-shadow:0 1px 2px #000a;padding:12px 16px;font-size:13px}aside{position:absolute;top:12px;right:8px;bottom:12px;width:290px;background:#0b121a8c;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid #ffffff1f;border-radius:10px;padding:24px 20px;overflow:auto;text-shadow:0 1px 2px #000a}main.hud-off aside{display:none}#hud-speed{display:none;position:absolute;left:14px;top:8px;bottom:30px;align-items:center;font-size:64px;line-height:1;font-weight:700;letter-spacing:-2px;font-variant-numeric:tabular-nums;text-align:left;pointer-events:none}#hud-speed .unit{font-size:16px;letter-spacing:0;opacity:.7}main.hud-off #hud-speed{display:flex;gap:6px;align-items:baseline;padding-top:12px}main.hud-off #timing{box-sizing:border-box;min-width:min(331px,calc(100vw - 40px));max-width:min(351px,calc(100vw - 40px))}main:not(.hud-off) #timing{right:318px}.label{font-size:10px;color:#91a4b6;letter-spacing:.14em;text-transform:uppercase}.speed{font-variant-numeric:tabular-nums;font-size:76px;font-weight:650;line-height:1.2;letter-spacing:-4px}.unit{color:#91a4b6;font-size:12px}.section{padding:20px 0;border-bottom:1px solid #273442}.stats{display:grid;grid-template-columns:1fr 1fr;gap:19px 12px}.number{font-variant-numeric:tabular-nums;font-size:21px;margin-top:5px}.wheels{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:13px}.wheel{background:#18233080;border-radius:6px;padding:10px;font-size:11px}.wheel span{float:right;color:#9fb5c5}.wheel meter{display:block;width:100%;height:12px;margin-top:6px;accent-color:#6fffc3}.note{font-size:11px;line-height:1.6;color:#91a4b6}kbd{font:11px monospace;background:#233242;border:1px solid #3b5062;border-radius:3px;padding:2px 5px}.controls{line-height:2.2;font-size:12px;color:#b8c8d5}#timing{position:absolute;top:20px;right:20px;background:#0b121a8c;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid #ffffff1f;text-shadow:0 1px 2px #000a;border-radius:6px;padding:10px 14px;text-align:right;font-variant-numeric:tabular-nums}#lap-time{font-size:26px;font-weight:650}#lap-delta{font-size:15px;min-height:18px}.sectors{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}.sector{background:#18233080;border-radius:5px;padding:6px;font-size:12px;font-variant-numeric:tabular-nums;border-bottom:3px solid #3a5065}.sector.best{border-color:#c77dff}.sector.slower{border-color:#ffc86f}.invalid{color:#ff8e86}#standings{list-style:none;margin:10px 0 0;padding:0;font-size:12px;font-variant-numeric:tabular-nums}#standings li{display:grid;grid-template-columns:22px 12px 1fr auto;gap:6px;align-items:center;padding:4px 6px;border-radius:4px}#standings li.you{background:#1b293799;color:#6fffc3}#standings i{width:10px;height:10px;border-radius:2px;display:block}#standings b{font-weight:500;color:#91a4b6}#race-pos{font-size:13px;color:#6fffc3;letter-spacing:.08em}#pause-state{color:#ffc86f;margin-bottom:10px;min-height:16px}#lights{position:absolute;top:22px;left:50%;transform:translateX(-50%);display:flex;gap:10px;background:#05080ce6;border:1px solid #2a3540;border-radius:8px;padding:10px 14px}#lights[hidden]{display:none}#lights span{width:30px;height:30px;border-radius:50%;background:#2a1010;border:2px solid #1a0a0a}#pit-info{font-size:12px;color:#b8c8d5;margin-top:4px;min-height:15px}.tyre{display:inline-block;width:15px;height:15px;line-height:13px;border-radius:50%;border:2px solid;font:700 9px system-ui;text-align:center;margin-right:4px;vertical-align:-3px}#standings .tyre{margin:0 0 0 4px}#lights span.on{background:#ff2a1f;box-shadow:0 0 16px #ff2a1f}@media(max-width:760px){#hud-speed{font-size:36px;left:8px;bottom:22px}main.hud-off #timing{min-width:min(320px,calc(100vw - 16px));max-width:calc(100vw - 16px)}#timing{top:8px;right:8px;padding:6px 8px}#lap-time{font-size:17px}header{padding:12px;height:94px;align-items:flex-start}h1{font-size:15px}.subtitle{font-size:9px}nav{flex-wrap:wrap;justify-content:flex-end;max-width:180px}button{padding:6px 8px;font-size:11px}main{height:calc(100vh - 110px)}main:not(.hud-off) #timing{right:204px}aside{padding:15px 12px;top:8px;right:8px;bottom:8px;width:180px}.speed{font-size:54px}.stats{gap:12px 6px}.number{font-size:17px}.tag{left:8px;top:8px;font-size:9px;padding:8px}#hud-left{width:200px}#minimap{height:150px}.wheels{gap:5px}.wheel{padding:6px}.controls{font-size:10px}}
+header[hidden]{display:none}
 header{position:absolute;top:0;left:0;right:0;z-index:20}main{height:100vh}.tag,#timing{top:104px}aside{top:104px}#lights{top:114px}@media(max-width:760px){main{height:100vh}.tag,#timing{top:118px}aside{top:118px}#lights{top:118px}}</style>
 <style>
 #yellow-flag{position:absolute;top:236px;left:8px;z-index:5;padding:9px 14px;border:1px solid #ffc400;border-radius:6px;background:#1a1400e8;color:#ffd84d;font-size:12px;font-weight:800;letter-spacing:.1em;text-shadow:0 1px 2px #000;pointer-events:none}
@@ -58,44 +59,215 @@ header{position:absolute;top:0;left:0;right:0;z-index:20}main{height:100vh}.tag,
 #on-foot-prompt strong,#exit-hint strong{color:#6fffc3}
 @media(max-width:760px){#on-foot-prompt,#exit-hint{bottom:22%;font-size:11px}}
 </style>
+<style>
+#menu-screen{position:fixed;inset:0;z-index:100;display:grid;grid-template-rows:auto 1fr auto;padding:32px clamp(20px,5vw,76px);background:radial-gradient(ellipse at 68% 48%,#182b38 0%,#0b141e 42%,#070b11 100%);color:#eef5fa}
+#menu-screen[hidden]{display:none}
+.menu-top,.menu-bottom{display:flex;align-items:center;justify-content:space-between}
+.menu-brand{font-size:clamp(20px,2.4vw,30px);font-weight:850;letter-spacing:.14em}.menu-brand span{color:#6fffc3}
+.menu-icon{width:50px;height:50px;border-radius:50%;font-size:22px}
+.menu-content{width:min(900px,100%);align-self:center;justify-self:center}
+.menu-kicker{color:#6fffc3;font-size:12px;font-weight:700;letter-spacing:.2em;text-transform:uppercase}
+.menu-title{font-size:clamp(42px,8vw,82px);line-height:.98;letter-spacing:-.06em;margin:12px 0 34px}
+.menu-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.menu-card{min-height:145px;text-align:left;padding:24px;border-radius:12px;background:linear-gradient(135deg,#182631e8,#101720e8);border:1px solid #ffffff24}
+.menu-card strong{display:block;font-size:clamp(21px,3vw,30px);margin-bottom:8px}.menu-card span{color:#9eafbc}
+.menu-card.primary{border-color:#6fffc399;background:linear-gradient(135deg,#173b35,#11231f)}
+.menu-card:disabled{opacity:.55}
+.menu-bottom{align-self:end;color:#8798a6}.menu-bottom button{background:transparent;border:0;color:inherit;padding:8px 0}
+.menu-panel{width:min(980px,100%);max-height:min(78vh,820px);overflow:auto;padding:clamp(18px,3vw,34px);border:1px solid #ffffff20;border-radius:14px;background:#0b131deF;box-shadow:0 24px 80px #0008}
+.menu-panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}.menu-panel h2{font-size:clamp(26px,4vw,38px);margin:0}.menu-back{background:transparent;border:0;color:#aab8c3}
+.menu-form{display:grid;grid-template-columns:1fr 1fr;gap:18px 22px}.menu-field{display:flex;flex-direction:column;gap:8px;color:#c5d0d9}.menu-field small{color:#8293a1}
+.menu-field select,.menu-field input[type="text"],.menu-field input[type="number"]{width:100%;padding:12px;background:#121e29;border:1px solid #ffffff24;border-radius:7px;color:#eef5fa}
+.menu-switch{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:13px 15px;border:1px solid #ffffff1a;border-radius:8px;background:#111b25}
+.menu-switch input{width:20px;height:20px;accent-color:#6fffc3}
+.map-preview{display:grid;grid-template-columns:minmax(0,1fr) 180px;align-items:center;gap:14px;min-height:145px;padding:14px;border:1px solid #ffffff1a;border-radius:9px;background:#101a24}
+#map-preview{width:100%;height:130px}
+.menu-primary{background:#6fffc3;color:#08110f;border:0;font-weight:800;padding:14px 20px}
+.menu-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:24px}
+.menu-tabs{display:flex;gap:8px;flex-wrap:wrap;border-bottom:1px solid #ffffff20;padding-bottom:14px;margin-bottom:20px}
+.menu-tabs button[aria-selected="true"]{border-color:#6fffc3;color:#6fffc3}
+.settings-pane[hidden]{display:none}
+#settings-screen{display:grid;grid-template-columns:155px 1fr;column-gap:24px}
+#settings-screen[hidden]{display:none}
+#settings-screen>.menu-panel-head,#settings-screen>.menu-footer{grid-column:1/-1}
+#settings-screen>.menu-tabs{grid-column:1;grid-row:2 / span 5;display:flex;flex-direction:column;align-items:stretch;border-bottom:0;border-right:1px solid #ffffff20;padding:0 16px 0 0;margin:0}
+#settings-screen>.settings-pane{grid-column:2;grid-row:2}
+.settings-pane{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.keybind-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:10px 12px;border-bottom:1px solid #ffffff14}
+.keybind-row button{min-width:92px}
+.menu-notice{color:#ffc86f;min-height:20px}
+.menu-credit{color:#8697a4;font-size:12px}
+.menu-credit details{max-width:460px}
+.menu-credit summary{cursor:pointer;color:#c1ced8}
+#livery-preview{display:block;max-width:100%;max-height:90px;border-radius:6px}
+#loading-screen{position:fixed;inset:0;z-index:120;display:grid;place-items:center;background:linear-gradient(180deg,#071019a6,#071019df),url('./Screenshot 2026-10-29 215341.png') center/cover no-repeat;color:#f4f7fa}
+#loading-screen[hidden]{display:none}
+.loading-card{width:min(440px,calc(100vw - 40px));padding:28px;border:1px solid #ffffff3b;border-radius:14px;background:#08121be8;box-shadow:0 20px 70px #0009;text-align:center}
+.loading-card strong,.loading-card span,.loading-card b{display:block}.loading-card strong{font-size:23px;margin-bottom:12px}.loading-card span{color:#afbdc8;font-size:13px;margin-bottom:15px}
+.loading-track{height:10px;border-radius:10px;background:#263743;overflow:hidden}.loading-track div{height:100%;width:0;background:#6fffc3;transition:width .2s ease}.loading-card b{margin-top:10px;font-variant-numeric:tabular-nums;color:#6fffc3}
+#race-notification{position:fixed;z-index:70;top:18px;left:50%;transform:translateX(-50%);display:flex;gap:10px;align-items:center;width:max-content;max-width:min(640px,calc(100vw - 24px));padding:12px 18px;border:1px solid #ffc400a6;border-radius:9px;background:#19160beF;color:#ffe27a;box-shadow:0 8px 26px #0009;font-size:14px;font-weight:750;text-align:center;pointer-events:none}
+#race-notification[data-choice="true"]{display:grid;grid-template-columns:auto minmax(0,1fr);pointer-events:auto}
+#safety-car-choice{grid-column:1/-1;display:flex;gap:8px;justify-content:center}
+#safety-car-choice[hidden]{display:none}
+#safety-car-choice button{border:1px solid #ffe27a;border-radius:6px;padding:7px 12px;background:#30280c;color:#fff0a8;font:inherit;cursor:pointer}
+#race-notification[hidden]{display:none}
+#race-control-panel{position:fixed;z-index:30;top:30%;left:10px;bottom:auto;width:min(270px,calc(100vw - 24px));padding:14px;border:1px solid #ffffff35;border-radius:9px;background:#0a111bd9;backdrop-filter:blur(8px);color:#e9f0f6;pointer-events:none;text-shadow:0 1px 2px #000}
+#race-control-message{font-size:12px;line-height:1.55;margin-top:8px;color:#cbd6df;min-height:42px}
+#nearby-leaderboard{position:absolute;z-index:5;top:12px;left:8px;width:min(280px,calc(100vw - 24px));padding:10px 12px;border:1px solid #ffffff25;border-radius:8px;background:#0b121ad9;backdrop-filter:blur(8px);pointer-events:none;text-shadow:0 1px 2px #000a}
+#nearby-leaderboard[hidden]{display:none}
+#nearby-standings{list-style:none;margin:6px 0 0;padding:0;font-size:11px;font-variant-numeric:tabular-nums}
+#nearby-standings li{display:grid;grid-template-columns:54px minmax(0,1fr) auto;gap:8px;padding:3px 4px;color:#cbd6df}
+#nearby-standings li.you{color:#6fffc3;background:#1b293799;border-radius:4px}
+#ers-status{margin-top:7px;color:#c77dff;font-size:12px;font-weight:750}
+#ers-status[data-mode="harvest"]{color:#ff6470}#ers-status[data-mode="standby"]{color:#ffd447}
+#pause-menu{position:fixed;inset:0;z-index:90;display:grid;place-items:center;background:#03070bd9;backdrop-filter:blur(9px)}
+#pause-menu[hidden]{display:none}
+.pause-card{display:grid;gap:14px;width:min(390px,calc(100vw - 32px));padding:26px;border:1px solid #ffffff30;border-radius:12px;background:#0c1620}
+.pause-card h2{margin:0 0 8px;font-size:27px}.pause-card label{display:grid;gap:8px;color:#c5d0d9}.pause-card input,.pause-card select{width:100%;accent-color:#6fffc3}
+.driver-name-tag{white-space:nowrap;padding:3px 6px;border-radius:4px;background:#071019aa;color:#f1f5f8;font:700 11px system-ui,sans-serif;text-shadow:0 1px 3px #000}
+@media(max-width:650px){#menu-screen{padding:20px;grid-template-rows:auto 1fr auto}.menu-actions,.menu-form,.settings-pane{grid-template-columns:1fr}.menu-card{min-height:115px;padding:18px}.menu-panel{max-height:80vh}#settings-screen{grid-template-columns:1fr}#settings-screen>.menu-tabs{grid-column:1;grid-row:auto;flex-direction:row;border-right:0;border-bottom:1px solid #ffffff20;padding:0 0 12px;overflow:auto}#settings-screen>.settings-pane{grid-column:1;grid-row:auto}.map-preview{grid-template-columns:1fr}.menu-bottom{align-items:flex-end}.menu-footer{align-items:stretch;flex-direction:column}}
+@media(max-width:650px){#race-control-panel{top:auto;bottom:250px;left:8px;width:min(230px,60vw);padding:10px}#race-notification{top:8px;font-size:12px;padding:9px 12px}}
+</style>
 </head>
 <body>
-<header><div><h1><span>Cursor
-</span> RACING</h1><div class="subtitle">F1 DYNAMICS SIMULATOR · 240 Hz PHYSICS</div></div><nav aria-label="Simulation controls"><button id="autopilot" aria-pressed="false">Autopilot: off</button><button id="pause" aria-pressed="false">Pause</button><button id="camera-mode" aria-label="Camera mode" title="Click to cycle: Cockpit, Chase Cam, T-Cam">Camera: Chase Cam</button><button id="trackside" aria-pressed="false">Trackside TV: off</button><button id="view" aria-pressed="false">Overview</button><button id="sound" aria-pressed="true">Sound: on</button><button id="field" aria-pressed="true">Opponents: on</button><button id="reset">Reset car</button><button id="hud" aria-pressed="true">HUD: on</button><button id="units">Units: km/h</button><button id="fullscreen" aria-pressed="false">Full screen</button><a id="github" class="btn" href="https://github.com/notparthyt/F1" target="_blank" rel="noopener" title="notparthyt/F1 on GitHub">GitHub F1</a><select id="track-select" aria-label="Circuit"><option value="">Stadium test track · race</option></select></nav></header>
-<main><section class="scene" aria-label="Driving viewport"><canvas id="track" role="img" aria-label="3D view of an open-wheel race car on a stadium-shaped test circuit"></canvas><div class="tag"><strong>LIVE</strong> &nbsp; THREE.JS 3D · 240 Hz PHYSICS / SI UNITS</div><div id="timing" aria-label="Lap timing"><div id="race-pos" aria-label="Race position"></div><div class="label" id="lap-label">Out lap</div><div id="lap-time">–:––.–––</div><div id="lap-delta"></div><div id="hud-speed" aria-label="Speed"><span id="speed-hud">0</span> <span class="unit">km/h</span></div><div id="pit-info" aria-label="Tyres and pit stop"></div></div><div id="lights" role="img" aria-label="Start lights" hidden><span></span><span></span><span></span><span></span><span></span></div><div id="yellow-flag" role="status" aria-live="polite" hidden>SAFETY CAR · FOLLOW · NO OVERTAKING</div><div id="on-foot-overlay" aria-live="polite" hidden><div id="on-foot-reticle" aria-hidden="true"></div><div id="on-foot-prompt"></div><section id="on-foot-emote-menu" role="dialog" aria-modal="false" aria-labelledby="on-foot-emote-title" hidden><h2 id="on-foot-emote-title">Choose an emote</h2><div id="on-foot-emote-list"></div><p>Press 1–9 to play · E or Esc to close</p></section><section id="on-foot-wardrobe-menu" role="dialog" aria-modal="false" aria-labelledby="on-foot-wardrobe-title" hidden><h2 id="on-foot-wardrobe-title">Driver suit</h2><div id="on-foot-suit-list"></div><p>Press 1–9 to change suit · M or Esc to close</p></section></div><div id="exit-hint" role="status" hidden></div><div id="hud-left"><canvas id="minimap" role="img" aria-label="Track map with car positions"></canvas><div id="status" role="status">Ready · W or ↑ to accelerate</div></div></section><aside aria-label="Vehicle telemetry">
+<div id="menu-screen">
+  <div class="menu-top"><div class="menu-brand"><span>Cursor</span>RACING</div><button id="menu-settings" class="menu-icon" type="button" aria-label="Settings" title="Settings">⚙</button></div>
+  <section id="home-screen" class="menu-content" aria-labelledby="home-title">
+    <div class="menu-kicker">Race your way</div><h1 id="home-title" class="menu-title">Own the<br>circuit.</h1>
+    <div class="menu-actions">
+      <button id="menu-singleplayer" class="menu-card primary" type="button"><strong>Singleplayer</strong><span>Choose your circuit and race setup</span></button>
+      <button class="menu-card" type="button" disabled><strong>Multiplayer</strong><span>Coming soon</span></button>
+    </div>
+  </section>
+  <section id="singleplayer-screen" class="menu-content menu-panel" aria-labelledby="singleplayer-title" hidden>
+    <div class="menu-panel-head"><h2 id="singleplayer-title">Singleplayer</h2><button class="menu-back" type="button" data-menu-back>Back</button></div>
+    <div class="menu-form">
+      <label class="menu-field">Circuit<select id="menu-track-select"><option value="">Stadium test track</option></select></label>
+      <div class="menu-field">Track preview<div class="map-preview"><canvas id="map-preview" aria-label="Selected circuit map preview"></canvas><small id="map-description">Stadium test track · 21 AI drivers</small></div></div>
+      <label class="menu-field">Number of laps<input id="menu-laps" type="number" min="3" max="99" value="10"></label>
+      <label class="menu-switch"><span>Opponents</span><input id="menu-opponents" type="checkbox" checked></label>
+      <label class="menu-switch"><span>Qualifying</span><input id="menu-qualifying" type="checkbox" checked></label>
+      <label class="menu-switch"><span>DNF retirements</span><input id="menu-retirements" type="checkbox" checked></label>
+      <label class="menu-switch"><span>Penalties</span><input id="menu-penalties" type="checkbox" checked></label>
+    </div>
+    <div class="menu-footer"><span class="menu-notice" id="singleplayer-notice"></span><button id="start-race" class="menu-primary" type="button">Start race</button></div>
+  </section>
+  <section id="settings-screen" class="menu-content menu-panel" aria-labelledby="settings-title" hidden>
+    <div class="menu-panel-head"><h2 id="settings-title">Settings</h2><button class="menu-back" type="button" data-menu-back>Back</button></div>
+    <div class="menu-tabs" role="tablist" aria-label="Settings categories">
+      <button type="button" role="tab" data-settings-tab="controls" aria-selected="true">Controls</button>
+      <button type="button" role="tab" data-settings-tab="graphics" aria-selected="false">Graphics</button>
+      <button type="button" role="tab" data-settings-tab="gameplay" aria-selected="false">Gameplay</button>
+      <button type="button" role="tab" data-settings-tab="keybinds" aria-selected="false">Keybinds</button>
+      <button type="button" role="tab" data-settings-tab="profile" aria-selected="false">Profile</button>
+    </div>
+    <section class="settings-pane" data-settings-pane="controls">
+      <label class="menu-field">Handling<select id="setting-handling"><option value="arcade">Arcade</option><option value="sim">Sim</option></select></label>
+      <label class="menu-field">Default camera<select id="setting-camera"><option value="tcam">T-Cam</option><option value="chase">Chase Cam</option><option value="cockpit">Visor Cam</option></select></label>
+      <label class="menu-switch"><span>Full screen</span><input id="setting-fullscreen" type="checkbox"></label>
+      <label class="menu-switch"><span>Auto-pit <small>When a tyre is requested, assist through the pit lane and return control after exit</small></span><input id="setting-autopit" type="checkbox"></label>
+      <label class="menu-switch"><span>Lights-out assist <small>Disable WASD until the start lights go out</small></span><input id="setting-lights-assist" type="checkbox" checked></label>
+    </section>
+    <section class="settings-pane" data-settings-pane="graphics" hidden>
+      <label class="menu-field">Graphics quality<select id="setting-graphics"><option value="ultra">Ultra Max Graphics</option><option value="max">Max</option><option value="high">High</option><option value="default">Default</option><option value="mid">Low (Mid Optimized)</option><option value="max-optimized">Max Optimized</option></select></label>
+      <label class="menu-switch"><span>Original car</span><input id="setting-original-car" type="checkbox"></label>
+      <label class="menu-field">Custom livery<input id="setting-livery" type="file" accept="image/*"><small>Choose an image to crop and preview as your car livery. Works together with Your Name Livery.</small><canvas id="livery-preview" hidden></canvas></label>
+      <label class="menu-switch"><span>Your Name Livery <small>Use your profile name on the car alongside a custom livery</small></span><input id="setting-name-livery" type="checkbox"></label>
+    </section>
+    <section class="settings-pane" data-settings-pane="gameplay" hidden>
+      <label class="menu-field">Units<select id="setting-units"><option value="kmh">km/h</option><option value="mph">mph</option></select></label>
+      <label class="menu-switch"><span>Trackside TV</span><input id="setting-trackside" type="checkbox"></label>
+    </section>
+    <section class="settings-pane" data-settings-pane="keybinds" hidden>
+      <div class="keybind-row"><span>Throttle · W (locked)</span><button type="button" disabled>W</button></div>
+      <div class="keybind-row"><span>Steer · A / D (locked)</span><button type="button" disabled>A / D</button></div>
+      <div class="keybind-row"><span>DRS · open anywhere, closes on braking</span><button type="button" data-keybind="drs">F</button></div>
+      <div class="keybind-row"><span>Reverse / brake · S (locked)</span><button type="button" disabled>S</button></div>
+      <div class="keybind-row"><span>Brake only</span><button type="button" data-keybind="brakeOnly">Space</button></div>
+      <div class="keybind-row"><span>ERS · hold for normal boost; press near a car to toggle overtake</span><button type="button" data-keybind="ers">O</button></div>
+      <div class="keybind-row"><span>Emote</span><button type="button" data-keybind="emote">E</button></div>
+      <div class="keybind-row"><span>Dress</span><button type="button" data-keybind="dress">M</button></div>
+      <div class="keybind-row"><span>Camera mode</span><button type="button" data-keybind="camera">C</button></div>
+      <button id="keybind-reset" type="button">Reset keybinds</button>
+    </section>
+    <section class="settings-pane" data-settings-pane="profile" hidden>
+      <label class="menu-field">Driver name<input id="setting-driver-name" type="text" maxlength="24" value="notparthyt"></label>
+      <button id="settings-reset" type="button">Reset to default settings</button>
+    </section>
+    <div class="menu-footer"><span class="menu-notice" id="settings-notice"></span><button id="save-settings" class="menu-primary" type="button">Save changes &amp; exit</button></div>
+  </section>
+  <div class="menu-bottom"><div class="menu-credit"><details><summary>Credits</summary><p>C1 · CursorRacing · notparthyt · CR<br>Built with Three.js and original vehicle simulation code.</p></details></div><span>CURSORRACING</span></div>
+</div>
+<div id="loading-screen" hidden role="status" aria-live="polite">
+  <div class="loading-card"><strong>Loading circuit</strong><span id="loading-detail">Preparing race assets…</span><div class="loading-track"><div id="loading-progress"></div></div><b id="loading-percent">0%</b></div>
+</div>
+<div id="race-notification" hidden role="status" aria-live="assertive"><span id="race-notification-icon"></span><span id="race-notification-text"></span><span id="safety-car-choice" hidden><button type="button" data-safety-car-choice="yield">1 · Give position back</button><button type="button" data-safety-car-choice="penalty">2 · Take 5-second penalty</button></span></div>
+<aside id="race-control-panel" role="status" aria-live="polite" aria-label="Race control and team engineer"><div class="label">Race control · Team engineer</div><div id="race-control-message">Tyre strategy and race-control messages will appear here.</div></aside>
+<section id="pause-menu" hidden role="dialog" aria-modal="true" aria-labelledby="pause-title">
+  <div class="pause-card"><h2 id="pause-title">Paused</h2><label>Sound <input id="pause-sound" type="range" min="0" max="100" value="65"></label><label>Graphics<select id="pause-graphics"><option value="ultra">Ultra Max</option><option value="max">Max</option><option value="high">High</option><option value="default">Default</option><option value="mid">Low (Mid Optimized)</option><option value="max-optimized">Max Optimized</option></select></label><button id="pause-resume" type="button">Resume</button><button id="pause-main-menu" type="button">Exit to main menu</button></div>
+</section>
+<header hidden><div><h1><span>Cursor
+</span> RACING</h1><div class="subtitle">F1 DYNAMICS SIMULATOR · 240 Hz PHYSICS</div></div><nav aria-label="Simulation controls"><button id="autopilot" aria-pressed="false">Auto-pit: off</button><button id="pause" aria-pressed="false">Pause</button><button id="camera-mode" aria-label="Camera mode" title="Click to cycle: Cockpit, Chase Cam, T-Cam">Camera: Chase Cam</button><button id="trackside" aria-pressed="false">Trackside TV: off</button><button id="view" aria-pressed="false">Overview</button><button id="sound" aria-pressed="true">Sound: on</button><button id="field" aria-pressed="true">Opponents: on</button><button id="reset">Reset car</button><button id="hud" aria-pressed="true">HUD: on</button><button id="units">Units: km/h</button><button id="fullscreen" aria-pressed="false">Full screen</button><a id="github" class="btn" href="https://github.com/notparthyt/F1" target="_blank" rel="noopener" title="notparthyt/F1 on GitHub">GitHub F1</a><select id="track-select" aria-label="Circuit"><option value="">Stadium test track · race</option></select></nav></header>
+<main><section class="scene" aria-label="Driving viewport"><canvas id="track" role="img" aria-label="3D view of an open-wheel race car on a stadium-shaped test circuit"></canvas><section id="nearby-leaderboard" aria-label="Nearby cars" hidden><div class="label">Nearby cars · time gap</div><ol id="nearby-standings"></ol></section><div id="timing" aria-label="Lap timing"><div id="race-pos" aria-label="Race position"></div><div class="label" id="lap-label">Out lap</div><div id="lap-time">–:––.–––</div><div id="lap-delta"></div><div id="hud-speed" aria-label="Speed"><span id="speed-hud">0</span> <span class="unit">km/h</span></div><div id="ers-status" aria-label="ERS deployment status">ERS · Deploying 100%</div><div id="pit-info" aria-label="Tyres and pit stop"></div></div><div id="lights" role="img" aria-label="Start lights" hidden><span></span><span></span><span></span><span></span><span></span></div><div id="yellow-flag" role="status" aria-live="polite" hidden>SAFETY CAR · FOLLOW · NO OVERTAKING</div><div id="on-foot-overlay" aria-live="polite" hidden><div id="on-foot-reticle" aria-hidden="true"></div><div id="on-foot-prompt"></div><section id="on-foot-emote-menu" role="dialog" aria-modal="false" aria-labelledby="on-foot-emote-title" hidden><h2 id="on-foot-emote-title">Choose an emote</h2><div id="on-foot-emote-list"></div><p>Press 1–9 to play · E or Esc to close</p></section><section id="on-foot-wardrobe-menu" role="dialog" aria-modal="false" aria-labelledby="on-foot-wardrobe-title" hidden><h2 id="on-foot-wardrobe-title">Driver suit</h2><div id="on-foot-suit-list"></div><p>Press 1–9 to change suit · M or Esc to close</p></section></div><div id="exit-hint" role="status" hidden></div><div id="hud-left"><canvas id="minimap" role="img" aria-label="Track map with car positions"></canvas><div id="status" role="status">Ready · W or ↑ to accelerate</div></div></section><aside aria-label="Vehicle telemetry">
 <div id="pause-state" role="status"></div><div class="label">Ground speed · Gear <strong id="gear" aria-label="Selected gear">1</strong></div><div><span class="speed" id="speed">0</span> <span class="unit" id="speed-unit">km/h</span></div>
 <div class="section"><div class="stats"><div><div class="label">Last lap</div><div class="number" id="last-lap">–:––.–––</div></div><div><div class="label">Best lap</div><div class="number" id="best-lap">–:––.–––</div></div></div><div class="sectors" id="sectors"></div><p class="note">Sectors: purple = session best, yellow = slower. Track limits: a lap is deleted when all four tires are beyond the road edge.</p></div>
 <div class="section" id="race-section"><div class="label" id="race-label">Race order · interval to leader</div><ol id="standings" aria-label="Race order"></ol><p class="note">Twenty-one AI opponents run the same physics. Random rain wets the circuit, lowers available grip and slows the AI corner-speed plan. Following within ~30 m gives a tow (up to 35% less drag) but dirty air (up to 25% less downforce); cars collide as rigid footprints. Illustrative values.</p></div>
 <div class="section stats"><div><div class="label">Longitudinal</div><div class="number" id="long">0.00 g</div></div><div><div class="label">Lateral</div><div class="number" id="lat">0.00 g</div></div><div><div class="label">Downforce</div><div class="number" id="aero">0.0 kN</div></div><div><div class="label">Distance</div><div class="number" id="distance">0 m</div></div><div><div class="label">Sim time</div><div class="number" id="time">0.0 s</div></div><div><div class="label">Steering</div><div class="number" id="steer">0.0°</div></div><div><div class="label">Roll / pitch</div><div class="number" id="attitude">0.00° / 0.00°</div></div><div><div class="label">Aero squat</div><div class="number" id="heave">0 mm</div></div><div><div class="label">Ride F / R</div><div class="number" id="ride">40 / 80 mm</div></div><div><div class="label">Aero balance</div><div class="number" id="balance">40.0% F</div></div><div><div class="label">ERS store</div><div class="number" id="ers">4.00 MJ</div></div><div><div class="label">ERS deployed / lap</div><div class="number" id="ers-lap">0.00 / 4.0 MJ</div></div></div><div class="section"><p class="note" style="margin-top:0">ERS: the MGU-K adds up to 120 kW on the throttle above 100 km/h, at most 4 MJ a lap from a 4 MJ store; braking harvests up to 120 kW (2 MJ a lap) and the MGU-H recharges the store from the exhaust. Illustrative values.</p></div>
 <div class="section"><div class="label">Driver input · <span id="input-source">keyboard</span></div><div class="stats" style="margin-top:10px"><div><div class="label">Throttle</div><meter id="in-throttle" min="0" max="1" value="0" style="width:100%;accent-color:#6fffc3" aria-label="Throttle command"></meter></div><div><div class="label">Brake</div><meter id="in-brake" min="0" max="1" value="0" style="width:100%;accent-color:#ff8e86" aria-label="Brake command"></meter></div></div><p class="note">Keyboard pedals ramp in ~0.17 s and release in 0.1 s; keyboard steering moves toward lock at 3/s and returns at 5/s. Gamepad (standard layout): triggers are analog pedals, left stick steers with a deadzone and progressive curve. Steering authority falls with speed for both.</p></div>
 <div class="section"><div class="label">Tire force / peak grip</div><div class="wheels" id="wheels"></div><p class="note">FL / FR / RL / RR · normal load in kN.<br>Bars: force / peak capacity, not remaining grip. SLIDE: combined demand beyond the illustrative force peak; force falls toward 75% of peak. Slip: signed longitudinal slip; + is wheelspin when moving forward. LOCK: stopped wheel above 1 m/s. α: force-producing (relaxed) / kinematic slip angle; the carcass catches up over 0.45 m of travel. Temp: tread / carcass °C · thermal grip (blue cold, green near the 100 °C optimum, red hot); sliding heats the tread, airflow cools it. Wear: tread used · wear grip; sliding energy wears the tread (faster above the optimum), grip fades then falls off a cliff past 75% wear (amber above 37.5%, red above 75%); qualifying uses fresh Soft tires with no grip loss; fresh Softs wear and lose grip once the main race starts. Sim handling has no ABS or traction control; Arcade handling adds grip, stronger slide recovery, and reduces braking in turns.</p></div>
-<div class="section controls"><strong>On foot</strong>: spawn beside your car. Click the viewport to capture the mouse; use <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> to walk, double-tap <kbd>W</kbd> to run, press <kbd>Space</kbd> to jump. Aim at your car and press <kbd>L</kbd> to enter, or press <kbd>R</kbd> nearby to enter without aiming. Press <kbd>E</kbd> while standing still to cycle emotes. Q1, Q2, and Q3 run before the race. Set one clean timed lap in each session you advance to; qualifying determines the main-race grid. You can exit with <kbd>L</kbd> only after finishing a race (or completing a lap in practice).<br><br><strong>In the car</strong><br><kbd>W</kbd> / <kbd>↑</kbd> Throttle<br><kbd>S</kbd> / <kbd>↓</kbd> Brake<br>Reverse: stopped, hold the brake (S / LT) and the car backs up; reversing, W / RT brakes and, once stopped, goes forward again. Or hold <kbd>Q</kbd> (reverse) / <kbd>E</kbd> (forward) while stopped on the brake, off throttle<br><kbd>A</kbd> <kbd>D</kbd> / <kbd>←</kbd> <kbd>→</kbd> Steer · steering wheel animation turns up to 180° each way with a smooth hand transfer to the turning side at high lock<br><kbd>X</kbd> / <kbd>Z</kbd> Shift up / down (gamepad RB / LB, once the race is on): switches to the manual gearbox (M beside the gear; the gear flashes red when a shift is refused); <kbd>G</kbd> (gamepad left stick click) back to automatic<br><kbd>F</kbd> DRS (hold; gamepad right stick click). Races: from lap 2, in a DRS zone after being within 1 s of the car ahead at its detection point; braking closes it. Open, it cuts drag 12% and downforce 10%, and both wing flaps open (illustrative)<br><kbd>P</kbd> Pause · <kbd>I</kbd> Autopilot · <kbd>R</kbd> Reset<br><kbd>V</kbd> Chase / overview<br><kbd>H</kbd> Hide / show HUD<br><kbd>C</kbd> / <kbd>N</kbd> Cycle cockpit → chase → T-Cam<br><kbd>M</kbd> Sound on / off<br><kbd>O</kbd> Opponents on / off (restarts)<br><kbd>B</kbd> Pit request: box for Soft → Medium → Hard → cancel. On autopilot the car pits at the next entry; driving, take the pit lane on the inside of the main straight (on a real circuit: beside the start/finish straight, entry ~300 m before the line) (80 km/h limiter, +5 s for speeding) and stop on your box (first, green)<br>Start: hold still on the five red lights, go when they go out (moving early: +5 s). On the lights, <kbd>1</kbd>–<kbd>5</kbd> (gamepad LB / RB: one ahead / behind) puts you in the car on that grid position (1 = pole) and takes you off the autopilot; that car takes your slot<br>Race: 10 laps (<kbd>?laps=N</kbd> in the URL); penalties are added at the flag; all cars start on fresh Soft tires; qualifying tires stay fresh, while race tires wear and lose grip after the start. Qualifying has unlimited fuel. Solo time trial tires can be selected with <kbd>?tyre=soft|medium|hard</kbd><br>Gamepad: touch any button or stick to take control from the autopilot · RT throttle · LT brake (or right stick forward / back, or D-pad up / down) · left stick or D-pad steer · Y pause / resume · Menu (Start, ≡) HUD on / off · B cycles Cockpit / Chase Cam / T-Cam · X full screen · A units · Back (View) reset car · right stick click autopilot off</div>
+<div class="section controls"><strong>On foot</strong>: spawn beside your car. Click the viewport to capture the mouse; use <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> to walk, double-tap <kbd>W</kbd> to run, press <kbd>Space</kbd> to jump. Aim at your car and press <kbd>L</kbd> to enter, or press <kbd>R</kbd> nearby to enter without aiming. Press <kbd>E</kbd> while standing still to cycle emotes. Q1, Q2, and Q3 run before the race, and qualifying determines the grid. You can exit with <kbd>L</kbd> after finishing a race (or completing a lap in practice).<br><br><strong>In the car</strong><br><kbd>W</kbd> / <kbd>↑</kbd> Throttle · <kbd>S</kbd> / <kbd>↓</kbd> Brake; at a standstill, S selects reverse<br><kbd>Space</kbd> Brake only · configurable in Settings<br><kbd>A</kbd> <kbd>D</kbd> / <kbd>←</kbd> <kbd>→</kbd> Steer · <kbd>X</kbd> / <kbd>Z</kbd> Shift up / down · <kbd>G</kbd> Automatic gears<br><kbd>F</kbd> DRS anywhere on track; braking closes it · <kbd>O</kbd> hold for normal ERS boost; press within 1 s of a car ahead to toggle stronger Overtake mode (press again or brake to return to Normal)<br><kbd>P</kbd> Pause · <kbd>R</kbd> Reset · <kbd>V</kbd> Chase / overview · <kbd>H</kbd> Hide / show HUD · <kbd>C</kbd> / <kbd>N</kbd> Cycle cameras<br><kbd>B</kbd> Request tyres: Soft → Medium → Hard → cancel. Auto-pit assistance, when enabled, takes control near pit entry and returns it after pit exit. Otherwise, drive into the pit lane and stop in your box.<br>On the start lights, <kbd>1</kbd>–<kbd>5</kbd> (gamepad LB / RB) changes grid slot. Penalties appear as notices and affect final classification; running order is not immediately changed.<br>Gamepad: RT throttle · LT brake · left stick steer · RB / LB shift · Y pause / resume · Start HUD · B camera · X fullscreen · A units · Back reset</div>
 <p class="note">Illustrative, uncalibrated dynamics. Body roll, pitch and aero squat are damped spring modes for display; wheel loads are still quasi-static. Surface grip (assumed): kerb 90%, runoff 70%, grass 35%. Walls are rigid: the body footprint rebounds with 25% restitution and scrubs with friction 0.5; no damage model. Tires start at 70 °C (blanket temperature) and have a two-node thermal model and tread wear; no pressure or camber yet. Compounds (assumed): soft +1.5% grip and 2× wear, hard −1.5% grip and 0.55× wear relative to the medium; a pit stop fits a new set at blanket temperature after a 2.1–3.2 s service. Sound is synthesized from engine rpm, throttle, turbo spool, tire sliding power and speed (V6 firing frequency; no recorded samples). This is a handling testbed, not a validated F1 simulator.</p>
 </aside></main>
 <script type="importmap">{ "imports": { "three": "./vendor/three.module.js" } }</script>
 <script type="module">
 import * as THREE from './vendor/three.module.js';
 import { RoomEnvironment } from './vendor/RoomEnvironment.js';
-import { DEFAULT_CAR, TIRE_COMPOUNDS, shift } from './src/physics.mjs';
-import { createRace, DEFAULT_GRID } from './src/race.mjs';
+import { DEFAULT_CAR, TIRE_COMPOUNDS, shift } from './src/physics.mjs?v=20261103-2';
+import { createRace, DEFAULT_GRID } from './src/race.mjs?v=20261103-3';
 import { buildF1Car } from './src/car3d.mjs';
-import { loadRB22Template, buildRB22Car, STEERING_RATIO, DRIVER_SUIT_STYLES, createDriverSuitTexture } from './src/rb22.mjs';
-import { buildWorld, buildCircuitWorld } from './src/world3d.mjs';
+import { loadRB22Template, buildRB22Car, STEERING_RATIO, DRIVER_SUIT_STYLES, createDriverSuitTexture } from './src/rb22.mjs?v=20261103';
+import { buildWorld, buildCircuitWorld, updateWorldDetailLod, worldDetailsInRadius } from './src/world3d.mjs?v=20261103-3';
+import { mergeGeometries } from './vendor/BufferGeometryUtils.js';
 import { makeMirror } from './src/mirror3d.mjs';
 import { GLTFLoader } from './vendor/GLTFLoader.js';
 import { createStadiumTrack } from './src/track.mjs';
 import { createCircuitTrack } from './src/circuit.mjs';
 import { CIRCUITS } from './src/circuits.mjs';
 import { CIRCUIT_PIT_SIDES, CIRCUIT_PIT_TUNNELS } from './src/pitconfig.mjs';
-import { CIRCUIT_ELEVATION_PROFILES, NIGHT_CIRCUITS, weatherOptionsForTrack } from './src/trackdata.mjs';
-import { createTimeTrial } from './src/trial.mjs';
+import { CIRCUIT_ELEVATION_PROFILES, NIGHT_CIRCUITS, startingTyreForTrack, weatherOptionsForTrack } from './src/trackdata.mjs';
+import { createTimeTrial } from './src/trial.mjs?v=20261103-2';
 import { createLapTimer, formatLapTime } from './src/laptimer.mjs';
 import { applyArcadeSteeringAssist, createDriverInput, readGamepad } from './src/input.mjs';
-import { createSoundModel, createAudioEngine } from './src/audio.mjs';
+import { createSoundModel, createAudioEngine } from './src/audio.mjs?v=20261103';
 import { createWeather } from './src/weather.mjs';
 import { captureHandlingBaseline, applyHandlingMode as applyCarHandlingMode } from './src/handling.mjs';
 import { canExitVehicle, moveOnFootColliding, onFootEmoteAt, ON_FOOT_EMOTES, shouldAutoPauseOnBlur, shouldShowSeatedDriver } from './src/onfoot.mjs';
 const $ = id => document.getElementById(id);
+const assetLoadingManager = new THREE.LoadingManager();
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  navigator.serviceWorker.register('./service-worker.js').catch(error => {
+    console.warn('Could not register the local asset cache', error);
+  });
+}
+let loadingAssets = 0, loadingTotal = 0, assetsLoaded = false, gameInitialized = false;
+const initialLoadQuery = new URLSearchParams(location.search);
+const loadingScreenRequested = initialLoadQuery.has('start') || initialLoadQuery.has('track') || initialLoadQuery.has('race');
+$('loading-screen').hidden = !loadingScreenRequested;
+function updateLoadingProgress(complete = false) {
+  const percent = complete ? 100 : loadingTotal ? Math.min(95, Math.floor(loadingAssets / loadingTotal * 100)) : 0;
+  $('loading-progress').style.width = `${percent}%`;
+  $('loading-percent').textContent = `${percent}%`;
+  $('loading-detail').textContent = complete ? 'Assets loaded · preparing your race…'
+    : loadingTotal ? `Loading assets · ${loadingAssets} of ${loadingTotal}`
+    : 'Waiting for circuit assets…';
+}
+assetLoadingManager.onStart = (_url, _loaded, total) => { loadingTotal = total; updateLoadingProgress(); };
+assetLoadingManager.onProgress = (_url, loaded, total) => { loadingAssets = loaded; loadingTotal = total; updateLoadingProgress(); };
+assetLoadingManager.onLoad = () => {
+  assetsLoaded = true;
+  updateLoadingProgress(true);
+  if (gameInitialized && loadingScreenRequested) setTimeout(() => { $('loading-screen').hidden = true; }, 350);
+};
 const canvas = $('track');
 const handlingButton = document.createElement('button');
 handlingButton.id = 'handling-mode';
@@ -113,15 +285,42 @@ optimizationButton.title = 'Cycle Default, Mid Optimized, and Max Optimized grap
 optimizationButton.textContent = 'Optimization: Default';
 originalCarButton.after(optimizationButton);
 const optimizationProfiles = {
+  ultra: { label: 'Ultra Max Graphics', pixelRatio: 2, maxPixels: 5_200_000, shadows: true, shadowSize: 2048, mirrors: true },
+  max: { label: 'Max', pixelRatio: 1.75, maxPixels: 4_000_000, shadows: true, shadowSize: 2048, mirrors: true },
+  high: { label: 'High', pixelRatio: 1.5, maxPixels: 3_200_000, shadows: true, shadowSize: 1024, mirrors: true },
   default: { label: 'Default', pixelRatio: 1.5, maxPixels: 2_800_000, shadows: true, shadowSize: 1024, mirrors: true },
   mid: { label: 'Mid Optimized', pixelRatio: 1.2, maxPixels: 2_000_000, shadows: true, shadowSize: 768, mirrors: false },
-  max: { label: 'Max Optimized', pixelRatio: 1, maxPixels: 1_350_000, shadows: false, shadowSize: 512, mirrors: false },
+  'max-optimized': { label: 'Max Optimized', pixelRatio: 1, maxPixels: 1_350_000, shadows: false, shadowSize: 512, mirrors: false },
 };
+const DEFAULT_GAME_SETTINGS = {
+  handling: 'arcade', camera: 'tcam', fullscreen: false, autoPit: true, lightsAssist: true,
+  graphics: 'default', originalCar: false, nameLivery: false, units: 'kmh', trackside: false,
+  driverName: 'notparthyt', keybinds: { drs: 'KeyF', brakeOnly: 'Space', ers: 'KeyO', emote: 'KeyE', dress: 'KeyM', camera: 'KeyC' },
+};
+function readGameSettings() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('cursor-racing-settings') ?? '{}');
+    const settings = { ...DEFAULT_GAME_SETTINGS, ...saved, keybinds: { ...DEFAULT_GAME_SETTINGS.keybinds, ...saved.keybinds } };
+    if (!optimizationProfiles[settings.graphics]) settings.graphics = DEFAULT_GAME_SETTINGS.graphics;
+    if (!['arcade', 'sim'].includes(settings.handling)) settings.handling = DEFAULT_GAME_SETTINGS.handling;
+    if (!['tcam', 'chase', 'cockpit'].includes(settings.camera)) settings.camera = DEFAULT_GAME_SETTINGS.camera;
+    if (!['kmh', 'mph'].includes(settings.units)) settings.units = DEFAULT_GAME_SETTINGS.units;
+    settings.driverName = String(settings.driverName ?? DEFAULT_GAME_SETTINGS.driverName).replace(/[^\w -]/g, '').slice(0, 24) || DEFAULT_GAME_SETTINGS.driverName;
+    return settings;
+  } catch (error) {
+    console.error('Could not read saved game settings', error);
+    return { ...DEFAULT_GAME_SETTINGS, keybinds: { ...DEFAULT_GAME_SETTINGS.keybinds } };
+  }
+}
+let gameSettings = readGameSettings();
+let settingsDraft = { ...gameSettings, keybinds: { ...gameSettings.keybinds } };
 let optimizationMode = 'default', adaptiveResolution = 1, frameTimeAverage = 16.7, qualityCheckAt = 0;
 let sim, paused = false, overview = false, cockpit = false, tcam = false, look360 = false, previousTime = null, snapCamera = true;
 let lookYaw = 0, lookPitch = 0.18, lookDistance = 6, lookPointer = null, onFootCameraMode = 'thirdPerson';
 let onFoot = true, canEnterCar = false, avatarLoaded = false, avatarLoadError = null, emoteMenuOpen = false, wardrobeMenuOpen = false;
 let playerSuitIndex = 0, avatarCharacter = null;
+let lastOnFootPoseAt = 0, lastOnFootInteractionAt = 0, lastOnFootCollisionQueryAt = 0;
+let onFootCollisionCars = [];
 let onFootPosition = { x: 0, y: 0 }, onFootYaw = 0, avatarMixer = null, avatarAction = null, avatarEmote = null;
 let runningOnFoot = false, lastWPressAt = -Infinity;
 let width = 1, height = 1;
@@ -213,8 +412,9 @@ const { surfaceAt, barrierAt } = track;
 let timer = createLapTimer(track, circuitKey ? { lineProgress: 0 } : undefined);
 const handlingModes = Object.freeze(['sim', 'arcade']);
 const requestedHandling = new URLSearchParams(location.search).get('handling');
-let autopilot = false, handlingMode = handlingModes.includes(requestedHandling) ? requestedHandling : 'sim';
-let handlingBaseline = null, command = { throttle: 0, brake: 0, steer: 0 }, opponents = !circuitKey || new URLSearchParams(location.search).has('race');
+let autopilot = false, autoPitActive = false, autoPitEntered = false, autoPitStopsAtStart = 0, ersOvertakeActive = false;
+let handlingMode = handlingModes.includes(requestedHandling) ? requestedHandling : gameSettings.handling;
+let handlingBaseline = null, command = { throttle: 0, brake: 0, steer: 0 }, opponents = !new URLSearchParams(location.search).has('solo') && (!circuitKey || new URLSearchParams(location.search).has('race'));
 let qualifying = null, qualifyingBreakTimer = null;
 const driver = createDriverInput();
 function updateHandlingButton() {
@@ -239,7 +439,7 @@ function toggleHandlingMode() {
 updateHandlingButton();
 // Sound: the AudioContext is created on the first key press or click (autoplay policy).
 const soundModel = createSoundModel(DEFAULT_CAR);
-let soundOn = true, audioCtx = null, audio = null, soundParams = null;
+let soundOn = true, soundVolume = 0.65, audioCtx = null, audio = null, soundParams = null;
 let recordAudioDestination = null;
 function startAudio() {
   if (!soundOn || audio || !window.AudioContext) return;
@@ -263,11 +463,51 @@ function gamepadPressed(i) {
   return down && !was;
 }
 function toggleAutopilot() {
-  if (onFoot) return;
-  autopilot = !autopilot; keys.clear(); driver.reset();
-  if (autopilot) sim.car.config.autoShift = true;
-  $('autopilot').textContent = `Autopilot: ${autopilot ? 'on' : 'off'}`;
-  $('autopilot').setAttribute('aria-pressed', String(autopilot));
+  if (!autopilot) return;
+  autopilot = false; autoPitActive = false; autoPitEntered = false; keys.clear(); driver.reset();
+  command = { throttle: 0, brake: 0, steer: 0 };
+  $('autopilot').textContent = 'Auto-pit: off';
+  $('autopilot').setAttribute('aria-pressed', 'false');
+}
+function updateAutoPitAssist() {
+  const player = sim.entries[0];
+  if (autoPitActive) {
+    if (!player.pitRequest && !autoPitEntered) { toggleAutopilot(); return; }
+    if (player.pit) autoPitEntered = true;
+    if (autoPitEntered && !player.pit
+      && (player.stops.length > autoPitStopsAtStart || !sim.inPitLane(player.car))) {
+      if (player.stops.length === autoPitStopsAtStart) sim.requestPit(null);
+      toggleAutopilot();
+    }
+    return;
+  }
+  if (!gameSettings.autoPit || onFoot || !opponents || !player.pitRequest || !sim.pit || player.finish) return;
+  const progress = track.progress(sim.car.x, sim.car.y);
+  const distanceToEntry = ((sim.pit.entry - progress) % track.length + track.length) % track.length;
+  if (sim.inPitLane(sim.car) || distanceToEntry <= 180) {
+    autoPitActive = autopilot = true;
+    autoPitEntered = false;
+    autoPitStopsAtStart = player.stops.length;
+    sim.car.config.autoShift = true;
+    keys.clear(); driver.reset();
+    $('autopilot').textContent = 'Auto-pit: on';
+    $('autopilot').setAttribute('aria-pressed', 'true');
+  }
+}
+function ersGapToAhead() {
+  const player = sim.entries[0], speed = Math.max(20, player.car.telemetry.speed);
+  let gap = Infinity;
+  for (const other of sim.entries) {
+    if (other === player || other.retired || other.finish) continue;
+    let distance = (other.covered - player.covered) % track.length;
+    if (distance <= 0) distance += track.length;
+    if (distance < track.length / 2) gap = Math.min(gap, distance / speed);
+  }
+  return gap;
+}
+function toggleErs() {
+  if (ersOvertakeActive) { ersOvertakeActive = false; return; }
+  if (ersGapToAhead() <= 1) ersOvertakeActive = true;
 }
 // The first standard gamepad to appear hands control to the player (once; I / the
 // button still work afterwards). Browsers only expose a pad after it is touched.
@@ -276,7 +516,6 @@ function gamepadTakeover() {
   if (onFoot) return;
   if (padSeen || !gamepad()) return;
   padSeen = true;
-  if (autopilot) toggleAutopilot();
 }
 window.addEventListener('gamepadconnected', gamepadTakeover);
 function createQualifyingState(query) {
@@ -290,7 +529,7 @@ function createQualifyingState(query) {
   ]));
   return {
     stage: 'Q1', tyre: 'soft', start: !query.has('nostart'),
-    laps: Math.max(1, Math.round(Number(query.get('laps')) || (circuitKey ? 3 : 10))),
+    laps: Math.max(3, Math.round(Number(query.get('laps')) || 10)),
     aiTimes, playerTimes: {}, active: { Q1: [-1, ...DEFAULT_GRID.map((_, i) => i)], Q2: [], Q3: [] },
     results: {}, recordedLaps: 0,
   };
@@ -337,12 +576,14 @@ function finishQualifying() {
   ];
   const playerGridSlot = Math.max(0, finalIds.indexOf(-1));
   const aiOrder = finalIds.filter(id => id >= 0);
+  const retirementOptions = raceOptions(new URLSearchParams(location.search));
+  const startingTyre = startingTyreForTrack(circuitKey);
+  const alternateTyre = startingTyre === 'soft' ? 'hard' : 'soft';
   sim = createRace(track, {
-    grid: aiOrder.map(id => ({ ...DEFAULT_GRID[id], tyres: ['soft', 'soft'] })), playerGridSlot, start: qualifying.start,
-    laps: qualifying.laps, compoundRule: false, tireWear: true,
-    player: { tyres: ['soft', 'soft'] },
+    grid: aiOrder.map(id => ({ ...DEFAULT_GRID[id], tyres: [startingTyre, alternateTyre] })), playerGridSlot, start: qualifying.start,
+    laps: qualifying.laps, compoundRule: true, tireWear: true, options: retirementOptions,
+    player: { name: gameSettings.driverName, tyres: [startingTyre, alternateTyre] },
   });
-  prepareFreshSoftTyres(sim);
   timer = createLapTimer(track, circuitKey ? { lineProgress: 0 } : undefined);
   wearSkins([0, ...aiOrder.map(id => id + 1)]);
   cars.forEach((car, i) => { car.model.group.visible = !i || opponents; });
@@ -351,6 +592,12 @@ function finishQualifying() {
   qualifying.stage = 'race';
   command = { throttle: 0, brake: 0, steer: 0 };
   driver.reset(); previousTime = null; snapCamera = true;
+}
+function raceOptions(query) {
+  return {
+    penaltiesEnabled: opponents || !query.has('nopenalties'),
+    ...(!opponents && query.has('noretire') ? { crashRetireSpeed: Infinity, retireAfter: Infinity, recoveryTimeout: Infinity } : {}),
+  };
 }
 function completeQualifyingStage(stage) {
   const rows = qualifyingRows(stage);
@@ -377,8 +624,9 @@ function completeQualifyingStage(stage) {
 }
 function qualifyingBreak(message, resume) {
   clearTimeout(qualifyingBreakTimer);
-  pause(true);
-  $('pause-state').textContent = `${message} · 5 seconds`;
+  pause(true, false);
+  $('status').textContent = `${message} · 5 seconds`;
+  raceNotice('⏱️', `${message} · resuming in 5 seconds`, 5000);
   qualifyingBreakTimer = setTimeout(() => {
     qualifyingBreakTimer = null;
     if (!qualifying) return;
@@ -400,11 +648,20 @@ function recordQualifyingLap() {
 function reset() {
   // A race with opponents begins with the standing-start lights (?nostart skips them).
   // Race distance: ?laps=N (default 10, or 3 on a real circuit); the chequered flag ends the race.
-  // Qualifying sessions and the main race start on fresh Soft tires; wear and temperature can reduce grip during each session.
+  // Qualifying starts on fresh Soft tires; the race starting compound is selected for the track.
   // Solo time trials honor ?tyre=soft|medium|hard.
   clearTimeout(qualifyingBreakTimer); qualifyingBreakTimer = null;
+  autopilot = autoPitActive = autoPitEntered = ersOvertakeActive = false;
+  lastYellowFlagNotice = null;
+  lastPlayerDsq = false;
+  lastRaceAdvice = '';
+  lastSpokenRaceMessage = '';
+  raceControlEventUntil = 0;
+  raceNoticeQueue.length = 0;
+  clearTimeout(raceNoticeTimer); raceNoticeTimer = null; $('race-notification').hidden = true;
+  $('race-notification').dataset.choice = 'false'; $('safety-car-choice').hidden = true;
   if (paused) pause(false);
-  onFoot = true; onFootCameraMode = 'thirdPerson'; canEnterCar = false; runningOnFoot = false; closeEmoteMenu(); $('exit-hint').hidden = true;
+  setOnFootMode(true); onFootCameraMode = 'thirdPerson'; canEnterCar = false; runningOnFoot = false; closeEmoteMenu(); $('exit-hint').hidden = true;
   if (document.pointerLockElement) document.exitPointerLock();
   updateCameraButtons();
   const query = new URLSearchParams(location.search), requestedTyre = TIRE_COMPOUNDS[query.get('tyre')] ? query.get('tyre') : 'medium';
@@ -425,6 +682,7 @@ function reset() {
   onFootPosition = spawn.player;
   onFootYaw = spawn.heading;
   lookYaw = onFootYaw; lookPitch = -0.12;
+  lastOnFootPoseAt = 0;
   handlingBaseline = captureHandlingBaseline(sim.entries);
   applyHandlingMode();
   wearSkins(cars.map((_, i) => i));
@@ -458,22 +716,25 @@ function enterVehicle(force = false) {
   if (!onFoot || (!canEnterCar && !force)) return;
   closeEmoteMenu();
   runningOnFoot = false;
-  onFoot = false; canEnterCar = false; playerAvatar.visible = false;
+  setOnFootMode(false); canEnterCar = false; playerAvatar.visible = false;
   setPlayerDriverVisible(true);
   if (autopilot) toggleAutopilot();
   if (document.pointerLockElement) document.exitPointerLock();
-  overview = cockpit = tcam = look360 = false;
+  overview = look360 = false;
+  cockpit = gameSettings.camera === 'cockpit';
+  tcam = gameSettings.camera === 'tcam';
   previousTime = null; snapCamera = true; keys.clear(); command = { throttle: 0, brake: 0, steer: 0 };
   updateCameraButtons();
 }
 function exitVehicle() {
   if (onFoot || !playerCanExit()) return;
   const finishedRace = opponents && !!sim.entries[0].finish;
+  if (finishedRace) sim.entries[0].parked = true;
   closeEmoteMenu();
   const c = sim.car, behind = 4;
   onFootPosition = { x: c.x - Math.cos(c.heading) * behind, y: c.y - Math.sin(c.heading) * behind };
   onFootYaw = c.heading; lookYaw = onFootYaw; lookPitch = -0.12;
-  onFoot = true; canEnterCar = false; runningOnFoot = false; playerAvatar.visible = avatarLoaded;
+  setOnFootMode(true); canEnterCar = false; runningOnFoot = false; playerAvatar.visible = avatarLoaded;
   setPlayerDriverVisible(false);
   avatarEmote = null; avatarAction = null; avatarActionName = null;
   if (avatarLoaded) playAvatarAction('Idle');
@@ -499,11 +760,14 @@ function takeGridSlot(n) {
   if (autopilot) toggleAutopilot();
   timer.restart(); snapCamera = true;
 }
-function pause(value) {
+function pause(value, showOverlay = true) {
   paused = value; keys.clear(); runningOnFoot = false; previousTime = null;
   $('pause').textContent = paused ? 'Resume' : 'Pause';
   $('pause').setAttribute('aria-pressed', String(paused));
   $('pause-state').textContent = paused ? 'SIMULATION PAUSED' : '';
+  $('pause-menu').hidden = !paused || !showOverlay;
+  $('pause-sound').value = Math.round(soundVolume * 100);
+  $('pause-graphics').value = optimizationMode;
 }
 function updateCameraButtons() {
   $('view').textContent = overview ? 'Chase view' : 'Overview';
@@ -572,7 +836,7 @@ canvas.addEventListener('wheel', event => {
   lookDistance = THREE.MathUtils.clamp(lookDistance + Math.sign(event.deltaY) * 0.8, 3, 14);
 }, { passive: false });
 canvas.addEventListener('pointerdown', () => {
-  if (onFoot && !document.pointerLockElement) canvas.requestPointerLock?.();
+  if (onFoot && !paused && $('menu-screen').hidden && !document.pointerLockElement) canvas.requestPointerLock?.();
 });
 document.addEventListener('mousemove', event => {
   if (!onFoot || document.pointerLockElement !== canvas) return;
@@ -580,6 +844,18 @@ document.addEventListener('mousemove', event => {
   lookPitch = THREE.MathUtils.clamp(lookPitch - event.movementY * 0.002, -0.5, 0.65);
 });
 $('pause').onclick = () => pause(!paused);
+$('pause-resume').onclick = () => pause(false);
+$('pause-main-menu').onclick = () => { pause(true, false); showMenu('home'); };
+$('pause-sound').oninput = event => {
+  soundVolume = Number(event.target.value) / 100;
+  if (!soundVolume) audio?.silence();
+};
+$('pause-graphics').onchange = event => {
+  gameSettings.graphics = event.target.value;
+  applyOptimizationMode(gameSettings.graphics);
+  try { localStorage.setItem('cursor-racing-settings', JSON.stringify(gameSettings)); }
+  catch (error) { console.error('Could not save pause-menu graphics setting', error); }
+};
 $('reset').onclick = reset;
 $('view').onclick = changeView;
 $('autopilot').onclick = toggleAutopilot;
@@ -715,27 +991,54 @@ const tyreBadge = c => `<span class="tyre" style="border-color:${TYRE_COLOR[c]};
 const title = c => c[0].toUpperCase() + c.slice(1);
 const drivingKeys = ['KeyW','KeyS','KeyA','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','KeyQ','KeyE','KeyF','KeyL','KeyC','KeyN','KeyI'];
 window.addEventListener('keydown', e => {
+  const listeningKeybind = document.querySelector('[data-keybind][data-listening="true"]');
+  if (listeningKeybind) {
+    e.preventDefault();
+    if (e.code !== 'Escape') {
+      settingsDraft.keybinds[listeningKeybind.dataset.keybind] = e.code;
+      renderKeybinds(settingsDraft);
+      setSettingsDirty();
+    } else listeningKeybind.removeAttribute('data-listening');
+    return;
+  }
+  if (e.code === 'Escape' && !$('menu-screen').hidden) {
+    showMenu('home');
+    return;
+  }
   if (e.target.closest('input,select,textarea,[contenteditable="true"]')) return;
+  if (sim.pendingSafetyCarPass && (e.code === 'Digit1' || e.code === 'Numpad1' || e.code === 'Digit2' || e.code === 'Numpad2')) {
+    e.preventDefault();
+    if (!e.repeat) chooseSafetyCarPass(e.code.endsWith('1') ? 'yield' : 'penalty');
+    return;
+  }
   const emoteNumberKey = /^(Digit|Numpad)[1-9]$/.test(e.code);
-  if (e.target.closest('button') && !drivingKeys.includes(e.code) && !['KeyT','KeyU'].includes(e.code)
-    && !(onFoot && (emoteMenuOpen || wardrobeMenuOpen) && (emoteNumberKey || e.code === 'Escape' || e.code === 'KeyM'))) return;
-  if ([...drivingKeys,'Space','KeyR','KeyV','KeyP','KeyC','KeyN','KeyM','KeyO','KeyB','KeyH','KeyZ','KeyX','KeyG','KeyT','KeyU','KeyL'].includes(e.code)
-    || (onFoot && ((emoteMenuOpen || wardrobeMenuOpen) && emoteNumberKey || e.code === 'Escape'))) e.preventDefault();
+  if (e.target.closest('button') && ![...drivingKeys, ...Object.values(gameSettings.keybinds)].includes(e.code) && !['KeyT','KeyU'].includes(e.code)
+    && !(onFoot && (emoteMenuOpen || wardrobeMenuOpen) && (emoteNumberKey || e.code === 'Escape' || e.code === gameSettings.keybinds.dress))) return;
+  if ([...drivingKeys,...Object.values(gameSettings.keybinds),'Space','KeyR','KeyV','KeyC','KeyN','KeyM','KeyO','KeyB','KeyH','KeyZ','KeyX','KeyG','KeyT','KeyU','KeyL','Escape'].includes(e.code)
+    || (onFoot && ((emoteMenuOpen || wardrobeMenuOpen) && emoteNumberKey))) e.preventDefault();
   if (e.repeat) return;
-  if (e.code !== 'KeyM') startAudio();
+  if (e.code !== gameSettings.keybinds.dress) startAudio();
+  if (!onFoot && !paused && e.code === gameSettings.keybinds.drs) {
+    keys.add(e.code);
+    return;
+  }
   if (e.code === 'KeyL') {
     if (onFoot) { if (canEnterCar) enterVehicle(); }
     else if (playerCanExit()) exitVehicle();
     return;
   }
-  if (e.code === 'KeyP') { pause(!paused); return; }
+  if (e.code === 'KeyI') { toggleAutopilot(); return; }
+  if (e.code === 'Escape') {
+    if (onFoot && (emoteMenuOpen || wardrobeMenuOpen)) closeEmoteMenu();
+    else pause(!paused);
+    return;
+  }
   if (onFoot) {
-    if (e.code === 'KeyM') toggleWardrobeMenu();
-    else if (e.code === 'KeyE') toggleEmoteMenu();
-    else if (e.code === 'Escape' && (emoteMenuOpen || wardrobeMenuOpen)) closeEmoteMenu();
+    if (e.code === gameSettings.keybinds.dress) toggleWardrobeMenu();
+    else if (e.code === gameSettings.keybinds.emote) toggleEmoteMenu();
     else if (wardrobeMenuOpen && emoteNumberKey) selectDriverSuit(Number(e.code.at(-1)) - 1);
     else if (emoteMenuOpen && emoteNumberKey) playOnFootEmote(Number(e.code.at(-1)) - 1);
-    else if (e.code === 'KeyC' || e.code === 'KeyN') changeCamera();
+    else if (e.code === gameSettings.keybinds.camera || e.code === 'KeyC' || e.code === 'KeyN') changeCamera();
     else if (e.code === 'KeyR') {
       const distance = Math.hypot(sim.car.x - onFootPosition.x, sim.car.y - onFootPosition.y);
       if (avatarLoaded && distance < 8 && model.group.visible) enterVehicle(true);
@@ -756,11 +1059,12 @@ window.addEventListener('keydown', e => {
   if (e.code === 'KeyR') reset();
   else if (e.code === 'KeyV') changeView();
   else if (e.code === 'KeyU') changeLook360();
-  else if (e.code === 'KeyI') toggleAutopilot();
-  else if (e.code === 'KeyC' || e.code === 'KeyN') changeCamera();
+  else if (e.code === gameSettings.keybinds.camera || e.code === 'KeyC' || e.code === 'KeyN') changeCamera();
   else if (e.code === 'KeyT') toggleRecording();
   else if (e.code === 'KeyM') toggleSound();
-  else if (e.code === 'KeyO') toggleOpponents();
+  else if (e.code === gameSettings.keybinds.ers) {
+    if (!paused) { keys.add(e.code); toggleErs(); }
+  }
   else if (e.code === 'KeyB') cyclePitRequest();
   else if (e.code === 'KeyH') toggleHud();
   else if (/^(Digit|Numpad)[1-5]$/.test(e.code)) takeGridSlot(Number(e.code.at(-1)));
@@ -788,7 +1092,7 @@ for (const name of ['FL', 'FR', 'RL', 'RR']) {
   box.innerHTML = `${name}<span id="load-${name}">0.0</span><meter id="grip-${name}" min="0" max="1" value="0" aria-label="${name} tire utilization"></meter><div id="slip-${name}" aria-label="${name} longitudinal slip">Slip 0%</div><div id="rpm-${name}" aria-label="${name} wheel rpm">0 rpm</div><div id="state-${name}" aria-label="${name} tire force regime">—</div><div id="alpha-${name}" aria-label="${name} relaxed and kinematic slip angle">α 0.0° / 0.0°</div><div id="temp-${name}" aria-label="${name} tread and carcass temperature, thermal grip">70° / 70° · 91%</div><div id="wear-${name}" aria-label="${name} tread wear and wear grip">Wear 0.0% · 100%</div>`;
   $('wheels').append(box);
 }
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.9;
 renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -818,7 +1122,7 @@ function playAvatarAction(name, emote = false) {
 }
 async function loadPlayerAvatar() {
   try {
-    const gltf = await new GLTFLoader().loadAsync('./models/Realistic_Male_F1_Racer_Rigged_Animated.gltf');
+    const gltf = await new GLTFLoader(assetLoadingManager).loadAsync('./models/Realistic_Male_F1_Racer_Rigged_Animated.gltf');
     const character = gltf.scene;
     avatarCharacter = character;
     character.updateMatrixWorld(true);
@@ -857,12 +1161,6 @@ async function loadPlayerAvatar() {
 void loadPlayerAvatar();
 const dryFog = new THREE.Color(nightTrack ? 0x10182b : 0xc8d8e4), rainFog = new THREE.Color(nightTrack ? 0x20283a : 0x72808b);
 let weather = weatherForTrack();
-const weatherBadge = document.createElement('div');
-weatherBadge.id = 'weather-indicator';
-weatherBadge.setAttribute('role', 'status');
-weatherBadge.setAttribute('aria-live', 'polite');
-weatherBadge.style.cssText = 'position:absolute;top:151px;left:8px;padding:8px 12px;border:1px solid #ffffff2e;border-radius:6px;background:#0b121a9c;color:#e9f0f6;font-size:11px;font-weight:700;letter-spacing:.1em;text-shadow:0 1px 2px #000a;pointer-events:none';
-document.querySelector('.scene').append(weatherBadge);
 const camera = new THREE.PerspectiveCamera(58, 1, 0.1, 4000);
 scene.add(new THREE.HemisphereLight(nightTrack ? 0x7183b1 : 0xd6e8ff, nightTrack ? 0x25283a : 0x4a5a32, nightTrack ? 0.42 : 0.55));
 const sun = new THREE.DirectionalLight(nightTrack ? 0xaabfff : 0xfff0d8, nightTrack ? 0.28 : 2.2);
@@ -903,7 +1201,7 @@ if (circuitKey) camera.far = 2 * world.userData.extent + 3000;
 // model that fails to load, uses the built-in car.
 let carTemplate = null;
 if (new URLSearchParams(location.search).get('car') !== 'procedural') {
-  try { carTemplate = await loadRB22Template(); }
+  try { carTemplate = await loadRB22Template(undefined, assetLoadingManager); }
   catch (err) { console.warn('rb22 car model failed to load', err); }
 }
 const buildCar = (livery = {}, suitIndex = 0) => carTemplate ? buildRB22Car(carTemplate, DEFAULT_CAR, { ...livery, suitIndex }) : buildF1Car(DEFAULT_CAR, livery);
@@ -911,6 +1209,62 @@ const buildCar = (livery = {}, suitIndex = 0) => carTemplate ? buildRB22Car(carT
 // index: its place in the sponsor rotation and race number).
 const cars = [buildCar({}, 0), ...DEFAULT_GRID.map((spec, i) => buildCar({ paint: spec.color, accent: spec.accent, helmet: spec.accent, index: i + 1 }, (i + 1) % DRIVER_SUIT_STYLES.length))]
   .map(m => { scene.add(m.group); return { model: m, wheelAngle: [0, 0, 0, 0] }; });
+const distantCarGeometry = (() => {
+  const parts = [];
+  const add = (geometry, position, rotation = [0, 0, 0]) => {
+    geometry.rotateX(rotation[0]); geometry.rotateY(rotation[1]); geometry.rotateZ(rotation[2]);
+    geometry.translate(...position); parts.push(geometry);
+  };
+  add(new THREE.BoxGeometry(1.05, 0.3, 2.8), [0, 0.28, -0.05]);
+  add(new THREE.ConeGeometry(0.28, 1.35, 4), [0, 0.22, 1.85], [Math.PI / 2, 0, 0]);
+  add(new THREE.BoxGeometry(2.8, 0.12, 0.42), [0, 0.2, 2.25]);
+  add(new THREE.BoxGeometry(2.35, 0.15, 0.4), [0, 0.42, -1.55]);
+  for (const x of [-0.88, 0.88]) for (const z of [-1.15, 1.05])
+    add(new THREE.CylinderGeometry(0.34, 0.34, 0.18, 8), [x, 0.22, z], [0, 0, Math.PI / 2]);
+  const geometry = mergeGeometries(parts);
+  parts.forEach(part => part.dispose());
+  return geometry;
+})();
+const distantCars = cars.map((_, i) => {
+  const color = i ? DEFAULT_GRID[i - 1].color : 0x39e0ae;
+  const mesh = new THREE.Mesh(distantCarGeometry, new THREE.MeshStandardMaterial({ color, roughness: 0.82 }));
+  mesh.castShadow = false; mesh.receiveShadow = false; mesh.visible = false; scene.add(mesh);
+  return mesh;
+});
+const driverNameTags = cars.map(() => {
+  const labelCanvas = document.createElement('canvas');
+  labelCanvas.width = 320; labelCanvas.height = 64;
+  const context = labelCanvas.getContext('2d');
+  context.font = 'bold 27px system-ui, sans-serif';
+  context.textAlign = 'center'; context.textBaseline = 'middle';
+  context.fillStyle = '#071019b8'; context.beginPath(); context.roundRect(8, 4, 304, 56, 13); context.fill();
+  context.fillStyle = '#f1f5f8'; context.fillText('Driver', 160, 32, 280);
+  const texture = new THREE.CanvasTexture(labelCanvas);
+  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false, opacity: 0 }));
+  sprite.scale.set(4.5, 0.9, 1);
+  scene.add(sprite);
+  return { sprite, labelCanvas, context, name: '' };
+});
+let customLiveryTexture = null;
+let pendingCustomLiveryTexture = null;
+if (gameSettings.customLivery) {
+  try {
+    const image = new Image();
+    await new Promise((resolve, reject) => {
+      image.onload = resolve;
+      image.onerror = () => reject(new Error('Saved custom livery image could not be loaded'));
+      image.src = gameSettings.customLivery;
+    });
+    const liveryCanvas = document.createElement('canvas');
+    liveryCanvas.width = 512; liveryCanvas.height = 256;
+    liveryCanvas.getContext('2d').drawImage(image, 0, 0, 512, 256);
+    customLiveryTexture = new THREE.CanvasTexture(liveryCanvas);
+    customLiveryTexture.colorSpace = THREE.SRGBColorSpace;
+    customLiveryTexture.anisotropy = 8;
+  } catch (error) {
+    console.error('Could not restore the saved custom livery', error);
+  }
+}
 const safetyCarModel = buildCar({ paint: 0xf2c230, accent: 0x15191e, helmet: 0x15191e });
 safetyCarModel.group.name = 'safety-car';
 safetyCarModel.group.visible = false;
@@ -936,14 +1290,14 @@ scene.add(safetyCarModel.group);
 // old car carries on with the AI. Reset puts you back in the navy car.
 const skins = cars.map((_, i) => i);
 let model;
-let originalCar = false;
+let originalCar = !!gameSettings.originalCar;
 function applyOptimizationMode(mode, persist = true) {
   if (!optimizationProfiles[mode]) mode = 'default';
   optimizationMode = mode;
   adaptiveResolution = 1;
   const profile = optimizationProfiles[mode];
-  renderer.shadowMap.enabled = profile.shadows;
-  sun.castShadow = profile.shadows;
+  renderer.shadowMap.enabled = profile.shadows && !onFoot;
+  sun.castShadow = profile.shadows && !onFoot;
   sun.shadow.map?.dispose(); sun.shadow.map = null;
   sun.shadow.mapSize.set(profile.shadowSize, profile.shadowSize);
   model?.mirrors?.forEach(m => m?.userData.mirror?.(profile.mirrors));
@@ -954,8 +1308,14 @@ function applyOptimizationMode(mode, persist = true) {
   }
   resize();
 }
+function setOnFootMode(value) {
+  onFoot = value;
+  const shadowsEnabled = optimizationProfiles[optimizationMode].shadows && !onFoot;
+  renderer.shadowMap.enabled = sun.castShadow = shadowsEnabled;
+  resize();
+}
 optimizationButton.onclick = () => {
-  const modes = ['default', 'mid', 'max'];
+  const modes = ['ultra', 'max', 'high', 'default', 'mid', 'max-optimized'];
   applyOptimizationMode(modes[(modes.indexOf(optimizationMode) + 1) % modes.length]);
 };
 // The player's mirrors reflect the rear view (the rivals keep the environment reflection).
@@ -966,6 +1326,8 @@ function wearSkins(list) {
   skins.splice(0, skins.length, ...list);
   list.forEach((skin, entryIndex) => cars[skin].model.setDriverSuit?.(entryIndex === 0 ? playerSuitIndex : entryIndex % DRIVER_SUIT_STYLES.length));
   model = cars[skins[0]].model;
+  model.setCustomLivery?.(customLiveryTexture);
+  model.setDriverName?.(gameSettings.nameLivery ? gameSettings.driverName : null);
   model.setOriginalLivery?.(originalCar);
   setPlayerDriverVisible(!onFoot);
   // Hide the player's car from its own mirrors so the rear view is not blocked by bodywork.
@@ -975,12 +1337,13 @@ function wearSkins(list) {
   model.mirrors?.forEach(m => m.userData.mirror?.(optimizationProfiles[optimizationMode].mirrors));
 }
 wearSkins(skins);
-try { applyOptimizationMode(localStorage.getItem('f1-optimization-mode') ?? 'default', false); }
-catch { applyOptimizationMode('default', false); }
+applyOptimizationMode(gameSettings.graphics, false);
 function updateOriginalCarButton() {
   originalCarButton.hidden = typeof model.setOriginalLivery !== 'function';
   originalCarButton.textContent = `Original car: ${originalCar ? 'on' : 'off'}`;
   originalCarButton.setAttribute('aria-pressed', String(originalCar));
+  $('setting-original-car').checked = originalCar;
+  $('setting-livery').disabled = originalCar;
 }
 originalCarButton.onclick = () => {
   if (typeof model.setOriginalLivery !== 'function') return;
@@ -995,9 +1358,8 @@ const hex = n => `#${n.toString(16).padStart(6, '0')}`;
 const skinColor = (e, mine = '#39e0ae') => skins[e.index] ? hex(DEFAULT_GRID[skins[e.index] - 1].color) : mine;
 // DRS state of an entry for the HUD: open, available in this zone, the last
 // detection gap, or when it is enabled (races only; not in a time trial).
-const drsNote = e => !sim.drsZones?.length || sim.finish.flag ? '' : e.car.drs > 0.5 ? ' · <strong style="color:#6fffc3">DRS OPEN</strong>'
-  : e.drsAllowed ? ` · <strong style="color:#6fffc3">DRS${autopilot ? '' : ' · hold F'}</strong>` : !sim.drsEnabled ? ` · DRS from lap ${sim.options.drsEnableLaps + 1}`
-  : e.drsGap !== null && Number.isFinite(e.drsGap) ? ` · DRS gap ${e.drsGap.toFixed(2)} s` : ' · DRS';
+const drsNote = e => sim.finish.flag ? '' : e.car.drs > 0.5 ? ' · <strong style="color:#6fffc3">DRS OPEN</strong>'
+  : e.drsAllowed ? ` · <strong style="color:#6fffc3">DRS · press ${keyName(gameSettings.keybinds.drs)}</strong>` : '';
 // Pose a car model from its physics state: ground-plane position and heading,
 // sprung-body roll/pitch/heave, wheel spin and front-wheel steer.
 function poseCar(m, c, angles, dt, yellowFlagActive = false) {
@@ -1039,7 +1401,8 @@ function resize() {
   const bounds = canvas.getBoundingClientRect();
   width = Math.max(bounds.width, 1); height = Math.max(bounds.height, 1);
   const profile = optimizationProfiles[optimizationMode];
-  const pixelRatio = Math.min(devicePixelRatio, profile.pixelRatio * adaptiveResolution,
+  const onFootResolutionScale = onFoot ? 0.7 : 1;
+  const pixelRatio = Math.min(devicePixelRatio, profile.pixelRatio * adaptiveResolution * onFootResolutionScale,
     Math.sqrt(profile.maxPixels / (width * height)));
   renderer.setPixelRatio(pixelRatio);
   renderer.setSize(width, height, false);
@@ -1074,14 +1437,19 @@ function placeScene(dt) {
   playerAvatar.position.set(onFootPosition.x, footHeight, -onFootPosition.y);
   playerAvatar.rotation.y = onFootYaw + Math.PI / 2;
   playerAvatar.visible = onFoot && avatarLoaded && onFootCameraMode !== 'firstPerson';
-  sim.entries.forEach((e, i) => {
-    const car = cars[skins[i]].model;
-    car.group.visible = !e.retired && (e.player || opponents);
-    const showDriver = shouldShowSeatedDriver({ player: e.player, onFoot, cockpit });
-    if (car.setDriverVisible) car.setDriverVisible(showDriver);
-    else car.driver.forEach(m => { m.visible = showDriver; });
-    poseCar(car, e.car, cars[skins[i]].wheelAngle, dt, sim.yellowFlag.active);
-  });
+  const poseNow = performance.now();
+  const updateCarPoses = !onFoot || poseNow - lastOnFootPoseAt >= 100;
+  if (updateCarPoses) {
+    lastOnFootPoseAt = poseNow;
+    sim.entries.forEach((e, i) => {
+      const car = cars[skins[i]].model;
+      car.group.visible = !e.retired && (e.player || opponents);
+      const showDriver = shouldShowSeatedDriver({ player: e.player, onFoot, cockpit });
+      if (car.setDriverVisible) car.setDriverVisible(showDriver);
+      else car.driver.forEach(m => { m.visible = showDriver; });
+      poseCar(car, e.car, cars[skins[i]].wheelAngle, dt, sim.yellowFlag.active);
+    });
+  }
   if (onFoot) {
     camera.fov = 66; camera.near = 0.1; camera.up.set(0, 1, 0);
     const fx = Math.cos(lookYaw), fz = -Math.sin(lookYaw);
@@ -1144,15 +1512,53 @@ function placeScene(dt) {
     camera.near = 0.1;
     camera.fov = 58;
     const target = look.copy(g.position).addScaledVector(forward, -7).setY(2.2);
-    if (snapCamera) chase.copy(target); else chase.lerp(target, 1 - Math.exp(-dt * 7));
+    chase.copy(target);
     camera.position.copy(chase);
     camera.lookAt(look.copy(g.position).addScaledVector(forward, 4).setY(0.8));
   }
   snapCamera = false;
   camera.updateProjectionMatrix();
-  scene.updateMatrixWorld(true);
-  camera.updateMatrixWorld(true);
-  updateOnFootInteraction();
+  camera.updateMatrixWorld();
+  sim.entries.forEach((entry, index) => {
+    const car = cars[skins[index]].model;
+    const proxy = distantCars[skins[index]];
+    const active = !entry.retired && (entry.player || opponents);
+    const distant = active && !entry.player && opponents
+      && camera.position.distanceToSquared(car.group.position) > 125 ** 2;
+    car.group.visible = active && !distant;
+    proxy.visible = distant;
+    if (distant) {
+      proxy.position.copy(car.group.position);
+      proxy.rotation.copy(car.group.rotation);
+    }
+  });
+  const lodNow = performance.now();
+  if (lodNow - lastWorldDetailLodUpdate >= 500) {
+    lastWorldDetailLodUpdate = lodNow;
+    updateWorldDetailLod(world, camera);
+  }
+  driverNameTags.forEach(tag => { tag.sprite.visible = false; });
+  sim.entries.forEach((entry, index) => {
+    const tag = driverNameTags[index], car = cars[skins[index]].model;
+    if (!tag) return;
+    if (tag.name !== entry.name) {
+      tag.name = entry.name;
+      tag.context.clearRect(0, 0, tag.labelCanvas.width, tag.labelCanvas.height);
+      tag.context.fillStyle = '#071019b8'; tag.context.beginPath(); tag.context.roundRect(8, 4, 304, 56, 13); tag.context.fill();
+      tag.context.fillStyle = '#f1f5f8'; tag.context.fillText(entry.name, 160, 32, 280);
+      tag.sprite.material.map.needsUpdate = true;
+    }
+    tag.sprite.position.set(car.group.position.x, car.group.position.y + 2.4, car.group.position.z);
+    const distance = camera.position.distanceTo(tag.sprite.position);
+    const opacity = Math.min(THREE.MathUtils.clamp((distance - 8) / 18, 0, 1),
+      THREE.MathUtils.clamp((135 - distance) / 40, 0, 1));
+    tag.sprite.visible = !entry.player && opponents && car.group.visible && opacity > 0;
+    tag.sprite.material.opacity = opacity * 0.8;
+  });
+  if (!onFoot || lodNow - lastOnFootInteractionAt >= 100) {
+    lastOnFootInteractionAt = lodNow;
+    updateOnFootInteraction();
+  }
   renderer.render(scene, camera);
   renderBroadcast(performance.now());
 }
@@ -1170,24 +1576,75 @@ function stadiumHeading(s) {
 }
 function onFootSpawn() {
   const car = sim.car, side = 2.4;
-  const heading = car.heading;
   const pitSide = track.pit?.side ?? 1;
   const acrossTrack = pitSide > 0 ? -side : side;
+  const player = { x: car.x - Math.sin(car.heading) * acrossTrack, y: car.y + Math.cos(car.heading) * acrossTrack };
   return {
-    player: { x: car.x - Math.sin(heading) * acrossTrack, y: car.y + Math.cos(heading) * acrossTrack },
-    heading: heading - Math.PI / 2,
+    player,
+    heading: Math.atan2(car.y - player.y, car.x - player.x),
   };
 }
-const interactionRaycaster = new THREE.Raycaster();
+function warmWorldAroundPlayer() {
+  const spawn = onFootPosition, height = track.heightAtPosition
+    ? track.heightAtPosition(spawn.x, spawn.y)
+    : track.heightAt ? track.heightAt(track.progress(spawn.x, spawn.y)) : 0;
+  const center = new THREE.Vector3(spawn.x, height, -spawn.y);
+  const nearbyDetails = worldDetailsInRadius(world, center, 450);
+  const nearbyMeshes = new Set(nearbyDetails.map(({ mesh }) => mesh));
+  const previousWorldVisibility = world.children.map(child => child.visible);
+  const previousRootVisibility = scene.children.map(child => child.visible);
+  const previousCulling = nearbyDetails.map(({ mesh }) => mesh.frustumCulled);
+  const previousCamera = {
+    position: camera.position.clone(),
+    quaternion: camera.quaternion.clone(),
+    up: camera.up.clone(),
+    fov: camera.fov,
+    aspect: camera.aspect,
+    near: camera.near,
+    far: camera.far,
+  };
+  const target = new THREE.WebGLRenderTarget(32, 32, { depthBuffer: true });
+  world.children.forEach(child => { child.visible = nearbyMeshes.has(child); });
+  nearbyDetails.forEach(({ mesh }) => { mesh.frustumCulled = false; });
+  scene.children.forEach(child => { child.visible = child === world || child.isLight; });
+  camera.fov = 66;
+  camera.near = 0.1;
+  camera.up.set(0, 1, 0);
+  camera.position.set(center.x, height + 1.8, center.z);
+  camera.lookAt(center.x + 100, height + 1.8, center.z);
+  camera.updateProjectionMatrix();
+  try {
+    renderer.setRenderTarget(target);
+    renderer.render(scene, camera);
+  } finally {
+    renderer.setRenderTarget(null);
+    world.children.forEach((child, index) => { child.visible = previousWorldVisibility[index]; });
+    scene.children.forEach((child, index) => { child.visible = previousRootVisibility[index]; });
+    nearbyDetails.forEach(({ mesh }, index) => { mesh.frustumCulled = previousCulling[index]; });
+    camera.position.copy(previousCamera.position);
+    camera.quaternion.copy(previousCamera.quaternion);
+    camera.up.copy(previousCamera.up);
+    camera.fov = previousCamera.fov;
+    camera.aspect = previousCamera.aspect;
+    camera.near = previousCamera.near;
+    camera.far = previousCamera.far;
+    camera.updateProjectionMatrix();
+    camera.updateMatrixWorld();
+    target.dispose();
+  }
+}
+const interactionDirection = new THREE.Vector3(), interactionTarget = new THREE.Vector3();
 function updateOnFootInteraction() {
   const prompt = $('on-foot-prompt'), exitHint = $('exit-hint');
   if (onFoot) {
     $('on-foot-overlay').hidden = false;
     exitHint.hidden = true;
     const distance = Math.hypot(sim.car.x - onFootPosition.x, sim.car.y - onFootPosition.y);
-    interactionRaycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+    camera.getWorldDirection(interactionDirection);
+    interactionTarget.set(model.group.position.x, model.group.position.y + 0.8, model.group.position.z)
+      .sub(camera.position).normalize();
     canEnterCar = avatarLoaded && distance < 8 && model.group.visible
-      && interactionRaycaster.intersectObject(model.group, true).length > 0;
+      && interactionDirection.dot(interactionTarget) > 0.94;
     prompt.innerHTML = avatarLoadError ? 'Driver model failed to load · reload to retry'
       : !avatarLoaded ? 'Loading driver model…'
           : canEnterCar ? '<strong>L</strong> · enter car · <strong>R</strong> enter without aiming'
@@ -1297,10 +1754,45 @@ function renderBroadcast(now) {
     mirrors.forEach((mirror, index) => { mirror.visible = visibility[index]; });
   }
 }
-const outline = Array.from({ length: Math.ceil(track.length / 2) }, (_, i) => track.point ? track.point(i * 2) : stadiumPoint(i * 2));
+const MINIMAP_SAMPLE_SPACING = 10;
+const outline = Array.from({ length: Math.ceil(track.length / MINIMAP_SAMPLE_SPACING) }, (_, i) => track.point ? track.point(i * MINIMAP_SAMPLE_SPACING) : stadiumPoint(i * MINIMAP_SAMPLE_SPACING));
 const mapBounds = outline.reduce((b, [x, y]) => ({ minX: Math.min(b.minX, x), maxX: Math.max(b.maxX, x), minY: Math.min(b.minY, y), maxY: Math.max(b.maxY, y) }), { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity });
 const minimap = $('minimap'), map2d = minimap.getContext('2d');
+let minimapLastDraw = 0, lastWorldDetailLodUpdate = 0;
+let nearbyLeaderboardLastUpdate = 0;
+function updateNearbyLeaderboard() {
+  const panel = $('nearby-leaderboard'), now = performance.now();
+  if (!opponents || qualifying && qualifying.stage !== 'race') {
+    panel.hidden = true;
+    return;
+  }
+  panel.hidden = false;
+  if (now - nearbyLeaderboardLastUpdate < 250) return;
+  nearbyLeaderboardLastUpdate = now;
+  const player = sim.entries[0], halfTrack = track.length / 2;
+  const nearby = sim.entries.filter(entry => entry !== player && !entry.retired)
+    .map(entry => {
+      const gap = ((entry.covered - player.covered) % track.length + track.length) % track.length;
+      const ahead = gap <= halfTrack;
+      const distance = ahead ? gap : track.length - gap;
+      const averageSpeed = Math.max(5, (Math.abs(player.car.telemetry.speed) + Math.abs(entry.car.telemetry.speed)) / 2);
+      return { entry, ahead, seconds: distance / averageSpeed };
+    });
+  const behind = nearby.filter(row => !row.ahead).sort((a, b) => a.seconds - b.seconds).slice(0, 3);
+  const ahead = nearby.filter(row => row.ahead).sort((a, b) => a.seconds - b.seconds).slice(0, 1);
+  const rows = [
+    ...ahead.map(row => ({ label: 'Ahead', ...row })),
+    { label: 'You', entry: player, ahead: false, seconds: 0 },
+    ...behind.map(row => ({ label: 'Behind', ...row })),
+  ];
+  $('nearby-standings').innerHTML = rows.map(row =>
+    `<li class="${row.entry.player ? 'you' : ''}"><span>${row.label}</span><span>${row.entry.name}</span><b>${row.entry.player ? '—' : `${row.ahead ? '+' : '−'}${row.seconds.toFixed(1)} s`}</b></li>`
+  ).join('');
+}
 function drawMinimap() {
+  const now = performance.now();
+  if (now - minimapLastDraw < 100) return;
+  minimapLastDraw = now;
   const dpr = Math.min(devicePixelRatio, 2), w = minimap.clientWidth, h = minimap.clientHeight;
   if (minimap.width !== Math.round(w * dpr) || minimap.height !== Math.round(h * dpr)) { minimap.width = Math.round(w * dpr); minimap.height = Math.round(h * dpr); }
   const pad = 12, scale = Math.min((w - 2 * pad) / (mapBounds.maxX - mapBounds.minX), (h - 2 * pad) / (mapBounds.maxY - mapBounds.minY));
@@ -1323,12 +1815,22 @@ function drawMinimap() {
     map2d.lineWidth = 1; map2d.strokeStyle = e.player ? '#ffffff' : '#000000a0'; map2d.stroke();
   }
 }
+let standingsLastUpdate = 0, standingsHtml = '';
+function updateStandings(makeHtml) {
+  const now = performance.now();
+  if (now - standingsLastUpdate < 250) return;
+  standingsLastUpdate = now;
+  const next = makeHtml();
+  if (next !== standingsHtml) {
+    standingsHtml = next;
+    $('standings').innerHTML = next;
+  }
+}
 function render(dt = 0) {
   const c = sim.car;
-  placeScene(dt); placeSafetyCar(); drawMinimap(); updateRain(dt);
+  placeScene(dt); placeSafetyCar(); drawMinimap(); updateNearbyLeaderboard(); updateRain(dt);
   const conditions = weather.state;
   $('yellow-flag').hidden = !sim.yellowFlag.active || !opponents;
-  weatherBadge.textContent = `${conditions.label.toUpperCase()} · GRIP ${Math.round(conditions.grip * 100)}%`;
   scene.fog.color.copy(dryFog).lerp(rainFog, conditions.intensity * 0.65);
   sun.intensity = (nightTrack ? 0.28 : 2.8) - conditions.intensity * (nightTrack ? 0.12 : 1.5);
   $('speed').textContent = $('speed-hud').textContent = Math.round(c.telemetry.speed * (mph ? 2.23694 : 3.6));
@@ -1339,6 +1841,18 @@ function render(dt = 0) {
   const ers = c.telemetry.powertrain?.ers;
   $('ers').textContent = ers ? `${(ers.charge / 1e6).toFixed(2)} MJ${ers.deploy > 0 ? ' · +' + Math.round(ers.deploy / 1000) + ' kW' : ers.harvest > 0 ? ' · −' + Math.round(ers.harvest / 1000) + ' kW' : ''}` : 'off';
   $('ers-lap').textContent = ers ? `${(ers.deployed / 1e6).toFixed(2)} / ${(c.config.ersDeployPerLap / 1e6).toFixed(1)} MJ` : '–';
+  const ersStatus = $('ers-status');
+  if (!ers) {
+    ersStatus.textContent = 'ERS · Off'; ersStatus.dataset.mode = 'standby';
+  } else {
+    const level = Math.round(ers.charge / c.config.ersCapacity * 100);
+    const mode = ers.deploy > 1000 ? 'deploy' : ers.harvest > 1000 ? 'harvest' : 'standby';
+    const action = mode === 'deploy' ? (ersOvertakeActive ? 'Overtake' : 'Normal boost')
+      : mode === 'harvest' ? 'Harvesting' : ersOvertakeActive ? 'Overtake ready'
+        : ersGapToAhead() <= 1 ? `Overtake available · hold ${keyName(gameSettings.keybinds.ers)}` : `Hold ${keyName(gameSettings.keybinds.ers)} for normal boost`;
+    ersStatus.textContent = `ERS · ${action} · ${level}%`;
+    ersStatus.dataset.mode = mode;
+  }
   $('distance').textContent = `${c.distance.toFixed(0)} m`;
   $('time').textContent = `${c.time.toFixed(1)} s`;
   $('steer').textContent = `${(c.steer * 180 / Math.PI).toFixed(1)}°`;
@@ -1392,21 +1906,21 @@ function render(dt = 0) {
     $('race-label').textContent = `${stage} qualifying · ${rows.length} drivers · top ${cutoff} advance`;
     const playerRow = rows.find(row => row.id === -1);
     $('race-pos').textContent = `${stage}${playerRow ? ` · P${playerRow.position}` : ''} · complete a clean lap`;
-    $('standings').innerHTML = rows.map(row => {
+    updateStandings(() => rows.map(row => {
       const color = row.id < 0 ? '#39e0ae' : `#${DEFAULT_GRID[row.id].color.toString(16).padStart(6, '0')}`;
       return `<li class="${row.id < 0 ? 'you' : ''}"><span>${row.position}</span><i style="background:${color}"></i>${row.name}<b>${Number.isFinite(row.time) ? formatLapTime(row.time) : '—'}${row.position === cutoff ? ' · cut line' : ''}</b></li>`;
-    }).join('');
+    }).join(''));
   } else if (opponents && finish.flag) {
     // After the chequered flag: the classification (race time + penalties).
     const rows = sim.classification(); result = rows.find(r => r.player);
     $('race-label').textContent = `Classification · ${finish.laps} lap${finish.laps > 1 ? 's' : ''}${finish.done ? '' : ' · finishing'}`;
     $('race-pos').textContent = result.finished ? `Finished P${result.position} / ${rows.length}` : `Chequered flag · P${result.position}`;
-    $('standings').innerHTML = rows.map(r => `<li class="${r.player ? 'you' : ''}"><span>${r.position}</span>${swatch(r)}${r.name}<b>${r.dsq ? 'DSQ · one compound' : r.retired ? `DNF · lap ${r.laps + 1}` : !r.finished ? 'running' : r.gap === 0 ? formatLapTime(r.total) : r.lapsDown ? `+${r.lapsDown} lap${r.lapsDown > 1 ? 's' : ''}` : `+${r.gap.toFixed(3)}`}${r.penalty ? ` · incl. ${r.penalty}s pen` : ''} · ${r.stops} stop${r.stops === 1 ? '' : 's'}</b></li>`).join('');
+    updateStandings(() => rows.map(r => `<li class="${r.player ? 'you' : ''}"><span>${r.position}</span>${swatch(r)}${r.name}<b>${r.dsq ? `DSQ · ${r.dsqReason}` : r.retired ? `DNF · lap ${r.laps + 1}` : !r.finished ? 'running' : r.gap === 0 ? formatLapTime(r.total) : r.lapsDown ? `+${r.lapsDown} lap${r.lapsDown > 1 ? 's' : ''}` : `+${r.gap.toFixed(3)}`}${r.unservedPenalty ? ` · +${r.unservedPenalty}s pending` : r.servedPenalty ? ` · ${r.servedPenalty}s served` : ''} · ${r.stops} stop${r.stops === 1 ? '' : 's'}</b></li>`).join(''));
   } else if (opponents) {
     const standings = sim.standings(), me = standings.find(s => s.player);
     $('race-label').textContent = 'Race order · interval to leader';
     $('race-pos').textContent = `P${me.position} / ${standings.length} · Lap ${Math.min(me.lap, finish.laps)}/${finish.laps}`;
-    $('standings').innerHTML = standings.map(s => `<li class="${s.player ? 'you' : ''}"><span>${s.position}</span>${swatch(s)}${s.name}<b>${s.position === 1 ? `Lap ${Math.min(s.lap, finish.laps)}` : `+${s.gap.toFixed(3)}`}${s.penalty ? ` · +${s.penalty}s pen` : ''}${s.pit ? ' · PIT' : ''}${s.retired ? ' · OUT' : ''}${s.drs === 'open' ? ' · DRS' : ''}${tyreBadge(s.compound)}</b></li>`).join('');
+    updateStandings(() => standings.map(s => `<li class="${s.player ? 'you' : ''}"><span>${s.position}</span>${swatch(s)}${s.name}<b>${s.position === 1 ? `Lap ${Math.min(s.lap, finish.laps)}` : `+${s.gap.toFixed(3)}`}${s.penalty ? ` · +${s.penalty}s pen` : ''}${s.pit ? ' · PIT' : ''}${s.retired ? ' · OUT' : ''}${s.drs === 'open' ? ' · DRS' : ''}${tyreBadge(s.compound)}</b></li>`).join(''));
   } else $('race-pos').textContent = '';
   const contact = c.contact && c.contact.speed > 1 && c.time - c.contact.time < 1.5 ? c.contact : null;
   const surface = track.surface(c.x, c.y), impact = c.impact && c.impact.speed > 2 && c.time - c.impact.time < 1.5 ? c.impact : null;
@@ -1416,19 +1930,153 @@ function render(dt = 0) {
   const worn = Math.max(...c.tireWear);
   const serviceProgress = service ? Math.min(1, Math.max(0, (sim.time - service.begin) / (service.end - service.begin))) : 0;
   $('pit-info').innerHTML = `${tyreBadge(c.compound)}${title(c.compound)} · ${(worn * 100).toFixed(1)}% worn${me.stops.length ? ` · ${me.stops.length} stop${me.stops.length > 1 ? 's' : ''}` : ''}${me.pitRequest ? ` · Box: ${title(me.pitRequest)}` : ''}${service ? ` · Service ${Math.round(serviceProgress * 100)}%` : ''}${c.fuel != null ? ` · Fuel ${c.fuel.toFixed(1)} kg` : ''} · ${conditions.label}${drsNote(me)}`;
-  const pitNote = c.fuel === 0 ? 'Out of fuel · engine starved' : service ? `Pit stop · fitting ${title(service.compound)} · ${Math.max(0, service.end - sim.time).toFixed(1)} s remaining`
+  const pitNote = c.fuel === 0 ? 'Out of fuel · engine starved' : service ? `Pit stop · fitting ${title(service.compound)}${service.penaltyTime ? ` · clearing ${service.penaltyTime}s penalty` : ''} · ${Math.max(0, service.end - sim.time).toFixed(1)} s remaining`
     : lane ? `Pit lane · ${Math.round(sim.pit.speedLimit * 3.6)} km/h limiter${me.pitVisit?.speeding ? ` · speeding +${sim.options.pitSpeedingPenalty} s` : !me.pitVisit?.served && me.pit?.phase !== 'out' ? ' · stop in your box (green)' : ''}`
-    : me.pitRequest && !result ? `Box this lap · ${title(me.pitRequest)}${autopilot ? '' : circuitKey ? ` · pit entry on the ${sim.pit?.side > 0 ? 'left' : 'right'} before the line` : ' · pit entry on the inside of the main straight'}` : null;
+    : me.pitRequest && !result ? `Box this lap · ${title(me.pitRequest)}${gameSettings.autoPit ? ' · auto-pit assists near entry' : circuitKey ? ` · pit entry on the ${sim.pit?.side > 0 ? 'left' : 'right'} before the line` : ' · pit entry on the inside of the main straight'}` : null;
   $('lights').hidden = onFoot || !(start.enabled && start.sinceLightsOut < 1.5);
   [...$('lights').children].forEach((el, k) => el.classList.toggle('on', start.phase === 'lights' && k < start.lit));
   const startNote = !start.enabled || start.sinceLightsOut > 4 ? null : start.phase === 'lights' ? (me.jumpStart ? `Jump start · +${me.penalty} s penalty` : 'Lights · hold the brake, go when they go out')
     : me.jumpStart ? `Jump start · +${me.penalty} s penalty` : me.reaction !== null ? `Lights out · reaction ${me.reaction.toFixed(3)} s` : 'Lights out · go!';
-  const flagNote = !result ? null : result.dsq ? 'Chequered flag · disqualified: one compound all race (pit for a different one) · R to restart' : result.finished ? `Chequered flag · P${result.position} · ${formatLapTime(result.total)}${result.penalty ? ` incl. ${result.penalty} s penalty` : ''} · R to restart` : 'Chequered flag · complete this lap to finish';
-  $('status').textContent = paused ? 'Paused · P or Resume to continue' : onFoot ? avatarLoadError ? 'Driver model failed to load · reload the page' : !avatarLoaded ? 'Loading the on-foot driver model…' : qualifying && qualifying.stage !== 'race' ? `On foot · ${qualifying.stage} qualifying · enter the car to set your lap` : 'On foot · WASD walk · double-tap W run · Space jump · R enter · E emotes · M suit menu · L enter' : c.gear < 0 ? 'Reverse · hold the brake to back up · W / RT brakes, then goes forward' : qualifying && qualifying.stage !== 'race' ? `${qualifying.stage} qualifying · complete a clean lap` : startNote ? startNote : flagNote ? flagNote : pitNote ? pitNote : impact ? `Wall impact · ${Math.round(impact.speed * 3.6)} km/h into the barrier · R to reset` : contact ? `Contact · ${Math.round(contact.speed * 3.6)} km/h closing speed` : !['asphalt', 'pit'].includes(surface) ? `On the ${surface} · reduced grip · R to reset` : autopilot ? 'Autopilot · I to take control' : c.telemetry.speed < 0.5 ? 'Ready · W or ↑ to accelerate' : `${circuitKey ? track.name : 'Test circuit'} · ${driver.source} input`;
-  $('input-source').textContent = autopilot ? 'autopilot' : driver.source;
+  const flagNote = !result ? null : result.dsq ? 'Chequered flag · disqualified · R to restart' : result.finished ? `Chequered flag · P${result.position} · ${formatLapTime(result.total)}${result.penalty ? ` incl. ${result.penalty} s penalty` : ''} · R to restart` : 'Chequered flag · complete this lap to finish';
+  $('status').textContent = paused ? 'Paused · Escape or Resume to continue' : onFoot ? avatarLoadError ? 'Driver model failed to load · reload the page' : !avatarLoaded ? 'Loading the on-foot driver model…' : qualifying && qualifying.stage !== 'race' ? `On foot · ${qualifying.stage} qualifying · enter the car to set your lap` : 'On foot · WASD walk · double-tap W run · Space jump · R enter · E emotes · M suit menu · L enter' : c.gear < 0 ? 'Reverse · hold S to reverse · Space brakes only' : qualifying && qualifying.stage !== 'race' ? `${qualifying.stage} qualifying · complete a clean lap` : startNote ? startNote : flagNote ? flagNote : pitNote ? pitNote : impact ? `Wall impact · ${Math.round(impact.speed * 3.6)} km/h into the barrier · R to reset` : contact ? `Contact · ${Math.round(contact.speed * 3.6)} km/h closing speed` : !['asphalt', 'pit'].includes(surface) ? `On the ${surface} · reduced grip · R to reset` : autopilot ? 'Auto-pit assist · control returns after pit exit · press I to take control' : c.telemetry.speed < 0.5 ? 'Ready · W or ↑ to accelerate' : `${circuitKey ? track.name : 'Test circuit'} · ${driver.source} input`;
+  updateRaceAssistant();
+  $('input-source').textContent = autopilot ? 'auto-pit assist' : driver.source;
   $('in-throttle').value = command.throttle ?? 0; $('in-brake').value = command.brake ?? 0;
 }
+const raceNoticeQueue = [];
+let raceNoticeTimer = null, lastRaceAdvice = '', lastSpokenRaceMessage = '', raceControlEventUntil = 0, lastPlayerDsq = false;
+const reportedPenaltyEvents = new WeakMap();
+const reportedRetirements = new WeakSet();
+function speakRaceAssistant(message) {
+  const text = message.replace(/[^\w\s.,!?;:'-]/g, '').trim();
+  if (!text || text === lastSpokenRaceMessage || !window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
+  lastSpokenRaceMessage = text;
+  window.speechSynthesis.cancel();
+  const utterance = new window.SpeechSynthesisUtterance(text);
+  utterance.rate = 0.98;
+  utterance.pitch = 0.96;
+  utterance.volume = 0.72;
+  window.speechSynthesis.speak(utterance);
+}
+function setRaceControlMessage(message) {
+  $('race-control-message').textContent = message;
+  lastRaceAdvice = message;
+  raceControlEventUntil = performance.now() + 8000;
+  speakRaceAssistant(message);
+}
+function showNextRaceNotice() {
+  if (sim.pendingSafetyCarPass) { raceNoticeTimer = null; return; }
+  const notice = raceNoticeQueue.shift();
+  if (!notice) { $('race-notification').hidden = true; raceNoticeTimer = null; return; }
+  $('race-notification-icon').textContent = notice.icon;
+  $('race-notification-text').textContent = notice.text;
+  $('race-notification').hidden = false;
+  raceNoticeTimer = setTimeout(showNextRaceNotice, notice.duration);
+}
+function raceNotice(icon, text, duration = 4000) {
+  raceNoticeQueue.push({ icon, text, duration });
+  if (!raceNoticeTimer && !sim.pendingSafetyCarPass) showNextRaceNotice();
+}
+function chooseSafetyCarPass(choice) {
+  if (!sim.chooseSafetyCarPass(choice)) return;
+  $('safety-car-choice').hidden = true;
+  $('race-notification').hidden = true;
+  $('race-notification').dataset.choice = 'false';
+  if (raceNoticeQueue.length && !raceNoticeTimer) showNextRaceNotice();
+}
+document.querySelectorAll('[data-safety-car-choice]').forEach(button => {
+  button.onclick = () => chooseSafetyCarPass(button.dataset.safetyCarChoice);
+});
+function updateSafetyCarChoice() {
+  const pass = sim.pendingSafetyCarPass;
+  if (!pass) {
+    if ($('race-notification').dataset.choice === 'true') {
+      $('race-notification').hidden = true;
+      $('race-notification').dataset.choice = 'false';
+      $('safety-car-choice').hidden = true;
+      if (raceNoticeQueue.length && !raceNoticeTimer) showNextRaceNotice();
+    }
+    return;
+  }
+  if (raceNoticeTimer) clearTimeout(raceNoticeTimer);
+  raceNoticeTimer = null;
+  $('race-notification-icon').textContent = '🚩';
+  $('race-notification-text').textContent = `Safety-car overtake: you passed ${pass.other}. Choose to return the position or accept a 5-second penalty.`;
+  $('safety-car-choice').hidden = false;
+  $('race-notification').dataset.choice = 'true';
+  $('race-notification').hidden = false;
+}
+function updateRaceEvents() {
+  for (const entry of sim.entries) {
+    const count = reportedPenaltyEvents.get(entry) ?? 0;
+    for (const event of entry.penaltyEvents.slice(count)) {
+      const message = event.reason === 'track limits' ? `⚠️ Track limits: ${event.seconds}s penalty for gaining an advantage.`
+        : event.reason === 'safety-car overtake' ? `🚩 Safety car: ${event.seconds}s penalty for overtaking without giving the position back.`
+        : event.reason === 'pit speeding' ? `⚠️ Pit lane speeding: ${event.seconds}s penalty.`
+        : event.reason === 'major collision' ? `⚠️ Race control review: ${event.seconds}s penalty after a major collision.`
+        : `⚠️ ${event.reason}: ${event.seconds}s penalty.`;
+      raceNotice('⚠️', message, event.seconds >= 10 ? 5000 : 4000);
+      setRaceControlMessage(message);
+    }
+    reportedPenaltyEvents.set(entry, entry.penaltyEvents.length);
+  }
+  const flag = sim.yellowFlag;
+  if (flag.active && flag.time !== undefined && flag.time !== lastYellowFlagNotice) {
+    lastYellowFlagNotice = flag.time;
+    const message = '🚩 Safety car deployed. Follow the train and obey the automatic speed cap.';
+    raceNotice('🚩', message, 5000);
+    setRaceControlMessage(message);
+  }
+  for (const entry of sim.entries) {
+    if (entry.retired && !reportedRetirements.has(entry)) {
+      reportedRetirements.add(entry);
+      const message = `🚩 DNF: ${entry.name} retired · safety car deployed.`;
+      raceNotice('🚩', message, 5000);
+      setRaceControlMessage(message);
+    }
+  }
+  const player = sim.entries[0];
+  const dsq = !!player.safetyCarDsq;
+  if (dsq && !lastPlayerDsq) {
+    const message = '🚩 Disqualified for overtaking the safety car.';
+    raceNotice('🚩', message, 5000);
+    setRaceControlMessage(message);
+  }
+  lastPlayerDsq = dsq;
+  updateSafetyCarChoice();
+}
+let lastYellowFlagNotice = null;
+function updateRaceAssistant() {
+  updateRaceEvents();
+  const player = sim.entries[0];
+  const wear = Math.max(...sim.car.tireWear), lap = Math.max(1, Math.floor(player.covered / track.length) + 1);
+  const message = sim.yellowFlag.active ? '🚩 Safety car: no overtaking; follow the pack and keep a safe gap.'
+    : player.pit?.phase === 'service' ? `🛠️ Pit crew is fitting ${title(player.pit.compound)} tyres${player.pit.penaltyTime ? ` and serving ${player.pit.penaltyTime}s of penalties` : ''}. Hold position until service is complete.`
+    : player.safetyCarDsq ? '🚩 Race control: disqualified for overtaking the safety car.'
+    : player.pitRequest ? `🛞 Box this lap for ${title(player.pitRequest)} tyres. ${gameSettings.autoPit ? 'Auto-pit will assist near the pit entry.' : 'Drive into the pit lane and stop in your box.'}`
+    : wear > 0.55 && player.stops.length === 0 ? '🛞 Tyres are wearing. Press B to request Hard tyres and plan your mandatory pit stop.'
+    : lap > 1 && player.stops.length === 0 ? '🛞 Remember: you need one pit stop and a second tyre compound before the finish.'
+    : '';
+  if (message && message !== lastRaceAdvice && performance.now() >= raceControlEventUntil) {
+    $('race-control-message').textContent = message;
+    lastRaceAdvice = message;
+    speakRaceAssistant(message);
+  } else if (!message && performance.now() >= raceControlEventUntil && lastRaceAdvice) {
+    $('race-control-message').textContent = 'Race control is monitoring the session.';
+    lastRaceAdvice = '';
+  }
+}
+const TARGET_FRAME_MS = 1000 / 60;
+let lastFrameAt = 0;
 function frame(now) {
+  if (now - lastFrameAt < TARGET_FRAME_MS) { requestAnimationFrame(frame); return; }
+  lastFrameAt = now;
+  if (!$('menu-screen').hidden || paused) {
+    previousTime = now;
+    audio?.silence();
+    requestAnimationFrame(frame);
+    return;
+  }
   const dt = previousTime !== null && !paused ? Math.min((now - previousTime) / 1000, 0.1) : 0;
   if (previousTime !== null && !paused) {
     const frameMs = Math.min(100, Math.max(1, now - previousTime));
@@ -1456,8 +2104,6 @@ function frame(now) {
   if (gamepadPressed(4)) sim.start.phase === 'lights' ? takeGridSlot(sim.gridSlot - 1) : manualShift(-1);
   if (gamepadPressed(5)) sim.start.phase === 'lights' ? takeGridSlot(sim.gridSlot + 1) : manualShift(1);
   if (gamepadPressed(10)) autoGearbox();
-  // Right stick click turns the autopilot off (held while driving it is DRS).
-  if (gamepadPressed(11) && autopilot) toggleAutopilot();
   if (previousTime !== null && !paused) {
     const has = (...codes) => codes.some(code => keys.has(code));
     if (onFoot) {
@@ -1467,10 +2113,19 @@ function frame(now) {
       const forward = Number(has('KeyW')) - Number(has('KeyS'));
       const strafe = Number(has('KeyD')) - Number(has('KeyA'));
       const running = runningOnFoot && forward > 0;
+      if (now - lastOnFootCollisionQueryAt >= 150) {
+        lastOnFootCollisionQueryAt = now;
+        onFootCollisionCars = [];
+        for (const entry of sim.entries) {
+          if (entry.retired) continue;
+          const dx = entry.car.x - onFootPosition.x, dy = entry.car.y - onFootPosition.y;
+          if (dx * dx + dy * dy < 24 * 24) onFootCollisionCars.push(entry.car);
+        }
+      }
       onFootPosition = moveOnFootColliding(onFootPosition, lookYaw, { forward, strafe }, dt, {
         speed: running ? 5.6 : undefined,
         barrierAt,
-        cars: sim.entries.filter(entry => !entry.retired).map(entry => entry.car),
+        cars: onFootCollisionCars,
       });
       onFootYaw = lookYaw;
       // After the player takes the chequered flag, keep the complete race
@@ -1490,10 +2145,13 @@ function frame(now) {
     } else {
       const elapsed = dt;
       weather.update(elapsed);
+      updateAutoPitAssist();
       // Ramp over the same elapsed time the simulation accepts (it caps a frame at 0.25 s).
+      const startAssist = gameSettings.lightsAssist && sim.start.enabled && sim.start.phase === 'lights';
+      const brakeOnly = has(gameSettings.keybinds.brakeOnly);
       command = autopilot ? null : driver.update(Math.min(elapsed, 0.25), {
-        throttle: has('KeyW', 'ArrowUp') || !!gamepadButton(12), brake: has('KeyS', 'ArrowDown') || !!gamepadButton(13),
-        left: has('KeyA', 'ArrowLeft') || !!gamepadButton(14), right: has('KeyD', 'ArrowRight') || !!gamepadButton(15),
+        throttle: !startAssist && (has('KeyW', 'ArrowUp') || !!gamepadButton(12)), brake: !startAssist && (has('KeyS', 'ArrowDown') || brakeOnly || !!gamepadButton(13)),
+        left: !startAssist && (has('KeyA', 'ArrowLeft') || !!gamepadButton(14)), right: !startAssist && (has('KeyD', 'ArrowRight') || !!gamepadButton(15)),
       }, gamepad(), sim.car.telemetry.speed);
       if (command) {
         // Direction: Q / E when held; otherwise the pedals. Stopped in forward, holding the
@@ -1502,13 +2160,18 @@ function frame(now) {
         const c = sim.car, stopped = c.telemetry.speed < 0.2, lights = sim.start.enabled && sim.start.phase === 'lights';
         const manual = has('KeyQ') && !has('KeyE') ? true : has('KeyE') && !has('KeyQ') ? false : undefined;
         if (manual !== undefined) command.reverse = manual;
-        else if (c.gear < 0) {
+        else if (c.gear < 0 && !brakeOnly) {
           const { throttle, brake } = command;
           command.throttle = brake; command.brake = throttle;
           command.reverse = stopped && throttle > 0.95 ? false : undefined;
-        } else command.reverse = stopped && !lights && command.brake > 0.95 && !command.throttle ? true : undefined;
+        } else command.reverse = stopped && !lights && has('KeyS', 'ArrowDown') && command.brake > 0.95 && !command.throttle ? true : undefined;
       }
-      if (command) command.drs = has('KeyF') || !!gamepadButton(11);
+      if (command) command.drs = has(gameSettings.keybinds.drs) || !!gamepadButton(11);
+      if (command && ersOvertakeActive && command.brake > 0.05) ersOvertakeActive = false;
+      if (command) {
+        command.ersMode = has(gameSettings.keybinds.ers) ? ersOvertakeActive ? 'overtake' : 'normal' : 'off';
+        command.ers = command.ersMode !== 'off';
+      }
       const forwardRecovery = autopilot && sim.car.gear < 0;
       if (forwardRecovery) command = { throttle: 0, brake: 1, steer: 0, reverse: false };
       if (handlingMode === 'arcade' && command && !autopilot && sim.car.gear > 0)
@@ -1517,6 +2180,7 @@ function frame(now) {
       sim.advance(elapsed, command,
         (x, y) => inQualifying ? surfaceAt(x, y) : weather.surfaceGrip(surfaceAt(x, y)),
         barrierAt, inQualifying ? 1 : weather.state.grip);
+      updateAutoPitAssist();
       if (autopilot && !forwardRecovery) command = sim.entries[0].command ?? { throttle: 0, brake: 0, steer: 0 };
       timer.update(sim.car);
       recordQualifyingLap();
@@ -1528,7 +2192,7 @@ function frame(now) {
     else {
       soundParams = soundModel.update(dt, sim.car.telemetry, command);
       if (audioCtx.state === 'suspended') audioCtx.resume();
-      audio.apply(soundParams, overview ? 0.3 : cockpit ? 0.9 : 0.7);
+      audio.apply(soundParams, soundVolume * (overview ? 0.3 : cockpit ? 0.9 : 0.7));
     }
   }
   previousTime = now; render(dt); requestAnimationFrame(frame);
@@ -1538,7 +2202,257 @@ $('track-select').innerHTML = `<option value="">Stadium test track · race</opti
 $('track-select').value = circuitKey ?? '';
 $('track-select').onchange = e => { const q = new URLSearchParams(location.search); if (e.target.value) q.set('track', e.target.value); else q.delete('track'); location.search = q.toString(); };
 $('field').textContent = `Opponents: ${opponents ? 'on' : 'off'}`; $('field').setAttribute('aria-pressed', String(opponents)); $('race-section').hidden = !opponents;
-reset(); resize(); requestAnimationFrame(frame);
+function showMenu(screen) {
+  $('home-screen').hidden = screen !== 'home';
+  $('singleplayer-screen').hidden = screen !== 'singleplayer';
+  $('settings-screen').hidden = screen !== 'settings';
+  $('menu-screen').hidden = false;
+  if (screen === 'settings') populateSettingsForm();
+}
+function setSettingsDirty() {
+  $('settings-notice').textContent = 'You have unsaved changes.';
+}
+function keyName(code) {
+  return code?.replace(/^Key/, '').replace(/^Digit/, '').replace(/^Arrow/, '←↑→↓') ?? '';
+}
+function renderKeybinds(settings) {
+  document.querySelectorAll('[data-keybind]').forEach(button => {
+    button.textContent = keyName(settings.keybinds[button.dataset.keybind]);
+    button.removeAttribute('data-listening');
+  });
+}
+function populateSettingsForm(source = gameSettings) {
+  settingsDraft = { ...source, keybinds: { ...source.keybinds } };
+  $('setting-handling').value = settingsDraft.handling;
+  $('setting-camera').value = settingsDraft.camera;
+  $('setting-fullscreen').checked = settingsDraft.fullscreen;
+  $('setting-autopit').checked = settingsDraft.autoPit;
+  $('setting-lights-assist').checked = settingsDraft.lightsAssist;
+  $('setting-graphics').value = settingsDraft.graphics;
+  $('setting-original-car').checked = settingsDraft.originalCar;
+  $('setting-name-livery').checked = settingsDraft.nameLivery;
+  $('setting-units').value = settingsDraft.units;
+  $('setting-trackside').checked = settingsDraft.trackside;
+  $('setting-driver-name').value = settingsDraft.driverName;
+  $('setting-livery').disabled = settingsDraft.originalCar;
+  drawLiveryPreview(settingsDraft.customLivery);
+  $('settings-notice').textContent = '';
+  renderKeybinds(settingsDraft);
+}
+function drawLiveryPreview(dataUrl) {
+  if (!dataUrl) { $('livery-preview').hidden = true; return; }
+  const image = new Image();
+  image.onload = () => {
+    const preview = $('livery-preview'), ctx = preview.getContext('2d');
+    preview.width = 512; preview.height = 256; preview.hidden = false;
+    ctx.clearRect(0, 0, preview.width, preview.height);
+    ctx.drawImage(image, 0, 0, preview.width, preview.height);
+  };
+  image.onerror = () => {
+    $('settings-notice').textContent = 'Could not load the selected livery image.';
+    console.error('Custom livery preview failed to load');
+  };
+  image.src = dataUrl;
+}
+function updateMenuMapPreview() {
+  const key = $('menu-track-select').value;
+  const canvas = $('map-preview'), ctx = canvas.getContext('2d');
+  canvas.width = 600; canvas.height = 260;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#101a24'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.strokeStyle = '#6fffc3'; ctx.lineWidth = 9; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  ctx.beginPath();
+  const fieldLabel = $('menu-opponents').checked ? '21 AI drivers' : 'Solo session';
+  if (!key) {
+    ctx.roundRect(74, 57, 452, 146, 70);
+    $('map-description').textContent = `Stadium test track · ${fieldLabel}`;
+  } else {
+    const points = CIRCUITS[key].points;
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (let i = 0; i < points.length; i += 2) {
+      minX = Math.min(minX, points[i]); maxX = Math.max(maxX, points[i]);
+      minY = Math.min(minY, points[i + 1]); maxY = Math.max(maxY, points[i + 1]);
+    }
+    const scale = Math.min(500 / Math.max(1, maxX - minX), 190 / Math.max(1, maxY - minY));
+    for (let i = 0; i < points.length; i += 2) {
+      const x = 300 + (points[i] - (minX + maxX) / 2) * scale;
+      const y = 130 + (points[i + 1] - (minY + maxY) / 2) * scale;
+      if (!i) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    $('map-description').textContent = `${CIRCUITS[key].name} · ${CIRCUITS[key].location} · ${fieldLabel}`;
+  }
+  ctx.stroke();
+}
+function saveSettings() {
+  settingsDraft.handling = $('setting-handling').value;
+  settingsDraft.camera = $('setting-camera').value;
+  settingsDraft.fullscreen = $('setting-fullscreen').checked;
+  settingsDraft.autoPit = $('setting-autopit').checked;
+  settingsDraft.lightsAssist = $('setting-lights-assist').checked;
+  settingsDraft.graphics = $('setting-graphics').value;
+  settingsDraft.originalCar = $('setting-original-car').checked;
+  settingsDraft.nameLivery = $('setting-name-livery').checked;
+  settingsDraft.units = $('setting-units').value;
+  settingsDraft.trackside = $('setting-trackside').checked;
+  settingsDraft.driverName = $('setting-driver-name').value.trim().replace(/[^\w -]/g, '').slice(0, 24) || DEFAULT_GAME_SETTINGS.driverName;
+  $('setting-driver-name').value = settingsDraft.driverName;
+  try {
+    localStorage.setItem('cursor-racing-settings', JSON.stringify(settingsDraft));
+  } catch (error) {
+    console.error('Could not save game settings', error);
+    $('settings-notice').textContent = 'Settings could not be saved in this browser.';
+    return;
+  }
+  gameSettings = { ...settingsDraft, keybinds: { ...settingsDraft.keybinds } };
+  if (pendingCustomLiveryTexture) {
+    customLiveryTexture?.dispose();
+    customLiveryTexture = pendingCustomLiveryTexture;
+    pendingCustomLiveryTexture = null;
+  } else if (!gameSettings.customLivery) {
+    customLiveryTexture?.dispose();
+    customLiveryTexture = null;
+  }
+  handlingMode = gameSettings.handling;
+  applyHandlingMode(); updateHandlingButton();
+  originalCar = gameSettings.originalCar;
+  model.setOriginalLivery?.(originalCar);
+  model.setCustomLivery?.(customLiveryTexture);
+  model.setDriverName?.(gameSettings.nameLivery ? gameSettings.driverName : null);
+  updateOriginalCarButton();
+  applyOptimizationMode(gameSettings.graphics);
+  cockpit = gameSettings.camera === 'cockpit';
+  tcam = gameSettings.camera === 'tcam';
+  overview = look360 = false; snapCamera = true; updateCameraButtons();
+  if (mph !== (gameSettings.units === 'mph')) $('units').click();
+  if (tvCameraButton.getAttribute('aria-pressed') !== String(gameSettings.trackside)) tvCameraButton.click();
+  if (gameSettings.fullscreen && !fsElement()) $('fullscreen').click();
+  if (!gameSettings.fullscreen && fsElement()) $('fullscreen').click();
+  $('settings-notice').textContent = '';
+  showMenu('home');
+}
+$('menu-settings').onclick = () => showMenu('settings');
+$('menu-singleplayer').onclick = () => {
+  $('menu-track-select').innerHTML = `<option value="">Stadium test track</option>${Object.entries(CIRCUITS).map(([key, circuit]) => `<option value="${key}">${circuit.name}</option>`).join('')}`;
+  $('menu-track-select').value = circuitKey ?? '';
+  $('menu-laps').value = new URLSearchParams(location.search).get('laps') ?? (circuitKey ? 3 : 10);
+  $('menu-opponents').checked = opponents;
+  $('menu-qualifying').checked = !new URLSearchParams(location.search).has('noqual');
+  $('menu-retirements').checked = !new URLSearchParams(location.search).has('noretire');
+  $('menu-penalties').checked = !new URLSearchParams(location.search).has('nopenalties');
+  updateOpponentOptions();
+  updateMenuMapPreview();
+  showMenu('singleplayer');
+};
+function updateOpponentOptions() {
+  const required = $('menu-opponents').checked;
+  for (const id of ['menu-qualifying', 'menu-retirements', 'menu-penalties']) {
+    const option = $(id);
+    if (required) option.checked = true;
+    option.disabled = required;
+  }
+}
+$('menu-opponents').onchange = () => { updateOpponentOptions(); updateMenuMapPreview(); };
+document.querySelectorAll('[data-menu-back]').forEach(button => { button.onclick = () => showMenu('home'); });
+document.querySelectorAll('[data-settings-tab]').forEach(button => {
+  button.onclick = () => {
+    document.querySelectorAll('[data-settings-tab]').forEach(tab => tab.setAttribute('aria-selected', String(tab === button)));
+    document.querySelectorAll('[data-settings-pane]').forEach(pane => { pane.hidden = pane.dataset.settingsPane !== button.dataset.settingsTab; });
+  };
+});
+document.querySelectorAll('#settings-screen select,#settings-screen input').forEach(field => {
+  field.addEventListener('change', () => {
+    if (field.id === 'setting-original-car' && field.checked) $('setting-name-livery').checked = false;
+    if (field.id === 'setting-name-livery' && field.checked) $('setting-original-car').checked = false;
+    if (field.id === 'setting-original-car')
+      $('setting-livery').disabled = $('setting-original-car').checked;
+    setSettingsDirty();
+  });
+});
+document.querySelectorAll('[data-keybind]').forEach(button => {
+  button.onclick = () => {
+    document.querySelectorAll('[data-keybind]').forEach(other => other.removeAttribute('data-listening'));
+    button.dataset.listening = 'true';
+    button.textContent = 'Press a key…';
+  };
+});
+$('keybind-reset').onclick = () => {
+  settingsDraft.keybinds = { ...DEFAULT_GAME_SETTINGS.keybinds };
+  renderKeybinds(settingsDraft); setSettingsDirty();
+};
+$('settings-reset').onclick = () => {
+  pendingCustomLiveryTexture?.dispose();
+  pendingCustomLiveryTexture = null;
+  $('livery-preview').hidden = true;
+  settingsDraft = { ...DEFAULT_GAME_SETTINGS, keybinds: { ...DEFAULT_GAME_SETTINGS.keybinds } };
+  populateSettingsForm(settingsDraft); setSettingsDirty();
+};
+$('setting-livery').addEventListener('change', async event => {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  const url = URL.createObjectURL(file), image = new Image();
+  try {
+    await new Promise((resolve, reject) => {
+      image.onload = resolve;
+      image.onerror = () => reject(new Error('Selected image could not be loaded'));
+      image.src = url;
+    });
+    const liveryCanvas = document.createElement('canvas');
+    liveryCanvas.width = 512; liveryCanvas.height = 256;
+    const ctx = liveryCanvas.getContext('2d'), aspect = image.width / image.height;
+    const cropWidth = aspect > 2 ? image.height * 2 : image.width;
+    const cropHeight = aspect > 2 ? image.height : image.width / 2;
+    ctx.drawImage(image, (image.width - cropWidth) / 2, (image.height - cropHeight) / 2, cropWidth, cropHeight, 0, 0, 512, 256);
+    settingsDraft.customLivery = liveryCanvas.toDataURL('image/jpeg', 0.84);
+    pendingCustomLiveryTexture?.dispose();
+    pendingCustomLiveryTexture = new THREE.CanvasTexture(liveryCanvas);
+    pendingCustomLiveryTexture.colorSpace = THREE.SRGBColorSpace;
+    pendingCustomLiveryTexture.anisotropy = 8;
+    drawLiveryPreview(settingsDraft.customLivery);
+    setSettingsDirty();
+  } catch (error) {
+    console.error('Could not process custom livery image', error);
+    $('settings-notice').textContent = error.message;
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+});
+$('menu-track-select').onchange = updateMenuMapPreview;
+$('start-race').onclick = () => {
+  const laps = Math.max(3, Math.min(99, Math.round(Number($('menu-laps').value) || 3)));
+  const hasOpponents = $('menu-opponents').checked;
+  updateOpponentOptions();
+  $('menu-laps').value = laps;
+  const query = new URLSearchParams(location.search);
+  if ($('menu-track-select').value) query.set('track', $('menu-track-select').value); else query.delete('track');
+  if (hasOpponents) {
+    query.set('race', '');
+    query.delete('solo');
+  } else {
+    query.delete('race');
+    query.set('solo', '1');
+  }
+  query.set('laps', String(laps));
+  query.set('start', '1');
+  if (hasOpponents || $('menu-qualifying').checked) query.delete('noqual'); else query.set('noqual', '');
+  if (hasOpponents || $('menu-retirements').checked) query.delete('noretire'); else query.set('noretire', '');
+  if (hasOpponents || $('menu-penalties').checked) query.delete('nopenalties'); else query.set('nopenalties', '');
+  location.search = query.toString();
+};
+$('save-settings').onclick = saveSettings;
+renderKeybinds(settingsDraft);
+const startupQuery = new URLSearchParams(location.search);
+if (startupQuery.has('start')) {
+  $('menu-screen').hidden = true;
+  startupQuery.delete('start');
+  history.replaceState(null, '', `${location.pathname}${startupQuery.toString() ? `?${startupQuery}` : ''}${location.hash}`);
+}
+if (gameSettings.camera === 'cockpit') cockpit = true;
+else if (gameSettings.camera === 'tcam') tcam = true;
+if (gameSettings.units === 'mph') $('units').click();
+reset(); resize(); placeScene(0); warmWorldAroundPlayer(); requestAnimationFrame(frame);
+gameInitialized = true;
+if (loadingScreenRequested && assetsLoaded) setTimeout(() => { $('loading-screen').hidden = true; }, 350);
 // Read-only snapshots for browser smoke tests and telemetry tools.
 window.f1Lab = {
   tcam: () => setTcam(),
@@ -1548,7 +2462,7 @@ window.f1Lab = {
     const result = cars.map(car => car.model.setRearFlap({ pivotOffset, angle }))[0];
     return result;
   },
-  snapshot: () => ({ car: structuredClone(sim.car), timing: structuredClone(timer.state), paused, onFoot, onFootPosition: { ...onFootPosition }, avatarLoaded, avatarAnimation: avatarActionName, canEnterCar, canExit: playerCanExit(), avatarError: avatarLoadError?.message ?? null, overview, cockpit, tcam, look360, recording: mediaRecorder?.state === 'recording', broadcastTarget: broadcastTarget?.name ?? null, broadcastShot: broadcastShotIndex, keys: [...keys], command: { ...command }, inputSource: autopilot ? 'autopilot' : driver.source }),
+  snapshot: () => ({ car: structuredClone(sim.car), timing: structuredClone(timer.state), paused, onFoot, onFootPosition: { ...onFootPosition }, avatarLoaded, avatarAnimation: avatarActionName, canEnterCar, canExit: playerCanExit(), avatarError: avatarLoadError?.message ?? null, overview, cockpit, tcam, look360, ersOvertakeActive, ersGapToAhead: ersGapToAhead(), recording: mediaRecorder?.state === 'recording', broadcastTarget: broadcastTarget?.name ?? null, broadcastShot: broadcastShotIndex, keys: [...keys], command: { ...command }, inputSource: autopilot ? 'autopilot' : driver.source }),
   track: () => ({ key: circuitKey, name: circuitKey ? track.name : 'Stadium test track', length: track.length, surface: track.surface(sim.car.x, sim.car.y), offset: track.offset(sim.car.x, sim.car.y), progress: track.progress(sim.car.x, sim.car.y) }),
   race: () => ({ opponents, finish: sim.finish, yellowFlag: sim.yellowFlag, safetyCar: sim.safetyCar, safetyCarVisible: safetyCarModel.group.visible, classification: sim.classification(), standings: opponents ? sim.standings() : [], cars: sim.entries.map(e => ({ name: e.name, x: e.car.x, y: e.car.y, speed: e.car.telemetry.speed, lane: e.lane, compound: e.car.compound, pit: e.pit?.phase ?? null, pitRequest: e.pitRequest, stops: structuredClone(e.stops), compounds: [...e.compounds], penalty: e.penalty, wake: e.car.wake.strength ?? 0, contact: e.car.contact ?? null, drs: e.car.drs, drsAllowed: !!e.drsAllowed, drsGap: e.drsGap, retired: !!e.retired, ...(m => ({ visible: m.group.visible, drawn: [m.group.position.x, -m.group.position.z], flap: m.drsFlap.rotation.x, frontFlap: m.frontWingFlap?.rotation.x ?? null, holderSteer: m.wheels[0].pivot.rotation.y }))(cars[skins[e.index]].model) })) }),
   start: () => (m => ({ ...sim.start, jumpStart: m.jumpStart, penalty: m.penalty, reaction: m.reaction, shown: !$('lights').hidden, litShown: $('lights').querySelectorAll('.on').length, status: $('status').textContent }))(sim.entries[0]),

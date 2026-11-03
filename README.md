@@ -1,6 +1,6 @@
 # C1 · CursorRacing · notparthyt · CR
 
-## F1 Dynamics Lab — Prototype III
+## F1 Simulator — Production
 
 **Play:** [GitHub Pages](https://notparthyt.github.io/F1/) · **Source:** [notparthyt/F1](https://github.com/notparthyt/F1)
 
@@ -36,6 +36,8 @@ real racing-line data.
   player livery selection.
 - **Telemetry:** live speed, lap times, vehicle dynamics, and tyre information.
 - **Graphics:** Default, Mid Optimized, and Max Optimized performance presets.
+- **Race control:** penalty and safety-car notices, a text-only team engineer,
+  position-redress checks, and pit-lane speed assistance.
 
 ## Run locally
 
@@ -63,22 +65,34 @@ the files excluded from that deployment are listed in `.assetsignore`.
 
 ## Getting started
 
-1. Choose a circuit from the header. The stadium starts a race weekend; real
-   circuits start as solo time trials. Press **O** to toggle opponents. With
-   opponents enabled, set a clean lap in each qualifying stage you advance to;
-   Q1, Q2, and Q3 determine the main-race grid. The default race is ten laps on
-   the stadium and three laps on a real circuit.
-2. Your driver spawns beside the car. Click the viewport to capture the mouse,
-   aim at the car, and press **L** to enter. Qualifying begins first; the race
-   starts after the final classification is set.
-3. Drive with **W / ↑** to accelerate, **S / ↓** to brake, and **A / D** or
-   **← / →** to steer. Use **I** to toggle autopilot and **P** to pause.
+1. Choose **Singleplayer**, select a circuit, and set at least three laps.
+   Turning opponents on requires qualifying, DNF retirements, and penalties;
+   turn opponents off to configure those options independently. Multiplayer
+   is marked as coming soon. Use the gear icon for controls, graphics,
+   gameplay, keybind, and driver-profile settings.
+2. With opponents enabled, Q1–Q3 set the grid. Your driver spawns beside the
+   car; click the viewport to aim at it and press **L** to enter.
+3. Drive with **W / ↑** to accelerate, **S / ↓** to brake and select reverse
+   at a stop, and **A / D** or **← / →** to steer. Press **Esc** to pause;
+   choose **Exit to main menu** in the pause menu to return.
 4. Use the HUD and standings to follow lap timing, position, tyres, fuel, and
    penalties. Press **R** to reset the session.
 
-In races, use different tyre compounds to meet the two-compound rule. Press
-**B** to cycle a pit request, then take the pit lane and stop in your box.
-Speeding in the pit lane incurs a penalty.
+Race starts use a track-specific starting compound and require a pit stop onto a second compound.
+Press **B** to cycle a requested tyre. With **Auto-pit** enabled, the assistant
+takes control near the pit entry and returns it after the pit exit; press **I**
+to take manual control early. Otherwise, drive into the pit lane and stop in
+your box. Speeding in the pit lane incurs a penalty. Map starts show a loading screen with progress from the actual asset
+loader. The browser caches downloaded car and driver model assets for later
+visits. The text Race Assistant also reads its guidance aloud when speech
+synthesis is available. Rendering is capped at 60 frames per second, independently
+of the 240 Hz simulation; distant cars use simplified models and far tree detail
+is culled to reduce rendering work.
+
+During a race, **F** opens DRS anywhere on track without a detection-gap rule;
+braking closes it. Hold **O** for the lower-power ERS Normal boost. Press **O**
+while within one second of a car ahead to latch the stronger Overtake mode;
+press **O** again or brake to return to Normal.
 
 Outside the car, **W** walks forward, **S** walks backward, and **A / D**
 strafe relative to the camera; double-tap **W** to run and press **Space** to
@@ -95,6 +109,7 @@ complete a lap first.
 |---|---|
 | W / ↑ | Throttle |
 | S / ↓ | Brake; at a standstill, selects reverse |
+| Space (driving) | Brake only; configurable in Settings |
 | A / D · ← / → | Steer |
 | X / Z | Shift up / down; switches to manual gears |
 | G | Return to automatic gears |
@@ -108,8 +123,8 @@ complete a lap first.
 | C / N (on foot) | Cycle third-person, first-person, and second-person cameras |
 | L (on foot) | Enter when aiming at the car; exit only after finishing |
 | 1–5 | On the start lights, take the selected grid position |
-| I | Toggle autopilot |
-| P | Pause / resume |
+| Esc | Pause / resume |
+| I (during auto-pit) | Return to manual control |
 | Space (on foot) | Jump |
 | Double-tap W (on foot) | Run |
 | Shift (on foot) | Stand |
@@ -119,17 +134,19 @@ complete a lap first.
 | V | Toggle Overview |
 | U | Toggle 360 Look; drag to orbit and scroll to zoom |
 | T | Start / stop trackside TV recording |
-| O | Toggle opponents and restart the session |
+| O | Toggle ERS deployment; status and charge appear in the timing HUD |
 | H | Toggle HUD |
 | M | Toggle sound |
 
-Pedals and keyboard steering ramp up and down rather than switching instantly.
-Driving keys remain active while a header button has focus.
+DRS, brake-only, ERS, emote, dress, and camera keys can be reassigned in Settings.
+WASD throttle and steering keys remain fixed. Pedals and keyboard steering
+ramp up and down rather than switching instantly.
 
 ## Gamepad controls
 
 Any connected gamepad using the browser's standard mapping is supported.
-Touch a gamepad button to connect and take control from the autopilot.
+Touch a gamepad button to connect and drive when the car is not under auto-pit
+assistance.
 
 | Control | Action |
 |---|---|
@@ -140,7 +157,7 @@ Touch a gamepad button to connect and take control from the autopilot.
 | D-pad | Throttle, brake, and steering |
 | RB / LB · R1 / L1 | Shift up / down; on the start lights, change grid slot |
 | Left-stick click | Return to automatic gears |
-| Right-stick click | Take over from autopilot; hold while driving to request DRS |
+| Right-stick click | Hold while driving to request DRS |
 | A / Cross | Toggle km/h and mph |
 | B / Circle | Cycle driving cameras |
 | Y / Triangle | Pause / resume |
@@ -153,25 +170,42 @@ small deadzone; steering authority decreases with speed.
 
 ## Modes and options
 
-- **Handling:** the header button switches between Sim and Arcade. Arcade adds
+- **Handling:** choose Sim or Arcade in Settings. Arcade adds
   grip and countersteering assistance while preserving full player throttle;
   AI cars use the same Arcade grip and cornering/braking targets.
-- **Optimization:** choose Default, Mid Optimized, or Max Optimized graphics.
+- **Graphics:** choose Ultra Max, Max, High, Default, Low (Mid Optimized), or
+  Max Optimized. Settings control resolution, shadows, and mirrors.
 - **Original car:** toggles the player's car between its authored model livery
-  and the CursorRacing livery. AI liveries are unaffected.
+  and the CursorRacing livery. A cropped custom image or your driver name can
+  be applied to the player car; AI liveries are unaffected.
 - **DRS:** in a race, DRS is limited to enabled zones and eligibility rules.
   In a solo time trial or with opponents disabled, it can be requested anywhere.
 - **Weather:** rain changes track grip and the AI's corner-speed targets.
-- **Pit stops:** with opponents enabled, races use a two-compound rule. Request
-  a compound with **B** and stop in your pit box.
+- **Pit stops and race control:** races use a mandatory two-compound stop.
+  Auto-pit assistance is optional. Safety cars deploy after retirements or
+  major car-to-car crashes; nearby traffic is speed-capped. During a safety-car
+  overtake, the player can choose to give the position back or accept a
+  five-second penalty; a selected yield that is not completed within three
+  seconds also incurs the penalty. Passes involving cars entering or in the pit
+  lane are exempt. Minor contact is not penalized; contact penalties require a
+  major crash. Off-track gained positions are also penalized. Penalties affect
+  final classification rather than instantly changing running order; outstanding
+  time can be served during a pit stop, and only unserved time counts at the
+  finish. Penalties can be disabled when opponents are off.
+- **Team engineer and notices:** suggestions and race-control messages appear
+  as text at the left of the screen. Penalties, retirements, and flags briefly
+  display in a yellow banner at the top; these are in-game notices, not desktop
+  notifications. The team engineer can use speech synthesis for guidance.
+- **Pause menu:** adjust sound volume and graphics or exit to the main menu.
 
 Supported URL options:
 
 | Query option | Effect |
 |---|---|
-| `?track=<key>` | Select a real circuit for a solo time trial |
+| `?track=<key>` | Select a real circuit |
 | `&race` | Start with AI opponents on a real circuit |
-| `?laps=N` | Set race distance (default: 10 stadium, 3 real circuit) |
+| `&solo=1` | Disable opponents (including on the stadium track) |
+| `?laps=N` | Set race distance (minimum: 3 laps) |
 | `?tyre=soft`, `?tyre=medium`, or `?tyre=hard` | Set the starting compound |
 | `?nostart` | Skip the starting lights |
 | `?handling=arcade` | Start in Arcade handling |

@@ -771,6 +771,17 @@ test('ERS: the MGU-K adds up to 120 kW above 100 km/h, burns no fuel, and can be
   near(part.telemetry.powertrain.ers.deploy, c.ersPower / 2, 1e-6);
 });
 
+test('ERS normal boost is weaker than overtake and deployment cuts on the brakes', () => {
+  const c = createCar().config;
+  const normal = run(rollingCar(50), 0.5, { throttle: 1, ersMode: 'normal' });
+  const overtake = run(rollingCar(50), 0.5, { throttle: 1, ersMode: 'overtake' });
+  const braking = run(rollingCar(50), 0.1, { throttle: 1, brake: 0.2, ersMode: 'overtake' });
+  near(normal.telemetry.powertrain.ers.deploy, c.ersNormalPower, 1e-6);
+  near(overtake.telemetry.powertrain.ers.deploy, c.ersPower, 1e-6);
+  assert.ok(overtake.vx > normal.vx + 0.1);
+  assert.equal(braking.telemetry.powertrain.ers.deploy, 0);
+});
+
 test('ERS: deployment stops at the per-lap allowance until a new lap; braking harvests up to the cap', () => {
   const car = rollingCar(60, { ersHeatShare: 0 });
   let t = 0;

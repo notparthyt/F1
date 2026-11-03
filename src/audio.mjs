@@ -4,16 +4,16 @@
 
 export const SOUND_DEFAULTS = Object.freeze({
   cylinders: 6,              // four-stroke V6: firing frequency = rpm / 60 * cylinders / 2
-  idleGain: 0.22,            // engine level on a closed throttle (overrun)
-  brightnessBase: 2.5,       // low-pass cutoff in multiples of firing frequency...
-  brightnessThrottle: 5.5,   // ...rising with throttle (open exhaust, more harmonics)
+  idleGain: 0.2,             // engine level on a closed throttle (overrun)
+  brightnessBase: 1.8,        // low-pass cutoff in multiples of firing frequency...
+  brightnessThrottle: 3.8,    // ...rising with throttle (open exhaust, more harmonics)
   spoolTime: 0.35,           // s, turbo spool / decay time constant
-  turboMinHz: 1800, turboMaxHz: 7500, turboGain: 0.05,
+  turboMinHz: 1500, turboMaxHz: 6200, turboGain: 0.035,
   squealThreshold: 15000,    // W of total contact sliding power before tires are heard
   squealFull: 150000,        // W at full squeal level
-  squealGain: 0.35, squealBaseHz: 950,
+  squealGain: 0.2, squealBaseHz: 780,
   windSpeed: 90,             // m/s at full wind level (quadratic in speed)
-  windGain: 0.3,
+  windGain: 0.18,
   shiftCut: 0.35,            // engine level multiplier during an ignition-cut shift
   limiterHz: 22,             // fuel-cut flutter rate at the rev limiter
 });
@@ -58,13 +58,20 @@ export function createSoundModel(car, cfg = SOUND_DEFAULTS) {
 // Web Audio renderer. ctx: an AudioContext (or compatible). apply() glides
 // each parameter toward the model output to avoid zipper noise.
 export function createAudioEngine(ctx, cfg = SOUND_DEFAULTS) {
-  const master = ctx.createGain(); master.gain.value = 0; master.connect(ctx.destination);
+  const master = ctx.createGain(); master.gain.value = 0;
+  const compressor = ctx.createDynamicsCompressor();
+  Object.assign(compressor.threshold, { value: -22 });
+  Object.assign(compressor.knee, { value: 12 });
+  Object.assign(compressor.ratio, { value: 6 });
+  Object.assign(compressor.attack, { value: 0.003 });
+  Object.assign(compressor.release, { value: 0.18 });
+  master.connect(compressor); compressor.connect(ctx.destination);
   const gain = (v, to) => { const g = ctx.createGain(); g.gain.value = v; g.connect(to); return g; };
   const osc = (type, to) => { const o = ctx.createOscillator(); o.type = type; o.connect(to); o.start(); return o; };
   // Engine: firing order sawtooth, half-order rumble and a second harmonic, low-passed.
   const engineOut = gain(0, master), limiterGate = gain(1, engineOut);
-  const lowpass = ctx.createBiquadFilter(); lowpass.type = 'lowpass'; lowpass.Q.value = 3; lowpass.connect(limiterGate);
-  const tones = [['sawtooth', 1, 0.5], ['triangle', 0.5, 0.45], ['square', 2, 0.12]]
+  const lowpass = ctx.createBiquadFilter(); lowpass.type = 'lowpass'; lowpass.Q.value = 1.2; lowpass.connect(limiterGate);
+  const tones = [['sawtooth', 1, 0.42], ['triangle', 0.5, 0.5], ['square', 2, 0.06]]
     .map(([type, order, level]) => ({ order, o: osc(type, gain(level, lowpass)) }));
   // Rev-limiter flutter: a square LFO modulating the gate, depth 0 until limiting.
   const lfoDepth = gain(0, limiterGate.gain), lfo = osc('square', lfoDepth); lfo.frequency.value = cfg.limiterHz;
@@ -80,7 +87,7 @@ export function createAudioEngine(ctx, cfg = SOUND_DEFAULTS) {
   return {
     master,
     apply(p, volume = 1) {
-      glide(master.gain, volume, 0.05);
+      glide(master.gain, clamp01(volume) * 0.45, 0.05);
       for (const t of tones) glide(t.o.frequency, p.firingHz * t.order, 0.015);
       glide(lowpass.frequency, Math.min(p.cutoffHz, ctx.sampleRate / 2 - 100));
       glide(engineOut.gain, p.engineGain);

@@ -24,6 +24,31 @@ export const CIRCUIT_ELEVATION_PROFILES = Object.freeze({
 
 export const NIGHT_CIRCUITS = new Set(['bahrain', 'jeddah', 'yas-marina']);
 
+const STARTING_TYRES = Object.freeze({
+  bahrain: 'hard',
+  shanghai: 'hard',
+  catalunya: 'hard',
+  monaco: 'soft',
+  montreal: 'soft',
+  'red-bull-ring': 'soft',
+  silverstone: 'hard',
+  hungaroring: 'hard',
+  spa: 'hard',
+  monza: 'medium',
+  cota: 'medium',
+  mexico: 'hard',
+  interlagos: 'hard',
+  'yas-marina': 'medium',
+  imola: 'medium',
+  zandvoort: 'soft',
+  jeddah: 'soft',
+  miami: 'medium',
+});
+
+export function startingTyreForTrack(key) {
+  return STARTING_TYRES[key] ?? 'medium';
+}
+
 const RAIN_CHANCE = Object.freeze({
   bahrain: .04, shanghai: .18, catalunya: .12, monaco: .18, montreal: .24,
   'red-bull-ring': .22, silverstone: .4, hungaroring: .12, spa: .48,

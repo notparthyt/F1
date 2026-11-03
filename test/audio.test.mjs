@@ -81,6 +81,9 @@ function fakeContext() {
   const ctx = { sampleRate: 48000, currentTime: 0, destination: node(), started: 0, nodes: [] };
   const track = n => (ctx.nodes.push(n), n);
   ctx.createGain = () => track(node({ gain: param(1) }));
+  ctx.createDynamicsCompressor = () => track(node({
+    threshold: param(-24), knee: param(30), ratio: param(12), attack: param(0.003), release: param(0.25),
+  }));
   ctx.createOscillator = () => track(node({ type: 'sine', frequency: param(440), start() { ctx.started++; } }));
   ctx.createBiquadFilter = () => track(node({ type: 'lowpass', frequency: param(350), Q: param(1) }));
   ctx.createBufferSource = () => track(node({ start() { ctx.started++; } }));
@@ -91,11 +94,15 @@ function fakeContext() {
 test('audio graph builds, starts its sources and schedules finite parameters', () => {
   const ctx = fakeContext(), engine = createAudioEngine(ctx), m = createSoundModel(DEFAULT_CAR);
   assert.equal(ctx.started, 6); // 3 engine tones, limiter LFO, turbo, noise
-  assert.ok(ctx.destination === engine.master.connected[0] || engine.master.connected.includes(ctx.destination));
+  const compressor = engine.master.connected[0];
+  assert.ok(compressor && compressor.connected.includes(ctx.destination));
   const noise = ctx.nodes.find(n => n.buffer).buffer.data;
   assert.ok(noise.every(x => x >= -1 && x <= 1) && Math.abs(noise.reduce((s, x) => s + x, 0) / noise.length) < 0.02);
   engine.apply(m.update(1 / 60, pt(14900, { limiter: true }), { throttle: 1 }), 0.8);
-  assert.equal(engine.master.gain.targets.at(-1), 0.8);
+  assert.ok(Math.abs(engine.master.gain.targets.at(-1) - 0.36) < 1e-12);
+  assert.equal(compressor.threshold.value, -22);
+  assert.equal(compressor.knee.value, 12);
+  assert.equal(compressor.ratio.value, 6);
   const filters = ctx.nodes.filter(n => n.Q);
   assert.ok(filters.every(f => f.frequency.targets.at(-1) < ctx.sampleRate / 2));
   engine.silence();

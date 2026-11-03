@@ -95,8 +95,8 @@ const NOSE_PLATE = new THREE.Box3(new THREE.Vector3(0.07, 0.69, 1.11), new THREE
 
 // Load once (a URL in the browser, an ArrayBuffer in node, where textures are skipped);
 // bake every mesh into model space and split the merged wheel meshes per corner.
-export async function loadRB22Template(source = RB22_URL) {
-  const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
+export async function loadRB22Template(source = RB22_URL, manager) {
+  const loader = new GLTFLoader(manager).setMeshoptDecoder(MeshoptDecoder);
   if (typeof document === 'undefined') loader.register(() => ({ name: 'EXT_texture_webp', loadTexture: () => Promise.resolve(null) }));
   const gltf = await (typeof source === 'string' ? loader.loadAsync(source) : loader.parseAsync(source, ''));
   gltf.scene.updateMatrixWorld(true);
@@ -457,6 +457,7 @@ export function buildRB22Car(template, config, { paint = 0x0e1626, accent = 0x39
   root.traverse(o => {
     if (o.isMesh) originalAppearance.set(o, { material: o.material, visible: o.visible });
   });
+  const haloLabels = [];
   if (typeof document !== 'undefined') {
     if (!TEXELS.has(template)) TEXELS.set(template, liveryTexels(template));
     const maps = liveryTextures(TEXELS.get(template), { paint, accent, index }), materials = new Map();
@@ -479,8 +480,18 @@ export function buildRB22Car(template, config, { paint = 0x0e1626, accent = 0x39
       Object.assign(map, { colorSpace: THREE.SRGBColorSpace, anisotropy: 16 });
       const decal = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ map, transparent: true, depthWrite: false, roughness: 0.35, polygonOffset: true, polygonOffsetFactor: -4 }));
       decal.name = 'halo-label'; root.add(decal);
+      haloLabels.push({ decal, map, slot, defaultText: names[slot.role], color: slot.role === 0 ? accent : inkFor(paint) });
     });
   }
+  const setDriverName = name => {
+    for (const label of haloLabels) {
+      label.map.dispose();
+      label.map = new THREE.CanvasTexture(drawLabel(label.slot, label.slot.role === 1 && name ? name : label.defaultText, label.color, 2400));
+      Object.assign(label.map, { colorSpace: THREE.SRGBColorSpace, anisotropy: 16 });
+      label.decal.material.map = label.map;
+      label.decal.material.needsUpdate = true;
+    }
+  };
   const setDriverSuit = styleIndex => {
     if (!Number.isInteger(styleIndex) || !DRIVER_SUIT_STYLES[styleIndex]) throw new RangeError('Driver suit style must be an index from 0 to 8');
     root.traverse(o => {
@@ -671,7 +682,26 @@ export function buildRB22Car(template, config, { paint = 0x0e1626, accent = 0x39
   root.traverse(o => {
     if (o.isMesh) gameAppearance.set(o, { material: o.material, visible: o.visible });
   });
+  let customLiveryMap = null, originalLiveryEnabled = false;
+  const applyCustomLivery = () => {
+    if (!customLiveryMap || originalLiveryEnabled) return;
+    root.traverse(o => {
+      if (!o.isMesh || !o.material?.name?.startsWith(LAYERS.paint)) return;
+      const material = o.material.clone();
+      material.map = customLiveryMap;
+      material.color.set(0xffffff);
+      material.needsUpdate = true;
+      o.material = material;
+    });
+  };
+  const setCustomLivery = texture => {
+    if (texture !== null && !texture?.isTexture) throw new TypeError('Custom livery must be a Three.js texture');
+    customLiveryMap = texture;
+    setOriginalLivery(originalLiveryEnabled);
+    return !!texture;
+  };
   const setOriginalLivery = enabled => {
+    originalLiveryEnabled = !!enabled;
     root.traverse(o => {
       if (o.isMesh && o.userData.mirror) return;
       if (o.isMesh && o.name === 'halo-label') {
@@ -684,6 +714,7 @@ export function buildRB22Car(template, config, { paint = 0x0e1626, accent = 0x39
         o.visible = appearance.visible;
       }
     });
+    if (!enabled) applyCustomLivery();
     return enabled;
   };
 
@@ -746,6 +777,6 @@ export function buildRB22Car(template, config, { paint = 0x0e1626, accent = 0x39
   }
   visor.name = 'driver-visor-camera';
   updateArms();
-  return { group: car, body, wheels, driver, setDriverVisible, setDriverSuit, driverNeck, driverHead, visor, driverElbows, driverHands, driverRest, updateHead, updateArms, drsFlap, setRearFlap, setOriginalLivery, frontWingFlap, steeringWheel,
+  return { group: car, body, wheels, driver, setDriverVisible, setDriverSuit, setCustomLivery, setDriverName, driverNeck, driverHead, visor, driverElbows, driverHands, driverRest, updateHead, updateArms, drsFlap, setRearFlap, setOriginalLivery, frontWingFlap, steeringWheel,
     rearLights, yellowLights, eye: [eye.x, eye.y, eye.z], mirrors: MIRRORS.map(name => root.getObjectByName(name)).filter(Boolean) };
 }

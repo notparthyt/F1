@@ -130,8 +130,8 @@ test('AI cars pass a car stopped on the racing line', () => {
   assert.ok(standings.slice(0, -1).every(s => s.lap >= 4), JSON.stringify(standings));
 });
 
-function runStart(seconds, input, seed = 7) {
-  const race = createRace(track, { start: { seed } });
+function runStart(seconds, input, seed = 7, options = {}) {
+  const race = createRace(track, { start: { seed }, options });
   const lit = new Map();
   let hardestContact = 0, moved = 0;
   for (let i = 0; i < seconds * 240; i++) {
@@ -179,6 +179,24 @@ test('moving before lights out is a jump start with a time penalty; reacting aft
   assert.ok(clean.car.telemetry.speed > 10);
 });
 
+test('penalties can be disabled for a race', () => {
+  const race = runStart(8, r => r.time < 1 ? { throttle: 0.6 } : { brake: 1 }, 7, { penaltiesEnabled: false }).race;
+  assert.equal(race.entries[0].jumpStart, true);
+  assert.equal(race.entries[0].penalty, 0);
+  assert.deepEqual(race.entries[0].penaltyEvents, []);
+});
+
+test('a parked race winner stops and cannot collide with traffic', () => {
+  const race = createRace(track, { grid: DEFAULT_GRID.slice(0, 1) });
+  const [player, rival] = race.entries;
+  player.parked = true;
+  Object.assign(player.car, { x: 0, y: -track.radius, heading: 0, vx: 0, vy: 0 });
+  Object.assign(rival.car, { x: 0, y: -track.radius, heading: 0, vx: 0, vy: 0 });
+  race.advance(FIXED_DT, { throttle: 1 }, track.surfaceAt, track.barrierAt);
+  assert.ok(!player.car.contact);
+  assert.ok(!rival.car.contact);
+});
+
 function runToFlag(laps, input, setup, grid = DEFAULT_GRID) {
   const race = createRace(track, { laps, grid });
   setup?.(race);
@@ -213,7 +231,8 @@ test('a two-lap race ends at the chequered flag with a classification by time', 
 test('time penalties are added to the race time; cars that never finish are unclassified at the back', () => {
   const { race } = runToFlag(1, null, r => { r.entries[0].penalty = 30; });
   const result = race.classification(), me = result.find(r => r.player);
-  assert.equal(me.total, me.time + 30);
+  assert.equal(me.total, me.time + me.penalty);
+  assert.ok(me.penalty >= 30);
   assert.equal(me.position, 1 + result.filter(r => !r.player && r.finished && r.total < me.total).length);
   const finishers = result.filter(r => r.finished);
   assert.ok(finishers.every((r, k) => k === 0 || r.total >= finishers[k - 1].total));
@@ -262,11 +281,29 @@ test('under the two-compound rule every car makes one clean pit stop and changes
   assert.ok(result.every(r => r.finished && !r.dsq && r.stops === 1 && r.laps >= 1 && r.laps <= 3), JSON.stringify(result));
 });
 
+test('a pit stop serves outstanding time penalties without adding them again to classification', () => {
+  const penalty = 12;
+  const { race } = runPitRace(2, r => {
+    r.entries[0].penalty = penalty;
+    r.entries[0].stopLap = 1;
+  });
+  const player = race.entries[0], result = race.classification().find(r => r.player);
+  assert.ok(race.finish.done);
+  assert.equal(player.stops.length, 1);
+  assert.equal(player.stops[0].penalty, penalty);
+  assert.ok(player.stops[0].stationary >= player.stops[0].service + penalty);
+  assert.equal(player.servedPenalty, penalty);
+  assert.equal(result.servedPenalty, penalty);
+  assert.equal(result.unservedPenalty, 0);
+  assert.equal(result.total, result.time);
+});
+
 test('a finisher who never changes compound is disqualified and classified last', () => {
   const { race } = runPitRace(2, r => { r.entries[0].stopLap = null; });
   const result = race.classification(), me = result.find(r => r.player);
   assert.ok(race.finish.done);
   assert.deepEqual([me.position, me.dsq, me.finished, me.stops, me.gap], [22, true, true, 0, null]);
+  assert.equal(me.dsqReason, 'failed tyre rule');
   assert.ok(result.slice(0, -1).every(r => !r.dsq && r.stops === 1));
   // Without the rule nobody stops in a short race on healthy tires.
   const free = createRace(track, { laps: 2 });
@@ -274,17 +311,93 @@ test('a finisher who never changes compound is disqualified and classified last'
   assert.ok(free.entries.every(e => e.stopLap === null));
 });
 
+test('safety-car disqualifications identify the race-control reason', () => {
+  const race = createRace(track, { laps: 1, grid: [] });
+  race.entries[0].safetyCarDsq = true;
+  const [result] = race.classification();
+  assert.equal(result.dsq, true);
+  assert.equal(result.dsqReason, 'overtook safety car');
+});
+
+test('a player chooses to yield or accept the five-second safety-car overtake penalty', () => {
+  const race = createRace(track, {
+    start: false, grid: DEFAULT_GRID.slice(0, 1),
+    options: { yellowFlagContactSpeed: 0 },
+  });
+  const player = race.entries[0], rival = race.entries[1], brake = { throttle: 0, brake: 1, steer: 0 };
+  race.advance(FIXED_DT, brake, track.surfaceAt, track.barrierAt);
+  assert.equal(race.yellowFlag.active, true);
+  player.covered = 100;
+  rival.covered = 101;
+  player.last = track.progress(player.car.x, player.car.y) - 3;
+  rival.last = track.progress(rival.car.x, rival.car.y);
+  race.advance(FIXED_DT, brake, track.surfaceAt, track.barrierAt);
+  assert.deepEqual(race.pendingSafetyCarPass, { other: rival.name });
+  assert.equal(race.chooseSafetyCarPass('penalty'), true);
+  assert.equal(player.penalty, RACE_DEFAULTS.safetyCarOvertakePenalty);
+  assert.equal(race.pendingSafetyCarPass, null);
+});
+
+test('a selected safety-car yield clears on returning behind or incurs a penalty after three seconds', () => {
+  const createPassingRace = () => {
+    const race = createRace(track, {
+      start: false, grid: DEFAULT_GRID.slice(0, 1),
+      options: { yellowFlagContactSpeed: 0 },
+    });
+    const player = race.entries[0], rival = race.entries[1], brake = { throttle: 0, brake: 1, steer: 0 };
+    race.advance(FIXED_DT, brake, track.surfaceAt, track.barrierAt);
+    player.covered = 100;
+    rival.covered = 101;
+    player.last = track.progress(player.car.x, player.car.y) - 3;
+    rival.last = track.progress(rival.car.x, rival.car.y);
+    race.advance(FIXED_DT, brake, track.surfaceAt, track.barrierAt);
+    return { race, player, rival, brake };
+  };
+  const returned = createPassingRace();
+  assert.equal(returned.race.chooseSafetyCarPass('yield'), true);
+  returned.player.covered = returned.rival.covered - 1;
+  returned.race.advance(FIXED_DT, returned.brake, track.surfaceAt, track.barrierAt);
+  assert.equal(returned.race.pendingSafetyCarPass, null);
+  assert.equal(returned.player.penalty, 0);
+
+  const unreturned = createPassingRace();
+  assert.equal(unreturned.race.chooseSafetyCarPass('yield'), true);
+  unreturned.rival.retired = { reason: 'test' };
+  for (let i = 0; i < 13; i++) unreturned.race.advance(0.25, unreturned.brake, track.surfaceAt, track.barrierAt);
+  assert.equal(unreturned.race.pendingSafetyCarPass, null);
+  assert.equal(unreturned.player.penalty, RACE_DEFAULTS.safetyCarOvertakePenalty);
+});
+
+test('safety-car passes involving a pitting car do not create a player choice or penalty', () => {
+  const race = createRace(track, {
+    start: false, grid: DEFAULT_GRID.slice(0, 1),
+    options: { yellowFlagContactSpeed: 0 },
+  });
+  const player = race.entries[0], rival = race.entries[1], brake = { throttle: 0, brake: 1, steer: 0 };
+  race.advance(FIXED_DT, brake, track.surfaceAt, track.barrierAt);
+  player.covered = 100;
+  rival.covered = 101;
+  player.last = track.progress(player.car.x, player.car.y) - 3;
+  rival.last = track.progress(rival.car.x, rival.car.y);
+  player.pit = { phase: 'in' };
+  race.advance(FIXED_DT, brake, track.surfaceAt, track.barrierAt);
+  assert.equal(race.pendingSafetyCarPass, null);
+  assert.equal(player.penalty, 0);
+});
+
 test('the player can request a stop and a compound; the autopilot boxes and fits it', () => {
   const race = createRace(track);
   race.requestPit('soft');
   race.requestPit('intermediate'); // unknown compounds are ignored
   assert.equal(race.entries[0].pitRequest, 'soft');
-  for (let i = 0; i < 70 * 240 && !race.entries[0].stops.length; i++) race.advance(1 / 240, null, track.surfaceAt, track.barrierAt);
   const me = race.entries[0];
+  for (let i = 0; i < 140 * 240 && (me.stops.length === 0 || me.pit); i++)
+    race.advance(1 / 240, null, track.surfaceAt, track.barrierAt);
   assert.equal(me.stops.length, 1);
+  assert.equal(me.pit, null, 'the car completes the pit exit');
   assert.equal(me.car.compound, 'soft');
   assert.equal(me.pitRequest, null);
-  assert.deepEqual(me.car.tireWear, [0, 0, 0, 0]);
+  assert.ok(me.car.tireWear.every(wear => wear < 0.01));
   assert.ok(race.entries.slice(1).every(e => !e.stops.length));
 });
 
