@@ -171,7 +171,7 @@ header{position:absolute;top:0;left:0;right:0;z-index:20}main{height:100vh}.tag,
     <section class="settings-pane" data-settings-pane="graphics" hidden>
       <label class="menu-field">Graphics quality<select id="setting-graphics"><option value="ultra">Ultra Max Graphics</option><option value="max">Max</option><option value="high">High</option><option value="default">Default</option><option value="mid">Low (Mid Optimized)</option><option value="max-optimized">Max Optimized</option></select></label>
       <label class="menu-switch"><span>Original car</span><input id="setting-original-car" type="checkbox"></label>
-      <label class="menu-field">Custom livery<input id="setting-livery" type="file" accept="image/*"><button id="remove-livery" type="button" disabled>Remove custom livery</button><small>Choose an image to crop and preview as your car livery. Works together with Your Name Livery.</small><canvas id="livery-preview" hidden></canvas></label>
+      <div class="menu-field"><label for="setting-livery">Custom livery</label><input id="setting-livery" type="file" accept="image/*"><button id="remove-livery" type="button" disabled>Remove custom livery</button><small>Choose an image to crop and preview as your car livery. Works together with Your Name Livery.</small><canvas id="livery-preview" hidden></canvas></div>
       <label class="menu-switch"><span>Your Name Livery <small>Use your profile name on the car alongside a custom livery</small></span><input id="setting-name-livery" type="checkbox"></label>
     </section>
     <section class="settings-pane" data-settings-pane="gameplay" hidden>
@@ -1371,7 +1371,7 @@ function updateOriginalCarButton() {
   originalCarButton.textContent = `Original car: ${originalCar ? 'on' : 'off'}`;
   originalCarButton.setAttribute('aria-pressed', String(originalCar));
   $('setting-original-car').checked = originalCar;
-  $('setting-livery').disabled = originalCar;
+  updateLiveryControls();
 }
 originalCarButton.onclick = () => {
   if (typeof model.setOriginalLivery !== 'function') return;
@@ -2265,6 +2265,10 @@ function renderKeybinds(settings) {
     button.removeAttribute('data-listening');
   });
 }
+function updateLiveryControls() {
+  $('setting-livery').disabled = $('setting-original-car').checked;
+  $('remove-livery').disabled = !settingsDraft.customLivery;
+}
 function populateSettingsForm(source = gameSettings) {
   settingsDraft = { ...source, keybinds: { ...source.keybinds } };
   $('setting-handling').value = settingsDraft.handling;
@@ -2278,8 +2282,7 @@ function populateSettingsForm(source = gameSettings) {
   $('setting-units').value = settingsDraft.units;
   $('setting-trackside').checked = settingsDraft.trackside;
   $('setting-driver-name').value = settingsDraft.driverName;
-  $('setting-livery').disabled = settingsDraft.originalCar;
-  $('remove-livery').disabled = !settingsDraft.customLivery;
+  updateLiveryControls();
   drawLiveryPreview(settingsDraft.customLivery);
   $('settings-notice').textContent = '';
   renderKeybinds(settingsDraft);
@@ -2409,8 +2412,7 @@ document.querySelectorAll('#settings-screen select,#settings-screen input').forE
   field.addEventListener('change', () => {
     if (field.id === 'setting-original-car' && field.checked) $('setting-name-livery').checked = false;
     if (field.id === 'setting-name-livery' && field.checked) $('setting-original-car').checked = false;
-    if (field.id === 'setting-original-car')
-      $('setting-livery').disabled = $('setting-original-car').checked;
+    if (field.id === 'setting-original-car') updateLiveryControls();
     setSettingsDirty();
   });
 });
@@ -2454,21 +2456,21 @@ $('setting-livery').addEventListener('change', async event => {
     pendingCustomLiveryTexture.colorSpace = THREE.SRGBColorSpace;
     pendingCustomLiveryTexture.anisotropy = 8;
     drawLiveryPreview(settingsDraft.customLivery);
-    $('remove-livery').disabled = false;
+    updateLiveryControls();
     setSettingsDirty();
   } catch (error) {
     console.error('Could not process custom livery image', error);
     $('settings-notice').textContent = error.message;
   } finally {
     URL.revokeObjectURL(url);
+    event.target.value = '';
   }
 });
 $('remove-livery').onclick = () => {
   settingsDraft.customLivery = null;
   pendingCustomLiveryTexture?.dispose();
   pendingCustomLiveryTexture = null;
-  $('setting-livery').value = '';
-  $('remove-livery').disabled = true;
+  updateLiveryControls();
   const preview = $('livery-preview');
   preview.getContext('2d').clearRect(0, 0, preview.width, preview.height);
   preview.hidden = true;
