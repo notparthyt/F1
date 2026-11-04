@@ -27,10 +27,24 @@ test('every circuit has a trackside style and the new layouts retain their venue
   for (const key of ['singapore', 'buddh', 'nurburgring']) {
     assert.ok(CIRCUITS[key].points.length >= 200, `${key} keeps a detailed sourced layout trace`);
   }
-  assert.deepEqual(CIRCUIT_ELEVATION_PROFILES.singapore, [[0, 0], [.15, 1], [.32, 0], [.48, 1], [.60, 4], [.72, 2], [.85, 0], [.95, 0]]);
+  assert.deepEqual(CIRCUITS.buddh.points.slice(0, 2), [0, 0], 'the OSM centerline begins at its mapped start/finish node');
+  assert.deepEqual(CIRCUIT_ELEVATION_PROFILES.singapore, [[0, 0], [.05, 0], [.15, 0], [.28, 2], [.40, 4], [.52, 1], [.68, 0], [.85, 1], [.95, 0]]);
   assert.deepEqual(CIRCUIT_ELEVATION_PROFILES.buddh, [[0, 0], [.11, 4], [.18, 14], [.35, -4], [.55, 6], [.72, -1], [.85, -8], [.95, -2]]);
   assert.equal(CIRCUIT_TRACK_STYLE['yas-marina'].runoffSurface, 'painted');
   for (const key of ['singapore', 'buddh', 'nurburgring']) {
     assert.ok(CIRCUITS[key].drs.length > 0, `${key} has DRS zones`);
   }
+  const singapore = CIRCUITS.singapore;
+  const signedArea = singapore.points.reduce((area, _, index, points) => {
+    if (index % 2 !== 0) return area;
+    const next = (index + 2) % points.length;
+    return area + points[index] * points[next + 1] - points[next] * points[index + 1];
+  }, 0) / 2;
+  assert.deepEqual(singapore.points.slice(0, 2), [688.6, 116.4], 'reversing the trace keeps the start/finish anchor');
+  assert.ok(signedArea > 0, 'Singapore follows the direction shown on the official F1 map');
+  assert.deepEqual(singapore.drs, [[.935, .995]]);
+  assert.deepEqual(singapore.sausageKerbs, [[.16, .18], [.41, .43], [.64, .66], [.9, .92]]);
+  assert.deepEqual(singapore.paintedKerbs, [[.28, .3], [.52, .54], [.8, .82]]);
+  assert.equal(singapore.pitConfig.side, 1);
+  assert.deepEqual(singapore.runoffSections, [{ start: .59, end: .65, surface: 'sand' }]);
 });

@@ -41,20 +41,25 @@ come from racing-line data or documented map traces.
   (© 2019–2025 Tomislav Bacinger; see its
   [Singapore](https://github.com/bacinger/f1-circuits/blob/master/circuits/sg-2008.geojson)
   and [Nürburgring](https://github.com/bacinger/f1-circuits/blob/master/circuits/de-1927.geojson)
-  traces). Buddh uses the
-  [OpenStreetMap circuit-area boundary](https://www.openstreetmap.org/way/169886085)
-  as a layout proxy; it is not a GPS centerline. OSM data is © OpenStreetMap
-  contributors and available under the [ODbL](https://www.openstreetmap.org/copyright).
-  These static points use the same circuit spline as existing tracks.
+  traces). Singapore's trace is oriented to match the travel direction on the
+  [official F1 circuit map](https://media.formula1.com/image/upload/c_fit,h_704/q_auto/v1740000001/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9/Singapore_Circuit.webp).
+  Buddh uses the centerline traced from
+  [OpenStreetMap relation 2532569](https://www.openstreetmap.org/relation/2532569),
+  beginning at its mapped start/finish node. OSM data is © OpenStreetMap
+  contributors and available under the [ODbL](https://www.openstreetmap.org/copyright);
+  the derived Buddh track data retains that attribution. These static points
+  use the same circuit spline as existing tracks.
 - **Race presentation:** night circuits use white track lighting; a completed
-  race ends with a cinematic podium and fireworks. The racing line can be
-  toggled in Gameplay settings and is on by default.
+  race ends with a cinematic driver podium, emotes, map/restart/menu controls,
+  and fireworks. The racing line can be toggled in Gameplay settings and is on
+  by default.
 - **Car details:** animated driver and steering wheel, cockpit mirrors, and
   player livery selection with an option to remove a saved custom livery.
 - **Telemetry:** live speed, lap times, vehicle dynamics, and tyre information.
 - **Graphics:** Default, Mid Optimized, and Max Optimized performance presets
-  select matching supplied car assets; the optimized animated driver is used
-  in Default, Mid Optimized, and Max Optimized.
+  tune rendering quality. Max Optimized uses the validated optimized car model;
+  the maxed GLB has an incomplete mesh hierarchy and is not used. The optimized
+  animated driver is used in all three presets.
 - **Race control:** penalty and safety-car notices, a text-only team engineer,
   position-redress checks, pit-lane speed assistance, and AI caution near a
   recent severe collision.

@@ -106,6 +106,66 @@ export async function loadGLTFAsset(source, manager) {
   }
 }
 
+function bindClonedSkinnedMeshes(nodePairs) {
+  for (const [source, clone] of nodePairs) {
+    if (!source.isSkinnedMesh) continue;
+    const bones = source.skeleton.bones.map(bone => nodePairs.get(bone));
+    if (bones.some(bone => !bone)) throw new Error(`Could not clone all bones for ${source.name || 'skinned mesh'}`);
+    const inverses = source.skeleton.boneInverses.map(matrix => matrix.clone());
+    clone.bind(new THREE.Skeleton(bones, inverses), source.bindMatrix.clone());
+    clone.bindMode = source.bindMode;
+  }
+}
+
+function pairObjectTrees(source, clone, pairs) {
+  pairs.set(source, clone);
+  for (let i = 0; i < source.children.length; i++) pairObjectTrees(source.children[i], clone.children[i], pairs);
+}
+
+export function cloneSkinnedModel(source) {
+  const clone = source.clone(true), pairs = new Map();
+  pairObjectTrees(source, clone, pairs);
+  bindClonedSkinnedMeshes(pairs);
+  return clone;
+}
+
+export function extractDriverRig(scene) {
+  const included = new Set();
+  const includeAncestors = node => {
+    while (node && node !== scene) {
+      included.add(node);
+      node = node.parent;
+    }
+  };
+  scene.traverse(node => {
+    if (!node.isSkinnedMesh) return;
+    includeAncestors(node);
+    for (const bone of node.skeleton.bones) includeAncestors(bone);
+  });
+  if (!included.size) return null;
+
+  const pairs = new Map();
+  const cloneBranch = source => {
+    if (!included.has(source)) return null;
+    const clone = source.clone(false);
+    pairs.set(source, clone);
+    for (const child of source.children) {
+      const childClone = cloneBranch(child);
+      if (childClone) clone.add(childClone);
+    }
+    return clone;
+  };
+  const rig = new THREE.Group();
+  for (const child of scene.children) {
+    const clone = cloneBranch(child);
+    if (clone) rig.add(clone);
+  }
+  bindClonedSkinnedMeshes(pairs);
+  rig.matrixAutoUpdate = false;
+  rig.matrix.copy(scene.matrixWorld);
+  return rig;
+}
+
 // Load once (a URL in the browser, an ArrayBuffer in node, where textures are skipped);
 // bake every mesh into model space and split the merged wheel meshes per corner.
 export async function loadRB22Template(source = RB22_URL, manager) {
@@ -133,11 +193,11 @@ export async function loadRB22Template(source = RB22_URL, manager) {
   };
   const addMirror = (geometry, index, material) => template.add(Object.assign(new THREE.Mesh(geometry, material), { name: MIRRORS[index] }));
   const driverSource = gltf.scene.getObjectByName('Sketchfab_model');
-  if (driverSource) {
-    const driver = driverSource.clone(true);
+  const driver = driverSource ? driverSource.clone(true) : extractDriverRig(gltf.scene);
+  if (driver) {
     driver.name = 'driver-rig';
     driver.matrixAutoUpdate = false;
-    driver.matrix.copy(driverSource.matrixWorld);
+    driver.matrix.copy(driverSource?.matrixWorld ?? gltf.scene.matrixWorld);
     template.add(driver);
   }
   for (const m of meshes) {

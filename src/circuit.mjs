@@ -286,6 +286,19 @@ export function createCircuitTrack({ name = 'Circuit', points, length: officialL
       ? pitHeightAt(q.progress) : elevationAt(q.progress);
   };
   const runoffAt = s => runoffSections.find(section => inSection(s, [section.start, section.end]))?.surface ?? runoffSurface;
+  const headingAt = s => {
+    const i = index(s), j = (i + 1) % n, f = (wrap(s) - ss[i]) / (ss[i + 1] - ss[i]);
+    const delta = Math.atan2(Math.sin(headings[j] - headings[i]), Math.cos(headings[j] - headings[i]));
+    return headings[i] + delta * f;
+  };
+  const elevationGradeAt = s => Math.atan2(elevationAt(s + 2) - elevationAt(s - 2), 4);
+  const headingDeltaAt = (s, heading) => heading - headingAt(s);
+  const gradeAt = (s, heading) => {
+    const grade = elevationGradeAt(s);
+    return heading == null ? grade : grade * Math.cos(headingDeltaAt(s, heading));
+  };
+  const crossGradeAt = (s, heading) => heading == null
+    ? 0 : -elevationGradeAt(s) * Math.sin(headingDeltaAt(s, heading));
   const surface = (x, y) => {
     const q = nearest(x, y), d = q.d;
     // The pit apron, and its entry and exit roads from the road edge.
@@ -306,8 +319,8 @@ export function createCircuitTrack({ name = 'Circuit', points, length: officialL
     // along the trace (the lap here still starts at its first point).
     drsZones: drs && drs.map(z => z.map(f => ((f * length + timingLine) % length + length) % length)),
     samples: { x: xs, y: ys, z: elevation, s: ss, heading: headings, curvature, kerb, kerbType, line, lineStep, lineCurvature },
-    heightAt: elevationAt, pitHeightAt, heightAtPosition,
-    heading: s => headings[index(s)], curvatureAt: s => curvature[index(s)],
+    heightAt: elevationAt, gradeAt, crossGradeAt, pitHeightAt, heightAtPosition,
+    heading: headingAt, curvatureAt: s => curvature[index(s)],
     // Racing-line offset (m, + right) at arc length s, interpolated.
     lineOffset: s => { const i = index(s), f = (wrap(s) - ss[i]) / (ss[i + 1] - ss[i]); return line[i] + (line[(i + 1) % n] - line[i]) * f; },
     surfaceAt: (x, y) => SURFACE_GRIP[surface(x, y)],

@@ -96,6 +96,16 @@ test('car-to-car contact separates the cars, conserves momentum and never adds e
   assert.ok(ahead.vx > 40 && behind.vx < 50 && ahead.vx > behind.vx);
 });
 
+test('car-to-car contacts keep the legacy 2D behavior regardless of vertical properties', () => {
+  const behind = place(0, 0, 0, 50), ahead = place(5, 0, 0, 40);
+  behind.height = 3;
+  const closing = resolveCarContact(behind, ahead);
+  assert.ok(closing > 0);
+  assert.equal(behind.height, 3);
+  assert.equal(ahead.height, undefined);
+  assert.ok(behind.vx < 50 && ahead.vx > 40);
+});
+
 function runRace(seconds, input, grid = DEFAULT_GRID) {
   const race = createRace(track, { grid });
   let maxOffset = 0, hardestContact = 0;
@@ -372,6 +382,25 @@ test('a player chooses to yield or accept the five-second safety-car overtake pe
   assert.equal(race.chooseSafetyCarPass('penalty'), true);
   assert.equal(player.penalty, RACE_DEFAULTS.safetyCarOvertakePenalty);
   assert.equal(race.pendingSafetyCarPass, null);
+});
+
+test('penalties-disabled safety-car passes cannot accept a penalty option', () => {
+  const race = createRace(track, {
+    start: false, grid: DEFAULT_GRID.slice(0, 1),
+    options: { yellowFlagContactSpeed: 0, penaltiesEnabled: false },
+  });
+  const player = race.entries[0], rival = race.entries[1], brake = { throttle: 0, brake: 1, steer: 0 };
+  race.advance(FIXED_DT, brake, track.surfaceAt, track.barrierAt);
+  player.covered = 100;
+  rival.covered = 101;
+  player.last = track.progress(player.car.x, player.car.y) - 3;
+  rival.last = track.progress(rival.car.x, rival.car.y);
+  race.advance(FIXED_DT, brake, track.surfaceAt, track.barrierAt);
+  assert.deepEqual(race.pendingSafetyCarPass, { other: rival.name });
+  assert.equal(race.chooseSafetyCarPass('penalty'), false);
+  assert.deepEqual(race.pendingSafetyCarPass, { other: rival.name });
+  assert.equal(player.penalty, 0);
+  assert.deepEqual(player.penaltyEvents, []);
 });
 
 test('a selected safety-car yield clears on returning behind or incurs a penalty after three seconds', () => {

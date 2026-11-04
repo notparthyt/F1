@@ -31,6 +31,33 @@ test('a traced circle gives a closed track with progress, signed offsets, surfac
   assert.ok(Math.abs(Math.hypot(px, py) - 203) < 0.5, 'point offsets to the right');
 });
 
+test('elevation grade angles point uphill and downhill in the direction of travel, including lap wrap', () => {
+  const t = createCircuitTrack({
+    points: ring.flat(),
+    elevationProfile: [[0, 0], [0.5, 10]],
+  });
+  assert.ok(t.gradeAt(t.length * 0.25) > 0, 'rising elevation produces a positive nose-up grade');
+  assert.ok(t.gradeAt(t.length * 0.25, t.heading(t.length * 0.25) + Math.PI) < 0,
+    'a car facing against the rising track pitches nose-down');
+  const uphillS = t.length * 0.25, uphillHeading = t.heading(uphillS);
+  const baseGrade = t.gradeAt(uphillS);
+  assert.ok(Math.abs(t.gradeAt(uphillS, uphillHeading + Math.PI / 2)) < 1e-12,
+    'a sideways-facing car has no pitch component from the track grade');
+  assert.ok(Math.abs(t.crossGradeAt(uphillS, uphillHeading + Math.PI / 2) + baseGrade) < 1e-12,
+    'a sideways-facing car rolls with the lateral component of the slope');
+  for (const angle of [0, Math.PI / 4, Math.PI / 2, Math.PI, -Math.PI / 2]) {
+    const pitch = t.gradeAt(uphillS, uphillHeading + angle);
+    const roll = t.crossGradeAt(uphillS, uphillHeading + angle);
+    assert.ok(Math.abs(Math.hypot(pitch, roll) - baseGrade) < 1e-12,
+      'pitch and roll preserve the full grade at every heading');
+  }
+  assert.ok(Math.abs(t.gradeAt(uphillS, uphillHeading + Math.PI / 2 - 0.01)
+    - t.gradeAt(uphillS, uphillHeading + Math.PI / 2 + 0.01)) < baseGrade * 0.021,
+  'grade changes continuously as the car turns through sideways');
+  assert.ok(t.gradeAt(t.length * 0.75) < 0, 'falling elevation produces a negative nose-down grade');
+  assert.ok(t.gradeAt(t.length - 1) < 0, 'the descending profile remains correctly oriented across start/finish');
+});
+
 test('kerbs are laid only in corners: none along a long straight', () => {
   const stadium = [[-300, -100], [0, -100], [300, -100], [400, 0], [300, 100], [0, 100], [-300, 100], [-400, 0]];
   const t = createCircuitTrack({ points: stadium.flat(), smoothing: 0 });

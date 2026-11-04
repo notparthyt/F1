@@ -5,7 +5,7 @@
 // telemetry: a close follower loses up to towDragLoss of its drag and
 // dirtyAirLoss of its downforce, decaying over wakeLength metres behind the
 // leader and wakeWidth metres either side of its centreline.
-import { step, createCar, carMass, fitTires, newErsLap, tireTempGrip, tireWearGrip, TIRE_COMPOUNDS, FIXED_DT, clamp } from './physics.mjs';
+import { step, createCar, carMass, fitTires, newErsLap, tireTempGrip, tireWearGrip, TIRE_COMPOUNDS, FIXED_DT, clamp } from './physics.mjs?v=20261104-3';
 import { createAutopilot, createCircuitAutopilot } from './autopilot.mjs';
 
 export const RACE_DEFAULTS = Object.freeze({
@@ -1022,6 +1022,7 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
     chooseSafetyCarPass(choice) {
       if (choice !== 'yield' && choice !== 'penalty')
         throw new RangeError('Safety-car overtake choice must be yield or penalty');
+      if (choice === 'penalty' && !o.penaltiesEnabled) return false;
       const pass = pendingSafetyCarPasses.find(item => item.entry.player && item.decision === null);
       if (!pass) return false;
       if (choice === 'penalty') {

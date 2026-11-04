@@ -4,7 +4,7 @@ const CAR_MODELS = Object.freeze({
   high: './models/redbull22.glb',
   default: './models/redbull22-optimized.glb',
   mid: './models/redbull22-optimized.glb',
-  'max-optimized': './models/redbull22-optimized-maxed.glb',
+  'max-optimized': './models/redbull22-optimized.glb',
 });
 
 const OPTIMIZED_DRIVER_MODES = new Set(['default', 'mid', 'max-optimized']);

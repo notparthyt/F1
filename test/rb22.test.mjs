@@ -2,11 +2,43 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import * as THREE from '../vendor/three.module.js';
-import { loadRB22Template, buildRB22Car, haloGeometries, HALO_SLOTS, liveryTexels, LIVERY_SLOTS, SPONSORS, STEERING_RATIO } from '../src/rb22.mjs';
+import { loadRB22Template, buildRB22Car, cloneSkinnedModel, extractDriverRig, haloGeometries, HALO_SLOTS, liveryTexels, LIVERY_SLOTS, SPONSORS, STEERING_RATIO } from '../src/rb22.mjs';
 import { DEFAULT_CAR } from '../src/physics.mjs';
 
 const bytes = readFileSync(new URL('../models/redbull22.glb', import.meta.url));
 const template = await loadRB22Template(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength));
+
+test('rootless skinned driver rigs are extracted without car body meshes', () => {
+  const scene = new THREE.Group(), skeletonRoot = new THREE.Bone(), bodyRoot = new THREE.Group();
+  skeletonRoot.name = 'driver-root';
+  const hand = new THREE.Bone(); hand.name = 'driver-hand'; skeletonRoot.add(hand);
+  scene.add(skeletonRoot, bodyRoot);
+  const geometry = new THREE.BoxGeometry(1, 1, 1);
+  const vertexCount = geometry.attributes.position.count;
+  geometry.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(new Uint16Array(vertexCount * 4), 4));
+  geometry.setAttribute('skinWeight', new THREE.Float32BufferAttribute(new Float32Array(vertexCount * 4), 4));
+  const driverMesh = new THREE.SkinnedMesh(geometry, new THREE.MeshBasicMaterial());
+  driverMesh.name = 'driver-body';
+  bodyRoot.add(driverMesh);
+  driverMesh.bind(new THREE.Skeleton([skeletonRoot, hand]));
+  const carMesh = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshBasicMaterial());
+  carMesh.name = 'car-body';
+  scene.add(carMesh);
+  scene.updateMatrixWorld(true);
+
+  const rig = extractDriverRig(scene);
+  const clonedMesh = rig.getObjectByName('driver-body');
+  assert.ok(clonedMesh?.isSkinnedMesh);
+  assert.equal(rig.getObjectByName('car-body'), undefined);
+  assert.notEqual(clonedMesh.skeleton.bones[0], skeletonRoot);
+  assert.equal(clonedMesh.skeleton.bones[0], rig.getObjectByName('driver-root'));
+  assert.equal(clonedMesh.skeleton.bones[1], rig.getObjectByName('driver-hand'));
+
+  const podiumModel = cloneSkinnedModel(scene), podiumMesh = podiumModel.getObjectByName('driver-body');
+  assert.notEqual(podiumMesh.skeleton.bones[0], skeletonRoot);
+  assert.equal(podiumMesh.skeleton.bones[0], podiumModel.getObjectByName('driver-root'));
+  assert.notEqual(podiumMesh.skeleton, driverMesh.skeleton);
+});
 
 test('every livery slot lands on the bodywork', () => {
   const texels = liveryTexels(template);
