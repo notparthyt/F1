@@ -31,14 +31,22 @@ test('on-foot movement stops at barriers and the car while sliding along barrier
   const barrierAt = x => x > 1 ? { depth: x - 1 } : null;
   const start = { x: 0, y: 0 };
   const blocked = moveOnFootColliding(start, 0, { forward: 1 }, 1, { barrierAt });
-  assert.deepEqual(blocked, start);
+  assert.ok(blocked.x > start.x && blocked.x < 0.7, 'the player can approach but not cross the barrier');
   const slid = moveOnFootColliding(start, 0, { forward: 1, strafe: 1 }, 1, { barrierAt });
-  assert.equal(slid.x, 0);
+  assert.ok(slid.x < 0.7);
   assert.ok(slid.y < 0);
   const carBlocked = moveOnFootColliding(start, 0, { forward: 1 }, 0.5, {
     car: { x: 0, y: 0, heading: 0 },
   });
   assert.deepEqual(carBlocked, start);
+});
+
+test('on-foot collision checks cannot be skipped by a long movement step', () => {
+  const stopped = moveOnFootColliding({ x: 0, y: 0 }, 0, { forward: 1 }, 0.1, {
+    speed: 100,
+    car: { x: 5, y: 0, heading: 0 },
+  });
+  assert.ok(stopped.x < 2.65, 'the player stops before crossing the car footprint');
 });
 
 test('on-foot spawn faces down the track so forward movement is not blocked by the player car', () => {

@@ -50,7 +50,7 @@ export const CIRCUIT_TRACK_STYLE = Object.freeze({
   jeddah: { wallOffset: 10, runoffWidth: 3, grassWidth: 0, runoffSurface: 'painted', urban: true, scraperKerbs: false },
   miami: { wallOffset: 26, runoffWidth: 18, grassWidth: 16, runoffSurface: 'painted', scraperKerbs: true },
   buddh: { wallOffset: 35, runoffWidth: 22, grassWidth: 10, runoffSurface: 'sand', scraperKerbs: true },
-  nurburgring: { wallOffset: 28, runoffWidth: 10, grassWidth: 20, runoffSurface: 'gravel', scraperKerbs: true },
+  nurburgring: { wallOffset: 40, runoffWidth: 10, grassWidth: 20, runoffSurface: 'gravel', scraperKerbs: true, boundary: true },
   singapore: { wallOffset: 18, urban: true, runoffSurface: 'painted', night: true, scraperKerbs: false },
 });
 

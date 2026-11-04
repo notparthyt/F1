@@ -51,8 +51,11 @@ come from racing-line data or documented map traces.
   use the same circuit spline as existing tracks.
 - **Race presentation:** night circuits use white track lighting; a completed
   race ends with a cinematic driver podium, emotes, map/restart/menu controls,
-  and fireworks. The racing line can be toggled in Gameplay settings and is on
-  by default.
+  and fireworks. The sky has moving clouds and directional sun/moon lighting;
+  daytime circuits transition into night, Singapore stays at night, and Yas
+  Marina fades from evening into night. Nürburgring has a continuous outer
+  boundary beyond its gravel and grass runoff. The racing line can be toggled
+  in Gameplay settings and is on by default.
 - **Car details:** animated driver and steering wheel, cockpit mirrors, and
   player livery selection with an option to remove a saved custom livery.
 - **Telemetry:** live speed, lap times, vehicle dynamics, and tyre information.
@@ -147,7 +150,7 @@ complete a lap first.
 | Mouse (on foot) | Aim with the centered reticle |
 | E, then 1–9 (on foot) | Open the emote menu and play an emote |
 | Esc (on foot) | Close the emote menu |
-| C / N (on foot) | Cycle third-person, first-person, and second-person cameras |
+| C (on foot) | Cycle third-person, first-person, and second-person cameras |
 | L (on foot) | Enter when aiming at the car; exit only after finishing |
 | 1–5 | On the start lights, take the selected grid position |
 | Esc | Pause / resume |
@@ -157,7 +160,7 @@ complete a lap first.
 | Shift (on foot) | Stand |
 | M (on foot) | Open driver suit menu |
 | R | Reset the session |
-| C / N | Cycle Cockpit → Chase Cam → T-Cam |
+| C | Cycle Cockpit → Chase Cam → T-Cam |
 | V | Toggle Overview |
 | U | Toggle 360 Look; drag to orbit and scroll to zoom |
 | T | Start / stop trackside TV recording |
@@ -214,7 +217,8 @@ small deadzone; steering authority decreases with speed.
   be applied to the player car; AI liveries are unaffected.
 - **DRS:** in a race, DRS is limited to enabled zones and eligibility rules.
   In a solo time trial or with opponents disabled, it can be requested anywhere.
-- **Weather:** rain changes track grip and the AI's corner-speed targets.
+- **Weather:** rain changes track grip and the AI's corner-speed targets, with
+  denser rain streaks and a progressively reflective wet-track surface.
 - **Pit stops and race control:** races use a mandatory two-compound stop.
   Auto-pit assistance is optional. Safety cars deploy after retirements or
   major car-to-car crashes; nearby traffic is speed-capped. During a safety-car

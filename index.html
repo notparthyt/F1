@@ -270,7 +270,7 @@ header{position:absolute;top:0;left:0;right:0;z-index:20}main{height:100vh}.tag,
 <div class="section stats"><div><div class="label">Longitudinal</div><div class="number" id="long">0.00 g</div></div><div><div class="label">Lateral</div><div class="number" id="lat">0.00 g</div></div><div><div class="label">Downforce</div><div class="number" id="aero">0.0 kN</div></div><div><div class="label">Distance</div><div class="number" id="distance">0 m</div></div><div><div class="label">Sim time</div><div class="number" id="time">0.0 s</div></div><div><div class="label">Steering</div><div class="number" id="steer">0.0°</div></div><div><div class="label">Roll / pitch</div><div class="number" id="attitude">0.00° / 0.00°</div></div><div><div class="label">Aero squat</div><div class="number" id="heave">0 mm</div></div><div><div class="label">Ride F / R</div><div class="number" id="ride">40 / 80 mm</div></div><div><div class="label">Aero balance</div><div class="number" id="balance">40.0% F</div></div><div><div class="label">ERS store</div><div class="number" id="ers">4.00 MJ</div></div><div><div class="label">ERS deployed / lap</div><div class="number" id="ers-lap">0.00 / 4.0 MJ</div></div></div><div class="section"><p class="note" style="margin-top:0">ERS: the MGU-K adds up to 120 kW on the throttle above 100 km/h, at most 4 MJ a lap from a 4 MJ store; braking harvests up to 120 kW (2 MJ a lap) and the MGU-H recharges the store from the exhaust. Illustrative values.</p></div>
 <div class="section"><div class="label">Driver input · <span id="input-source">keyboard</span></div><div class="stats" style="margin-top:10px"><div><div class="label">Throttle</div><meter id="in-throttle" min="0" max="1" value="0" style="width:100%;accent-color:#6fffc3" aria-label="Throttle command"></meter></div><div><div class="label">Brake</div><meter id="in-brake" min="0" max="1" value="0" style="width:100%;accent-color:#ff8e86" aria-label="Brake command"></meter></div></div><p class="note">Keyboard pedals ramp in ~0.17 s and release in 0.1 s; keyboard steering moves toward lock at 3/s and returns at 5/s. Gamepad (standard layout): triggers are analog pedals, left stick steers with a deadzone and progressive curve. Steering authority falls with speed for both.</p></div>
 <div class="section"><div class="label">Tire force / peak grip</div><div class="wheels" id="wheels"></div><p class="note">FL / FR / RL / RR · normal load in kN.<br>Bars: force / peak capacity, not remaining grip. SLIDE: combined demand beyond the illustrative force peak; force falls toward 75% of peak. Slip: signed longitudinal slip; + is wheelspin when moving forward. LOCK: stopped wheel above 1 m/s. α: force-producing (relaxed) / kinematic slip angle; the carcass catches up over 0.45 m of travel. Temp: tread / carcass °C · thermal grip (blue cold, green near the 100 °C optimum, red hot); sliding heats the tread, airflow cools it. Wear: tread used · wear grip; sliding energy wears the tread (faster above the optimum), grip fades then falls off a cliff past 75% wear (amber above 37.5%, red above 75%); qualifying uses fresh Soft tires with no grip loss; fresh Softs wear and lose grip once the main race starts. Sim handling has no ABS or traction control; Arcade handling adds grip, stronger slide recovery, and reduces braking in turns.</p></div>
-<div class="section controls"><strong>On foot</strong>: spawn beside your car. Click the viewport to capture the mouse; use <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> to walk, double-tap <kbd>W</kbd> to run, press <kbd>Space</kbd> to jump. Aim at your car and press <kbd>L</kbd> to enter, or press <kbd>R</kbd> nearby to enter without aiming. Press <kbd>E</kbd> while standing still to cycle emotes. Q1, Q2, and Q3 run before the race, and qualifying determines the grid. You can exit with <kbd>L</kbd> after finishing a race (or completing a lap in practice).<br><br><strong>In the car</strong><br><kbd>W</kbd> / <kbd>↑</kbd> Throttle · <kbd>S</kbd> / <kbd>↓</kbd> Brake; at a standstill, S selects reverse<br><kbd>Space</kbd> Brake only · configurable in Settings<br><kbd>A</kbd> <kbd>D</kbd> / <kbd>←</kbd> <kbd>→</kbd> Steer · <kbd>X</kbd> / <kbd>Z</kbd> Shift up / down · <kbd>G</kbd> Automatic gears<br><kbd>F</kbd> DRS anywhere on track; braking closes it · <kbd>O</kbd> hold for normal ERS boost; press within 1 s of a car ahead to toggle stronger Overtake mode (press again or brake to return to Normal)<br><kbd>P</kbd> Pause · <kbd>R</kbd> Reset · <kbd>V</kbd> Chase / overview · <kbd>H</kbd> Hide / show HUD · <kbd>C</kbd> / <kbd>N</kbd> Cycle cameras<br><kbd>B</kbd> Request tyres: Soft → Medium → Hard → cancel. Auto-pit assistance, when enabled, takes control near pit entry and returns it after pit exit. Otherwise, drive into the pit lane and stop in your box.<br>On the start lights, <kbd>1</kbd>–<kbd>5</kbd> (gamepad LB / RB) changes grid slot. Penalties appear as notices and affect final classification; running order is not immediately changed.<br>Gamepad: RT throttle · LT brake · left stick steer · RB / LB shift · Y pause / resume · Start HUD · B camera · X fullscreen · A units · Back reset</div>
+<div class="section controls"><strong>On foot</strong>: spawn beside your car. Click the viewport to capture the mouse; use <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> to walk, double-tap <kbd>W</kbd> to run, press <kbd>Space</kbd> to jump. Aim at your car and press <kbd>L</kbd> to enter. Press <kbd>E</kbd> while standing still to cycle emotes. Q1, Q2, and Q3 run before the race, and qualifying determines the grid. You can exit with <kbd>L</kbd> after finishing a race (or completing a lap in practice).<br><br><strong>In the car</strong><br><kbd>W</kbd> / <kbd>↑</kbd> Throttle · <kbd>S</kbd> / <kbd>↓</kbd> Brake; at a standstill, S selects reverse<br><kbd>Space</kbd> Brake only · configurable in Settings<br><kbd>A</kbd> <kbd>D</kbd> / <kbd>←</kbd> <kbd>→</kbd> Steer · <kbd>X</kbd> / <kbd>Z</kbd> Shift up / down · <kbd>G</kbd> Automatic gears<br><kbd>F</kbd> DRS anywhere on track; braking closes it · <kbd>O</kbd> hold for normal ERS boost; press within 1 s of a car ahead to toggle stronger Overtake mode (press again or brake to return to Normal)<br><kbd>Esc</kbd> Pause · <kbd>R</kbd> Reset · <kbd>V</kbd> Chase / overview · <kbd>H</kbd> Hide / show HUD · <kbd>C</kbd> Cycle cameras · <kbd>U</kbd> 360 Look; drag to orbit and zoom without passing through the car or track boundary<br><kbd>B</kbd> Request tyres: Soft → Medium → Hard → cancel. Auto-pit assistance, when enabled, takes control near pit entry and returns it after pit exit. Otherwise, drive into the pit lane and stop in your box.<br>On the start lights, <kbd>1</kbd>–<kbd>5</kbd> (gamepad LB / RB) changes grid slot. Penalties appear as notices and affect final classification; running order is not immediately changed.<br>Gamepad: RT throttle · LT brake · left stick steer · RB / LB shift · Y pause / resume · Start HUD · B camera · X fullscreen · A units · Back reset</div>
 <p class="note">Illustrative, uncalibrated dynamics. Body roll, pitch and aero squat are damped spring modes for display; wheel loads are still quasi-static. Surface grip (assumed): kerb 90%, runoff 70%, grass 35%. Walls are rigid: the body footprint rebounds with 25% restitution and scrubs with friction 0.5; no damage model. Tires start at 70 °C (blanket temperature) and have a two-node thermal model and tread wear; no pressure or camber yet. Compounds (assumed): soft +1.5% grip and 2× wear, hard −1.5% grip and 0.55× wear relative to the medium; a pit stop fits a new set at blanket temperature after a 2.1–3.2 s service. Sound is synthesized from engine rpm, throttle, turbo spool, tire sliding power and speed (V6 firing frequency; no recorded samples). This is a handling testbed, not a validated F1 simulator.</p>
 </aside></main>
 <script type="importmap">{ "imports": { "three": "./vendor/three.module.js" } }</script>
@@ -282,7 +282,7 @@ import { createRace, DEFAULT_GRID } from './src/race.mjs?v=20261104-3';
 import { buildF1Car } from './src/car3d.mjs';
 import { loadGLTFAsset, loadRB22Template, buildRB22Car, cloneSkinnedModel, STEERING_RATIO, DRIVER_SUIT_STYLES, createDriverSuitTexture } from './src/rb22.mjs?v=20261104-1';
 import { carModelForGraphics, driverModelForGraphics } from './src/modelassets.mjs';
-import { buildWorld, buildCircuitWorld, updateWorldDetailLod, worldDetailsInRadius } from './src/world3d.mjs?v=20261103-8';
+import { buildWorld, buildCircuitWorld, updateWorldDaylight, updateWorldWeather, updateWorldDetailLod, worldDetailsInRadius } from './src/world3d.mjs?v=20261104-1';
 import { mergeGeometries } from './vendor/BufferGeometryUtils.js';
 import { makeMirror } from './src/mirror3d.mjs';
 import { createStadiumTrack } from './src/track.mjs';
@@ -295,8 +295,10 @@ import { createLapTimer, formatLapTime } from './src/laptimer.mjs';
 import { applyArcadeSteeringAssist, createDriverInput, readGamepad } from './src/input.mjs';
 import { createSoundModel, createAudioEngine } from './src/audio.mjs?v=20261103';
 import { createWeather } from './src/weather.mjs';
+import { daylightForRace } from './src/environment.mjs';
+import { clampLook360Distance, constrainLook360Camera } from './src/camera.mjs';
 import { captureHandlingBaseline, applyHandlingMode as applyCarHandlingMode } from './src/handling.mjs';
-import { canExitVehicle, moveOnFootColliding, onFootEmoteAt, onFootSpawn, ON_FOOT_EMOTES, shouldAutoPauseOnBlur, shouldShowSeatedDriver } from './src/onfoot.mjs?v=20261104-1';
+import { canExitVehicle, moveOnFootColliding, onFootEmoteAt, onFootSpawn, ON_FOOT_EMOTES, shouldAutoPauseOnBlur, shouldShowSeatedDriver } from './src/onfoot.mjs?v=20261104-2';
 const $ = id => document.getElementById(id);
 const assetLoadingManager = new THREE.LoadingManager();
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
@@ -967,7 +969,7 @@ canvas.addEventListener('pointercancel', endLookDrag);
 canvas.addEventListener('wheel', event => {
   if (!look360) return;
   event.preventDefault();
-  lookDistance = THREE.MathUtils.clamp(lookDistance + Math.sign(event.deltaY) * 0.8, 3, 14);
+  lookDistance = clampLook360Distance(lookDistance + Math.sign(event.deltaY) * 0.8);
 }, { passive: false });
 canvas.addEventListener('pointerdown', () => {
   if (!onFoot || paused || !$('menu-screen').hidden || document.pointerLockElement) return;
@@ -1128,7 +1130,7 @@ function cyclePitRequest() { sim.requestPit(PIT_CYCLE[(PIT_CYCLE.indexOf(sim.ent
 const TYRE_COLOR = { soft: '#ff3b30', medium: '#ffd60a', hard: '#f2f2f2' };
 const tyreBadge = c => `<span class="tyre" style="border-color:${TYRE_COLOR[c]};color:${TYRE_COLOR[c]}" title="${c}">${c[0].toUpperCase()}</span>`;
 const title = c => c[0].toUpperCase() + c.slice(1);
-const drivingKeys = ['KeyW','KeyS','KeyA','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','KeyQ','KeyE','KeyF','KeyL','KeyC','KeyN','KeyI'];
+const drivingKeys = ['KeyW','KeyS','KeyA','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','KeyQ','KeyE','KeyF','KeyL','KeyI'];
 const pressedKeys = new Set();
 function updatePressedKey(code, pressed) {
   if (pressed) pressedKeys.add(code);
@@ -1161,7 +1163,7 @@ window.addEventListener('keydown', e => {
   const emoteNumberKey = /^(Digit|Numpad)[1-9]$/.test(e.code);
   if (e.target.closest('button') && ![...drivingKeys, ...Object.values(gameSettings.keybinds)].includes(e.code) && !['KeyT','KeyU'].includes(e.code)
     && !((onFoot || podiumCanEmote()) && (emoteMenuOpen || wardrobeMenuOpen) && (emoteNumberKey || e.code === 'Escape' || e.code === gameSettings.keybinds.dress))) return;
-  if ([...drivingKeys,...Object.values(gameSettings.keybinds),'Space','KeyR','KeyV','KeyC','KeyN','KeyM','KeyO','KeyB','KeyH','KeyZ','KeyX','KeyG','KeyT','KeyU','KeyL','Escape'].includes(e.code)
+  if ([...drivingKeys,...Object.values(gameSettings.keybinds),'Space','KeyR','KeyV','KeyM','KeyO','KeyB','KeyH','KeyZ','KeyX','KeyG','KeyT','KeyU','KeyL','Escape'].includes(e.code)
     || ((onFoot || podiumCanEmote()) && ((emoteMenuOpen || wardrobeMenuOpen) && emoteNumberKey))) e.preventDefault();
   updatePressedKey(e.code, true);
   if (e.repeat) return;
@@ -1175,6 +1177,7 @@ window.addEventListener('keydown', e => {
     else if (playerCanExit()) void blinkVehicleTransition(exitVehicle);
     return;
   }
+  if (e.code === 'KeyR') { reset(); return; }
   if (e.code === 'KeyI') { toggleAutopilot(); return; }
   if (e.code === 'Escape') {
     if ((onFoot || podiumCanEmote()) && (emoteMenuOpen || wardrobeMenuOpen)) closeEmoteMenu();
@@ -1191,12 +1194,7 @@ window.addEventListener('keydown', e => {
     else if (e.code === gameSettings.keybinds.emote) toggleEmoteMenu();
     else if (wardrobeMenuOpen && emoteNumberKey) selectDriverSuit(Number(e.code.at(-1)) - 1);
     else if (emoteMenuOpen && emoteNumberKey) playOnFootEmote(Number(e.code.at(-1)) - 1);
-    else if (e.code === gameSettings.keybinds.camera || e.code === 'KeyC' || e.code === 'KeyN') changeCamera();
-    else if (e.code === 'KeyR') {
-      const distance = Math.hypot(sim.car.x - onFootPosition.x, sim.car.y - onFootPosition.y);
-      if (avatarLoaded && distance < 8 && model.group.visible) enterVehicle(true);
-      else reset();
-    }
+    else if (e.code === gameSettings.keybinds.camera) changeCamera();
     else if (e.code === 'Space') { if (!paused) playAvatarAction('Jump', true); }
     else if (e.code === 'KeyH') toggleHud();
     else if (!paused && !emoteMenuOpen && !wardrobeMenuOpen && ['KeyW','KeyA','KeyS','KeyD'].includes(e.code)) {
@@ -1209,10 +1207,9 @@ window.addEventListener('keydown', e => {
     }
     return;
   }
-  if (e.code === 'KeyR') reset();
-  else if (e.code === 'KeyV') changeView();
+  if (e.code === 'KeyV') changeView();
   else if (e.code === 'KeyU') changeLook360();
-  else if (e.code === gameSettings.keybinds.camera || e.code === 'KeyC' || e.code === 'KeyN') changeCamera();
+  else if (e.code === gameSettings.keybinds.camera) changeCamera();
   else if (e.code === 'KeyT') toggleRecording();
   else if (e.code === 'KeyM') toggleSound();
   else if (e.code === gameSettings.keybinds.ers) {
@@ -1343,20 +1340,25 @@ async function loadPlayerAvatar(mode = gameSettings.graphics) {
     console.error('On-foot driver model failed to load', error);
   }
 }
-const dryFog = new THREE.Color(nightTrack ? 0x10182b : 0xc8d8e4), rainFog = new THREE.Color(nightTrack ? 0x20283a : 0x72808b);
+const dayFog = new THREE.Color(0xc8d8e4), nightFog = new THREE.Color(0x10182b);
+const dayRainFog = new THREE.Color(0x72808b), nightRainFog = new THREE.Color(0x20283a);
+const frameFog = new THREE.Color(), frameRainFog = new THREE.Color();
 let weather = weatherForTrack();
 const camera = new THREE.PerspectiveCamera(58, 1, 0.1, 4000);
-scene.add(new THREE.HemisphereLight(nightTrack ? 0x7183b1 : 0xd6e8ff, nightTrack ? 0x25283a : 0x4a5a32, nightTrack ? 0.42 : 0.55));
+const hemisphere = new THREE.HemisphereLight(nightTrack ? 0x7183b1 : 0xd6e8ff, nightTrack ? 0x25283a : 0x4a5a32, nightTrack ? 0.42 : 0.55);
+scene.add(hemisphere);
+const dayHemisphereColor = new THREE.Color(0xd6e8ff), dayGroundLightColor = new THREE.Color(0x4a5a32);
 const sun = new THREE.DirectionalLight(nightTrack ? 0xaabfff : 0xfff0d8, nightTrack ? 0.28 : 2.2);
 sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
 Object.assign(sun.shadow.camera, { left: -14, right: 14, top: 14, bottom: -14, near: 1, far: 140 });
 sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.02;
-scene.add(sun, sun.target);
+const moon = new THREE.DirectionalLight(0xaabfff, nightTrack ? 0.5 : 0.04);
+scene.add(sun, sun.target, moon, moon.target);
 const boxColors = [0x39e0ae, ...DEFAULT_GRID.map(g => g.color)];
 const world = circuitKey ? buildCircuitWorld(track, { boxColors, night: nightTrack, urban: track.urban }) : buildWorld({ halfStraight, radius, roadWidth, boxColors });
 scene.add(world);
 world.userData.racingLine.visible = gameSettings.racingLine;
-const rainCount = 180, rainDrops = Array.from({ length: rainCount }, () => ({
+const rainCount = 360, rainDrops = Array.from({ length: rainCount }, () => ({
   x: (Math.random() - 0.5) * 44, y: 1 + Math.random() * 28, z: (Math.random() - 0.5) * 44,
 }));
 const rainGeometry = new THREE.BufferGeometry(), rainPositions = new Float32Array(rainCount * 6);
@@ -1367,7 +1369,7 @@ function updateRain(dt) {
   const state = weather.state;
   rainLines.visible = state.intensity > 0.01;
   if (!rainLines.visible) return;
-  rainLines.material.opacity = 0.12 + 0.28 * state.intensity;
+  rainLines.material.opacity = 0.16 + 0.42 * state.intensity;
   rainLines.position.set(model.group.position.x, 0, model.group.position.z);
   for (let i = 0; i < rainCount; i++) {
     const drop = rainDrops[i];
@@ -1855,7 +1857,6 @@ function placeScene(dt) {
   podiumStage.visible = podiumActive;
   fireworks.visible = podiumActive;
   const c = sim.car, g = model.group;
-  sun.position.set(c.x + 35, 70, -c.y + 25); sun.target.position.copy(g.position);
   forward.set(Math.cos(c.heading), 0, -Math.sin(c.heading));
   const footHeight = track.heightAtPosition ? track.heightAtPosition(onFootPosition.x, onFootPosition.y) : track.heightAt ? track.heightAt(track.progress(onFootPosition.x, onFootPosition.y)) : 0;
   playerAvatar.position.set(onFootPosition.x, footHeight, -onFootPosition.y);
@@ -1936,6 +1937,7 @@ function placeScene(dt) {
       lookDistance * Math.sin(lookPitch),
       Math.sin(lookYaw) * horizontal,
     )));
+    camera.position.copy(constrainLook360Camera(target, camera.position, barrierAt));
     camera.lookAt(target);
   } else if (cockpit) {
     camera.fov = 72; camera.near = 0.03;
@@ -2077,7 +2079,7 @@ function updateOnFootInteraction() {
       && interactionDirection.dot(interactionTarget) > 0.94;
     prompt.innerHTML = avatarLoadError ? 'Driver model failed to load · reload to retry'
       : !avatarLoaded ? 'Loading driver model…'
-          : canEnterCar ? '<strong>L</strong> · enter car · <strong>R</strong> enter without aiming'
+          : canEnterCar ? '<strong>L</strong> · enter car'
           : onFootCameraMode === 'secondPerson' ? 'Press <strong>C</strong> to aim at your car'
           : document.pointerLockElement === canvas ? 'Aim at your car to enter'
             : 'Click the viewport to look · point at your car';
@@ -2261,9 +2263,37 @@ function render(dt = 0) {
   const c = sim.car;
   placeScene(dt); placeSafetyCar(); drawMinimap(); updateNearbyLeaderboard(); updateRain(dt);
   const conditions = weather.state;
+  const raceDistance = opponents && sim.finish.laps > 0;
+  const totalDistance = track.length * (raceDistance ? sim.finish.laps : 3);
+  const raceProgress = raceDistance ? sim.entries[0].covered / totalDistance : c.distance / totalDistance;
+  const daylight = daylightForRace(circuitKey, raceProgress);
+  if (Math.abs(daylight - (world.userData.lastDaylight ?? -1)) > 0.002) {
+    updateWorldDaylight(world, daylight);
+    world.userData.lastDaylight = daylight;
+  }
+  if (Math.abs(conditions.wetness - (world.userData.lastWetness ?? -1)) > 0.01) {
+    updateWorldWeather(world, conditions.wetness);
+    world.userData.lastWetness = conditions.wetness;
+  }
+  if (world.userData.clouds) world.userData.clouds.rotation.y += dt * 0.0007;
+  const solarProgress = THREE.MathUtils.clamp((daylight - 0.05) / 0.85, 0, 1);
+  const solarStrength = solarProgress * solarProgress * (3 - 2 * solarProgress);
+  const solarElevation = (daylight - 0.5) * Math.PI * 0.9;
+  const orbitX = Math.cos(solarElevation) * 90, orbitY = Math.sin(solarElevation) * 90;
+  sun.position.set(c.x + orbitX, model.group.position.y + orbitY, -c.y + 35);
+  sun.target.position.copy(model.group.position);
+  moon.position.set(c.x - orbitX, model.group.position.y - orbitY, -c.y - 35);
+  moon.target.position.copy(model.group.position);
+  hemisphere.color.set(0x7183b1).lerp(dayHemisphereColor, daylight);
+  hemisphere.groundColor.set(0x25283a).lerp(dayGroundLightColor, daylight);
+  hemisphere.intensity = 0.36 + daylight * 0.24;
+  sun.intensity = (0.04 + solarStrength * 2.65) * (1 - conditions.intensity * 0.52);
+  moon.intensity = 0.04 + (1 - daylight) * 0.5;
+  scene.environmentIntensity = 0.22 + daylight * 0.18 - conditions.intensity * 0.06;
   $('yellow-flag').hidden = !sim.yellowFlag.active || !opponents;
-  scene.fog.color.copy(dryFog).lerp(rainFog, conditions.intensity * 0.65);
-  sun.intensity = (nightTrack ? 0.28 : 2.8) - conditions.intensity * (nightTrack ? 0.12 : 1.5);
+  frameFog.copy(nightFog).lerp(dayFog, daylight);
+  frameRainFog.copy(nightRainFog).lerp(dayRainFog, daylight);
+  scene.fog.color.copy(frameFog).lerp(frameRainFog, conditions.intensity * 0.65);
   $('speed').textContent = $('speed-hud').textContent = Math.round(c.telemetry.speed * (mph ? 2.23694 : 3.6));
   $('gear').textContent = (c.gear < 0 ? 'R' : String(c.gear)) + (c.config.autoShift ? '' : ' M');
   $('long').textContent = `${(c.ax / 9.81).toFixed(2)} g`;
@@ -2369,7 +2399,7 @@ function render(dt = 0) {
   const startNote = !start.enabled || start.sinceLightsOut > 4 ? null : start.phase === 'lights' ? (me.jumpStart ? `Jump start · +${me.penalty} s penalty` : 'Lights · hold the brake, go when they go out')
     : me.jumpStart ? `Jump start · +${me.penalty} s penalty` : me.reaction !== null ? `Lights out · reaction ${me.reaction.toFixed(3)} s` : 'Lights out · go!';
   const flagNote = !result ? null : result.dsq ? 'Chequered flag · disqualified · R to restart' : result.finished ? `Chequered flag · P${result.position} · ${formatLapTime(result.total)}${result.penalty ? ` incl. ${result.penalty} s penalty` : ''} · R to restart` : 'Chequered flag · complete this lap to finish';
-  $('status').textContent = paused ? 'Paused · Escape or Resume to continue' : onFoot ? avatarLoadError ? 'Driver model failed to load · reload the page' : !avatarLoaded ? 'Loading the on-foot driver model…' : qualifying && qualifying.stage !== 'race' ? `On foot · ${qualifying.stage} qualifying · enter the car to set your lap` : 'On foot · WASD walk · double-tap W run · Space jump · R enter · E emotes · M suit menu · L enter' : c.gear < 0 ? 'Reverse · hold S to reverse · Space brakes only' : qualifying && qualifying.stage !== 'race' ? `${qualifying.stage} qualifying · complete a clean lap` : startNote ? startNote : flagNote ? flagNote : pitNote ? pitNote : impact ? `Wall impact · ${Math.round(impact.speed * 3.6)} km/h into the barrier · R to reset` : contact ? `Contact · ${Math.round(contact.speed * 3.6)} km/h closing speed` : !['asphalt', 'pit'].includes(surface) ? `On the ${surface} · reduced grip · R to reset` : autopilot ? 'Auto-pit assist · control returns after pit exit · press I to take control' : c.telemetry.speed < 0.5 ? 'Ready · W or ↑ to accelerate' : `${circuitKey ? track.name : 'Test circuit'} · ${driver.source} input`;
+  $('status').textContent = paused ? 'Paused · Escape or Resume to continue' : onFoot ? avatarLoadError ? 'Driver model failed to load · reload the page' : !avatarLoaded ? 'Loading the on-foot driver model…' : qualifying && qualifying.stage !== 'race' ? `On foot · ${qualifying.stage} qualifying · enter the car to set your lap` : 'On foot · WASD walk · double-tap W run · Space jump · E emotes · M suit menu · L enter' : c.gear < 0 ? 'Reverse · hold S to reverse · Space brakes only' : qualifying && qualifying.stage !== 'race' ? `${qualifying.stage} qualifying · complete a clean lap` : startNote ? startNote : flagNote ? flagNote : pitNote ? pitNote : impact ? `Wall impact · ${Math.round(impact.speed * 3.6)} km/h into the barrier · R to reset` : contact ? `Contact · ${Math.round(contact.speed * 3.6)} km/h closing speed` : !['asphalt', 'pit'].includes(surface) ? `On the ${surface} · reduced grip · R to reset` : autopilot ? 'Auto-pit assist · control returns after pit exit · press I to take control' : c.telemetry.speed < 0.5 ? 'Ready · W or ↑ to accelerate' : `${circuitKey ? track.name : 'Test circuit'} · ${driver.source} input`;
   updateRaceAssistant();
   $('input-source').textContent = autopilot ? 'auto-pit assist' : driver.source;
   $('in-throttle').value = command.throttle ?? 0; $('in-brake').value = command.brake ?? 0;
@@ -2656,7 +2686,7 @@ sceneShortcuts.innerHTML = `<summary>Keyboard shortcuts</summary>
     <div><span>Brake only</span><kbd data-scene-keybind="brakeOnly">Space</kbd></div>
     <div><span>DRS · ERS</span><span><kbd data-scene-keybind="drs">F</kbd> · <kbd data-scene-keybind="ers">O</kbd></span></div>
     <div><span>Enter / exit · auto-pit</span><span><kbd data-active-code="KeyL">L</kbd> · <kbd data-active-code="KeyI">I</kbd></span></div>
-    <div><span>Tyres · camera · view</span><span><kbd data-active-code="KeyB">B</kbd> · <kbd data-scene-keybind="camera">C</kbd> · <kbd data-active-code="KeyV">V</kbd></span></div>
+    <div><span>Tyres · camera · view · 360</span><span><kbd data-active-code="KeyB">B</kbd> · <kbd data-scene-keybind="camera">C</kbd> · <kbd data-active-code="KeyV">V</kbd> · <kbd data-active-code="KeyU">U</kbd></span></div>
     <div><span>Pause · reset · HUD</span><span><kbd data-active-code="Escape">Esc</kbd> · <kbd data-active-code="KeyR">R</kbd> · <kbd data-active-code="KeyH">H</kbd></span></div>
     <div><span>On foot</span><span><kbd data-active-code="KeyW">W</kbd> / <kbd data-active-code="KeyA">A</kbd> / <kbd data-active-code="KeyS">S</kbd> / <kbd data-active-code="KeyD">D</kbd> · <kbd data-active-code="Space">Space</kbd></span></div>
   </div>`;

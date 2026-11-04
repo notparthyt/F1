@@ -32,6 +32,90 @@ function asphaltMaterial(width, vScale = 30) {
   return new THREE.MeshStandardMaterial({ side: THREE.DoubleSide, map, normalMap, roughnessMap, roughness: 1 });
 }
 
+function makeCloudTexture() {
+  return texture(1024, (g, size) => {
+    g.clearRect(0, 0, size, size);
+    for (let cluster = 0; cluster < 42; cluster++) {
+      const x = Math.random() * size, y = Math.random() * size;
+      const blobs = 4 + Math.floor(Math.random() * 5);
+      g.filter = 'blur(18px)';
+      for (let i = 0; i < blobs; i++) {
+        const radiusX = 12 + Math.random() * 42, radiusY = 8 + Math.random() * 20;
+        g.fillStyle = `rgba(255,255,255,${0.1 + Math.random() * 0.16})`;
+        g.beginPath();
+        g.ellipse(x + (Math.random() - 0.5) * 90, y + (Math.random() - 0.5) * 42, radiusX, radiusY, 0, 0, Math.PI * 2);
+        g.fill();
+      }
+    }
+    g.filter = 'none';
+  });
+}
+
+const skyPalette = {
+  nightHorizon: new THREE.Color(0x111a30), nightZenith: new THREE.Color(0x02040b),
+  duskHorizon: new THREE.Color(0xe17b61), duskZenith: new THREE.Color(0x263c77),
+  dayHorizon: new THREE.Color(0xdfe9f1), dayZenith: new THREE.Color(0x3d78b8),
+};
+const skyHorizon = new THREE.Color(), skyZenith = new THREE.Color();
+function skyColor(height, daylight, dusk, target) {
+  skyHorizon.copy(skyPalette.nightHorizon).lerp(skyPalette.dayHorizon, daylight)
+    .lerp(skyPalette.duskHorizon, dusk * 0.62);
+  skyZenith.copy(skyPalette.nightZenith).lerp(skyPalette.dayZenith, daylight)
+    .lerp(skyPalette.duskZenith, dusk * 0.48);
+  return target.copy(skyHorizon).lerp(skyZenith, Math.pow(height, 0.6));
+}
+
+function addSky(world, radius, position = new THREE.Vector3()) {
+  const geometry = new THREE.SphereGeometry(radius, 32, 16);
+  const colors = new Float32Array(geometry.attributes.position.count * 3);
+  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  const skyMesh = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({
+    vertexColors: true, side: THREE.BackSide, fog: false, depthWrite: false,
+  }));
+  skyMesh.position.copy(position);
+  world.add(skyMesh);
+  const clouds = new THREE.Mesh(
+    new THREE.SphereGeometry(radius * 0.995, 32, 16),
+    new THREE.MeshBasicMaterial({
+      map: makeCloudTexture(), color: 0xffffff, transparent: true, opacity: 0.42,
+      side: THREE.BackSide, fog: false, depthWrite: false,
+    }),
+  );
+  clouds.position.copy(position);
+  world.add(clouds);
+  world.userData.skyMesh = skyMesh;
+  world.userData.skyRadius = radius;
+  world.userData.clouds = clouds;
+  updateWorldDaylight(world, 1);
+}
+
+export function updateWorldDaylight(world, daylight) {
+  if (!Number.isFinite(daylight)) throw new RangeError('Daylight must be finite');
+  const mesh = world?.userData?.skyMesh;
+  if (!mesh) return;
+  const colors = mesh.geometry.attributes.color;
+  const positions = mesh.geometry.attributes.position;
+  const radius = world.userData.skyRadius;
+  const color = new THREE.Color();
+  const amount = THREE.MathUtils.clamp(daylight, 0, 1);
+  const dusk = Math.max(0, 1 - Math.abs(amount - 0.42) / 0.36);
+  for (let i = 0; i < colors.count; i++) {
+    skyColor(Math.max(0, positions.getY(i) / radius), amount, dusk, color);
+    colors.setXYZ(i, color.r, color.g, color.b);
+  }
+  colors.needsUpdate = true;
+  world.userData.clouds.material.opacity = 0.3 + 0.18 * amount;
+}
+
+export function updateWorldWeather(world, wetness) {
+  if (!Number.isFinite(wetness)) throw new RangeError('Wetness must be finite');
+  const amount = THREE.MathUtils.clamp(wetness, 0, 1);
+  for (const material of world?.userData?.roadMaterials ?? []) {
+    material.roughness = 1 - amount * 0.68;
+    material.metalness = amount * 0.12;
+  }
+}
+
 // Centerline samples (counter-clockwise from the start line) with left normals.
 export function centerline(halfStraight, radius, step = 2) {
   const pts = [];
@@ -131,18 +215,12 @@ export function createRacingLineMesh(points, palette = ['#39e0ae', '#ffd166', '#
 export function buildWorld({ halfStraight, radius, roadWidth, boxColors = [] }) {
   const world = new THREE.Group();
   world.userData.detailLod = [];
+  world.userData.roadMaterials = [];
   const pts = centerline(halfStraight, radius);
   const half = roadWidth / 2, pit = stadiumPitLane(halfStraight, radius, roadWidth);
   const std = (o) => new THREE.MeshStandardMaterial({ side: THREE.DoubleSide, ...o });
 
-  // Sky dome with a horizon gradient.
-  const sky = new THREE.SphereGeometry(1800, 32, 16), col = [];
-  for (let i = 0; i < sky.attributes.position.count; i++) {
-    const t = Math.max(0, sky.attributes.position.getY(i) / 1800);
-    const c = new THREE.Color(0xdfe9f1).lerp(new THREE.Color(0x3d78b8), Math.pow(t, 0.6)); col.push(c.r, c.g, c.b);
-  }
-  sky.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
-  world.add(new THREE.Mesh(sky, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide, fog: false, depthWrite: false })));
+  addSky(world, 1800);
 
   const grass = texture(256, (g, s) => {
     noise(g, s, '#3f6b2e', 0.25, 9000);
@@ -159,6 +237,7 @@ export function buildWorld({ halfStraight, radius, roadWidth, boxColors = [] }) 
   });
   const runoff = texture(256, (g, s) => noise(g, s, '#8b8170', 0.3, 20000), 4, 1);
   const road = asphaltMaterial(roadWidth);
+  world.userData.roadMaterials.push(road);
   world.add(ribbon(pts, -half, half, 0, road, 30));
   const racingLine = createRacingLineMesh(pts, ['#39e0ae', '#ffd166', '#ff6b5f']);
   world.add(racingLine);
@@ -174,7 +253,9 @@ export function buildWorld({ halfStraight, radius, roadWidth, boxColors = [] }) 
   // the exit, a solid white line along the circuit edge, speed-limit lines,
   // painted boxes in each car's colour and a garage block behind the wall.
   const along = (a, b) => pts.filter(p => p.s >= a && p.s <= b);
-  world.add(ribbon(along(pit.entry, pit.exit), pit.inner, pit.outer, 0.006, asphaltMaterial(Math.abs(pit.outer - pit.inner)), 30));
+  const pitRoad = asphaltMaterial(Math.abs(pit.outer - pit.inner));
+  world.userData.roadMaterials.push(pitRoad);
+  world.add(ribbon(along(pit.entry, pit.exit), pit.inner, pit.outer, 0.006, pitRoad, 30));
   world.add(ribbon(along(pit.entry, pit.exit), pit.inner, pit.inner + 0.25, 0.009, std({ color: 0xf2f2ee, roughness: 0.6 }), 10));
   const paint = (s, offset, length, width, color, y = 0.01) => {
     const m = new THREE.Mesh(new THREE.PlaneGeometry(length, width), std({ color, roughness: 0.6 }));
@@ -353,6 +434,7 @@ export function buildWorld({ halfStraight, radius, roadWidth, boxColors = [] }) 
 export function buildCircuitWorld(track, { boxColors = [], night = false, urban = false } = {}) {
   const world = new THREE.Group(), half = track.roadWidth / 2, wallAt = track.wallOffset;
   world.userData.detailLod = [];
+  world.userData.roadMaterials = [];
   const { x: X, y: Y, z: Z, s: S, heading: H, kerbType } = track.samples, n = X.length;
   const pts = Array.from({ length: n + 1 }, (_, k) => { const i = k % n; return { x: X[i], y: Y[i], h: Z?.[i] ?? 0, nx: -Math.sin(H[i]), ny: Math.cos(H[i]), s: k < n ? S[i] : track.length, i }; });
   // Consecutive runs of samples meeting a predicate (each run shares its end point).
@@ -362,17 +444,9 @@ export function buildCircuitWorld(track, { boxColors = [], night = false, urban 
   for (let i = 0; i < n; i++) { minX = Math.min(minX, X[i]); maxX = Math.max(maxX, X[i]); minY = Math.min(minY, Y[i]); maxY = Math.max(maxY, Y[i]); }
   const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2, extent = Math.hypot(maxX - minX, maxY - minY) / 2;
 
-  const skyR = extent + 1500, sky = new THREE.SphereGeometry(skyR, 32, 16), col = [];
-  for (let i = 0; i < sky.attributes.position.count; i++) {
-    const t = Math.max(0, sky.attributes.position.getY(i) / skyR);
-    const c = night
-      ? new THREE.Color(0x111a30).lerp(new THREE.Color(0x02040b), Math.pow(t, 0.7))
-      : new THREE.Color(0xdfe9f1).lerp(new THREE.Color(0x3d78b8), Math.pow(t, 0.6));
-    col.push(c.r, c.g, c.b);
-  }
-  sky.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
-  const skyMesh = new THREE.Mesh(sky, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide, fog: false, depthWrite: false }));
-  skyMesh.position.set(cx, 0, -cy); world.add(skyMesh);
+  const skyR = extent + 1500;
+  addSky(world, skyR, new THREE.Vector3(cx, 0, -cy));
+  updateWorldDaylight(world, night ? 0.04 : 0.94);
   const size = 2 * extent + 1200;
   const grass = texture(256, (g, s) => {
     noise(g, s, '#3f6b2e', 0.25, 9000);
@@ -448,7 +522,9 @@ export function buildCircuitWorld(track, { boxColors = [], night = false, urban 
   }, 20, 1);
   const fenceMat = new THREE.MeshStandardMaterial({ map: meshTex, alphaTest: 0.4, side: THREE.DoubleSide, metalness: 0.6, roughness: 0.5 });
   const steel = new THREE.MeshStandardMaterial({ color: 0x2b2f35, metalness: 0.7, roughness: 0.4 });
-  world.add(ribbon(pts, -half, half, 0, asphaltMaterial(track.roadWidth), 30));
+  const circuitRoad = asphaltMaterial(track.roadWidth);
+  world.userData.roadMaterials.push(circuitRoad);
+  world.add(ribbon(pts, -half, half, 0, circuitRoad, 30));
   const linePoints = Array.from({ length: n }, (_, i) => ({
     x: X[i] + Math.sin(H[i]) * track.samples.line[i],
     y: Y[i] - Math.cos(H[i]) * track.samples.line[i],
@@ -587,7 +663,7 @@ export function buildCircuitWorld(track, { boxColors = [], night = false, urban 
       // Keep the repeated lamp fixtures emissive; only every third mast adds
       // a dynamic light to the scene to keep the night renderer light.
       if (i % 4 === 0) {
-        const light = new THREE.PointLight(0xfff8ec, 1250, 190, 2);
+        const light = new THREE.PointLight(0xffffff, 1250, 190, 2);
         light.position.set(lx, h + 13.5, -ly); world.add(light);
       }
     }
@@ -633,6 +709,7 @@ export function buildCircuitWorld(track, { boxColors = [], night = false, urban 
       const mesh = new THREE.Mesh(geometry, material); mesh.receiveShadow = true; world.add(mesh); return mesh;
     };
     const pitSurface = asphaltMaterial(Math.abs(pit.outer - half));
+    world.userData.roadMaterials.push(pitSurface);
     world.add(pitRoadMesh(pit.entry, pit.exit, pitSurface));
     if (pit.tunnel) {
       const tunnelPath = strip(pit.tunnel.start, pit.tunnel.end);

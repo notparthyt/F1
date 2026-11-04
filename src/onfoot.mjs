@@ -1,6 +1,7 @@
 export const ON_FOOT_WALK_SPEED = 3.5;
 const ON_FOOT_COLLISION_SAMPLES = 8;
 const ON_FOOT_PLAYER_RADIUS = 0.3;
+const ON_FOOT_MAX_COLLISION_STEP = 0.25;
 
 export function onFootSpawn(car, pitSide = 1, side = 2.4) {
   if (![car?.x, car?.y, car?.heading, pitSide, side].every(Number.isFinite) || side <= 0)
@@ -74,12 +75,25 @@ export function moveOnFootColliding(position, heading, input, elapsed, {
     }
     return false;
   };
-  if (!collides(target)) return target;
-
+  const distance = Math.hypot(target.x - position.x, target.y - position.y);
+  const steps = Math.max(1, Math.ceil(distance / ON_FOOT_MAX_COLLISION_STEP));
   const resolved = { ...position };
-  for (const axis of ['x', 'y']) {
-    const candidate = { ...resolved, [axis]: target[axis] };
-    if (!collides(candidate)) resolved[axis] = candidate[axis];
+  for (let i = 1; i <= steps; i++) {
+    const fraction = i / steps;
+    const next = {
+      x: position.x + (target.x - position.x) * fraction,
+      y: position.y + (target.y - position.y) * fraction,
+    };
+    if (!collides(next)) {
+      resolved.x = next.x;
+      resolved.y = next.y;
+      continue;
+    }
+    for (const axis of ['x', 'y']) {
+      const candidate = { ...resolved, [axis]: next[axis] };
+      if (!collides(candidate)) resolved[axis] = candidate[axis];
+    }
+    break;
   }
   return resolved;
 }

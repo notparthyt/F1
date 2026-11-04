@@ -24,6 +24,8 @@ test('every circuit has a trackside style and the new layouts retain their venue
   assert.equal(CIRCUIT_TRACK_STYLE.singapore.night, true);
   assert.equal(CIRCUIT_TRACK_STYLE.buddh.runoffSurface, 'sand');
   assert.equal(CIRCUIT_TRACK_STYLE.nurburgring.runoffSurface, 'gravel');
+  assert.equal(CIRCUIT_TRACK_STYLE.nurburgring.boundary, true);
+  assert.equal(CIRCUIT_TRACK_STYLE.nurburgring.wallOffset, 40);
   for (const key of ['singapore', 'buddh', 'nurburgring']) {
     assert.ok(CIRCUITS[key].points.length >= 200, `${key} keeps a detailed sourced layout trace`);
   }

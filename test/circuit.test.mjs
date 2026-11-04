@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createCircuitTrack } from '../src/circuit.mjs';
 import { CIRCUITS } from '../src/circuits.mjs';
+import { CIRCUIT_TRACK_STYLE } from '../src/trackdata.mjs';
 import { createTimeTrial } from '../src/trial.mjs';
 import { createLapTimer } from '../src/laptimer.mjs';
 import { SURFACE_GRIP } from '../src/track.mjs';
@@ -29,6 +30,20 @@ test('a traced circle gives a closed track with progress, signed offsets, surfac
   assert.ok(Math.abs(wall.depth - 1) < 0.5 && wall.nx < -0.99, JSON.stringify(wall));
   const [px, py] = t.point(t.progress(0, 200), 3);
   assert.ok(Math.abs(Math.hypot(px, py) - 203) < 0.5, 'point offsets to the right');
+});
+
+test('Nürburgring has a continuous outer barrier beyond its gravel and grass runoff', () => {
+  const config = CIRCUITS.nurburgring;
+  const style = CIRCUIT_TRACK_STYLE.nurburgring;
+  const track = createCircuitTrack({ ...config, ...style });
+  const progress = track.length * 0.2;
+  const [x, y] = track.point(progress, style.wallOffset + 1);
+  const collision = track.barrierAt(x, y);
+
+  assert.equal(track.boundary, true);
+  assert.ok(collision?.depth > 0.5);
+  assert.equal(style.runoffSurface, 'gravel');
+  assert.ok(style.wallOffset > track.roadWidth / 2 + style.runoffWidth + style.grassWidth);
 });
 
 test('elevation grade angles point uphill and downhill in the direction of travel, including lap wrap', () => {

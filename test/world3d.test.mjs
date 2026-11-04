@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from '../vendor/three.module.js';
-import { createRacingLineMesh, worldDetailsInRadius } from '../src/world3d.mjs';
+import { createRacingLineMesh, updateWorldDaylight, updateWorldWeather, worldDetailsInRadius } from '../src/world3d.mjs';
 
 test('world detail preloading includes chunks within a circular radius and their cell bounds', () => {
   const center = new THREE.Vector3(0, 0, 0);
@@ -28,4 +28,26 @@ test('racing-line visualization uses sparse directional arrows with one of the t
   assert.equal(colors.count, positions.count);
   assert.equal(arrows.geometry.index.count % 3, 0);
   assert.ok([...colors.array].some(channel => channel > 0));
+});
+
+test('environment updates smoothly recolor the sky and reveal clouds by daylight', () => {
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0, 0, 10, 0], 3));
+  geometry.setAttribute('color', new THREE.Float32BufferAttribute([0, 0, 0, 0, 0, 0], 3));
+  const world = { userData: { skyMesh: { geometry }, skyRadius: 10, clouds: { material: { opacity: 0 } } } };
+
+  updateWorldDaylight(world, 0);
+  const nightColors = [...geometry.attributes.color.array];
+  assert.ok(world.userData.clouds.material.opacity > 0);
+  updateWorldDaylight(world, 1);
+  assert.notDeepEqual([...geometry.attributes.color.array], nightColors);
+  assert.throws(() => updateWorldDaylight(world, NaN), RangeError);
+});
+
+test('wet weather makes asphalt less rough and slightly reflective', () => {
+  const road = { roughness: 1, metalness: 0 };
+  updateWorldWeather({ userData: { roadMaterials: [road] } }, 0.75);
+  assert.ok(road.roughness < 1);
+  assert.ok(road.metalness > 0);
+  assert.throws(() => updateWorldWeather({ userData: { roadMaterials: [road] } }, NaN), RangeError);
 });

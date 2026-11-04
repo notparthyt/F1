@@ -302,7 +302,8 @@ export function resolveBarrier(car, barrierAt) {
   const c = car.config, m = carMass(car), cos = Math.cos(car.heading), sin = Math.sin(car.heading);
   let hit = null, weight = 0, rx = 0, ry = 0;
   for (const [bx, by] of [[c.bodyFront, c.bodyHalfWidth], [c.bodyFront, -c.bodyHalfWidth],
-    [-c.bodyRear, c.bodyHalfWidth], [-c.bodyRear, -c.bodyHalfWidth]]) {
+    [-c.bodyRear, c.bodyHalfWidth], [-c.bodyRear, -c.bodyHalfWidth],
+    [c.bodyFront, 0], [-c.bodyRear, 0], [0, c.bodyHalfWidth], [0, -c.bodyHalfWidth]]) {
     const cx = bx * cos - by * sin, cy = bx * sin + by * cos;
     const contact = barrierAt(car.x + cx, car.y + cy);
     if (!contact || contact.depth <= 0) continue;

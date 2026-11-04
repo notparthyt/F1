@@ -130,7 +130,7 @@ export function createCircuitTrack({ name = 'Circuit', points, length: officialL
   step = 2, smoothing = 40, kerbCurvature = 1 / 600, kerbReach = 30, lineMargin = 1.6, minRadius = 15, pitLane = true, timingLine = 0, drs = null,
   elevationProfile = [], pitSide = null, pitTunnel = null, runoffWidth = 6.8, grassWidth = 30,
   runoffSurface = 'runoff', runoffSections = [], sausageKerbs = [], paintedKerbs = [],
-  scraperKerbs = false, racingLineColors = null, urban = false, night = false, pitConfig = {} }) {
+  scraperKerbs = false, racingLineColors = null, urban = false, night = false, boundary = false, pitConfig = {} }) {
   const pairs = points.length && typeof points[0] === 'number' ? Array.from({ length: points.length / 2 }, (_, i) => [points[2 * i], points[2 * i + 1]]) : points;
   let poly = spline(pairs, step);
   const polyLength = () => poly.reduce((L, a, i) => { const b = poly[(i + 1) % poly.length]; return L + Math.hypot(b[0] - a[0], b[1] - a[1]); }, 0);
@@ -313,7 +313,7 @@ export function createCircuitTrack({ name = 'Circuit', points, length: officialL
   };
   return {
     kind: 'circuit', name, length, roadWidth, wallOffset, step, locate, offset, surface, progress, point, pit,
-    runoffWidth, grassWidth, runoffSurface, runoffAt, runoffSections, scraperKerbs, racingLineColors, urban, night,
+    runoffWidth, grassWidth, runoffSurface, runoffAt, runoffSections, scraperKerbs, racingLineColors, urban, night, boundary,
     // DRS zones [open, close] (lap progress, m), or null: drs gives them as
     // fractions of the lap from the real timing line, which lies timingLine m
     // along the trace (the lap here still starts at its first point).
