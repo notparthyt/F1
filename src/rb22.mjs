@@ -4,6 +4,7 @@
 // with our sponsors in place of the Red Bull livery.
 import * as THREE from '../vendor/three.module.js';
 import { GLTFLoader } from '../vendor/GLTFLoader.js';
+import { DRACOLoader } from '../vendor/DRACOLoader.js';
 import { MeshoptDecoder } from '../vendor/meshopt_decoder.module.js';
 
 export const RB22_URL = new URL('../models/redbull22.glb', import.meta.url).href;
@@ -93,12 +94,22 @@ function setBoneWorldQuaternion(bone, worldRotation, parentRotation) {
 // magenta-and-white metallic texture flashes white in the cockpit view, so it is left out.
 const NOSE_PLATE = new THREE.Box3(new THREE.Vector3(0.07, 0.69, 1.11), new THREE.Vector3(0.125, 0.712, 1.165));
 
+export async function loadGLTFAsset(source, manager) {
+  const loader = new GLTFLoader(manager).setMeshoptDecoder(MeshoptDecoder);
+  const dracoLoader = new DRACOLoader(manager).setDecoderPath(new URL('../vendor/draco/', import.meta.url).href);
+  loader.setDRACOLoader(dracoLoader);
+  if (typeof document === 'undefined') loader.register(() => ({ name: 'EXT_texture_webp', loadTexture: () => Promise.resolve(null) }));
+  try {
+    return await (typeof source === 'string' ? loader.loadAsync(source) : loader.parseAsync(source, ''));
+  } finally {
+    dracoLoader.dispose();
+  }
+}
+
 // Load once (a URL in the browser, an ArrayBuffer in node, where textures are skipped);
 // bake every mesh into model space and split the merged wheel meshes per corner.
 export async function loadRB22Template(source = RB22_URL, manager) {
-  const loader = new GLTFLoader(manager).setMeshoptDecoder(MeshoptDecoder);
-  if (typeof document === 'undefined') loader.register(() => ({ name: 'EXT_texture_webp', loadTexture: () => Promise.resolve(null) }));
-  const gltf = await (typeof source === 'string' ? loader.loadAsync(source) : loader.parseAsync(source, ''));
+  const gltf = await loadGLTFAsset(source, manager);
   gltf.scene.updateMatrixWorld(true);
   const meshes = []; gltf.scene.traverse(o => { if (o.isMesh) meshes.push(o); });
   const template = new THREE.Group(), wheels = CORNERS.map(name => Object.assign(new THREE.Group(), { name }));
@@ -288,7 +299,7 @@ export function haloGeometries(template, slots = HALO_SLOTS) {
         }
       }
     }
-    if (!pos.length) throw new Error(`Could not find halo paint geometry for label at x=${s.x}`);
+    if (!pos.length) return null;
     const out = new THREE.BufferGeometry();
     out.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); out.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
     out.computeVertexNormals();
@@ -476,6 +487,7 @@ export function buildRB22Car(template, config, { paint = 0x0e1626, accent = 0x39
     if (!HALO.has(template)) HALO.set(template, haloGeometries(template));
     const names = SPONSORS.map((_, k) => SPONSORS[(k + index) % SPONSORS.length]);
     HALO.get(template).forEach((geometry, k) => {
+      if (!geometry) return;
       const slot = HALO_SLOTS[k], map = new THREE.CanvasTexture(drawLabel(slot, names[slot.role], slot.role === 0 ? accent : inkFor(paint), 2400));
       Object.assign(map, { colorSpace: THREE.SRGBColorSpace, anisotropy: 16 });
       const decal = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ map, transparent: true, depthWrite: false, roughness: 0.35, polygonOffset: true, polygonOffsetFactor: -4 }));

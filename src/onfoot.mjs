@@ -2,6 +2,19 @@ export const ON_FOOT_WALK_SPEED = 3.5;
 const ON_FOOT_COLLISION_SAMPLES = 8;
 const ON_FOOT_PLAYER_RADIUS = 0.3;
 
+export function onFootSpawn(car, pitSide = 1, side = 2.4) {
+  if (![car?.x, car?.y, car?.heading, pitSide, side].every(Number.isFinite) || side <= 0)
+    throw new RangeError('On-foot spawn requires a finite car pose and positive side offset');
+  const acrossTrack = pitSide > 0 ? -side : side;
+  return {
+    player: {
+      x: car.x - Math.sin(car.heading) * acrossTrack,
+      y: car.y + Math.cos(car.heading) * acrossTrack,
+    },
+    heading: car.heading,
+  };
+}
+
 export const ON_FOOT_EMOTES = Object.freeze([
   'Victory_Idle_1',
   'Victory_Idle_2',
@@ -51,8 +64,8 @@ export function moveOnFootColliding(position, heading, input, elapsed, {
       const config = vehicle.config ?? vehicle;
       const dx = point.x - vehicle.x, dy = point.y - vehicle.y;
       const cos = Math.cos(vehicle.heading), sin = Math.sin(vehicle.heading);
-      const along = dx * cos - dy * sin;
-      const across = dx * sin + dy * cos;
+      const along = dx * cos + dy * sin;
+      const across = -dx * sin + dy * cos;
       const front = config.bodyFront ?? 2.95;
       const rear = config.bodyRear ?? 2.35;
       const halfWidth = config.bodyHalfWidth ?? 1;

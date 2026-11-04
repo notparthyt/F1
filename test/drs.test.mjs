@@ -95,7 +95,7 @@ test('circuits without zone data get DRS zones on their longest straights, Monza
   for (const z of race.drsZones) assert.ok(span(z) >= 390);
 });
 
-test('circuits use their real DRS zones from race telemetry, each on a straight', () => {
+test('configured circuit DRS zones each lie on a straight', () => {
   const count = { monaco: 1, imola: 1, monza: 2, spa: 2, silverstone: 2, bahrain: 3, jeddah: 3, 'red-bull-ring': 3, mexico: 3 };
   for (const [key, def] of Object.entries(CIRCUITS)) {
     const t = createCircuitTrack(def), zones = createRace(t, { grid: [] }).drsZones, L = t.length, k = t.samples.lineCurvature;

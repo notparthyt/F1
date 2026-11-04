@@ -3,7 +3,10 @@
 // Grip multipliers are illustrative assumptions, not measured surface data.
 import { clamp } from './physics.mjs';
 
-export const SURFACE_GRIP = Object.freeze({ asphalt: 1, pit: 1, kerb: 0.9, runoff: 0.7, grass: 0.35 });
+export const SURFACE_GRIP = Object.freeze({
+  asphalt: 1, pit: 1, painted: 0.98, kerb: 0.9, scraper: 0.84,
+  sausage: 0.66, runoff: 0.7, gravel: 0.62, sand: 0.56, grass: 0.35,
+});
 
 // Pit lane on the inside of the circuit, positions in metres of lap progress
 // (0 = left end of the main straight) and track offset (negative = inside).

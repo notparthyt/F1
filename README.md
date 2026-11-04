@@ -7,9 +7,9 @@
 ![CursorRacing F1 Dynamics Lab gameplay screenshot](Screenshot%202026-10-29%20215341.png)
 
 A browser-based, 3D open-wheel racing prototype with a 240 Hz vehicle physics
-simulation. Race a 21-car AI field on the stadium test track or choose from 18
-real circuits, or run a solo time trial. The circuit layouts are rebuilt from
-real racing-line data.
+simulation. Race an AI field on the stadium test track or choose from 21
+real-world and original circuits, or run a solo time trial. Circuit layouts
+come from racing-line data or documented map traces.
 
 > **Prototype notice:** This project is an experimental vehicle dynamics
 > testbed, not an official or validated Formula 1 simulator. Vehicle
@@ -33,10 +33,28 @@ real racing-line data.
 - **3D cameras:** cockpit, chase, T-Cam, overview, and a car-following 360
   Look. Chase and free cameras follow track elevation. A separate trackside TV
   camera can record the race to WebM.
+- **Circuit details:** Singapore Marina Bay, Buddh International Circuit, and
+  Nürburgring GP-Strecke join the 21-circuit roster, with track-specific
+  runoff, painted surfaces, kerbs, barriers, and colored directional racing-line arrows. Singapore and
+  Nürburgring use traced layouts from the MIT-licensed
+  [bacinger/f1-circuits](https://github.com/bacinger/f1-circuits) dataset
+  (© 2019–2025 Tomislav Bacinger; see its
+  [Singapore](https://github.com/bacinger/f1-circuits/blob/master/circuits/sg-2008.geojson)
+  and [Nürburgring](https://github.com/bacinger/f1-circuits/blob/master/circuits/de-1927.geojson)
+  traces). Buddh uses the
+  [OpenStreetMap circuit-area boundary](https://www.openstreetmap.org/way/169886085)
+  as a layout proxy; it is not a GPS centerline. OSM data is © OpenStreetMap
+  contributors and available under the [ODbL](https://www.openstreetmap.org/copyright).
+  These static points use the same circuit spline as existing tracks.
+- **Race presentation:** night circuits use white track lighting; a completed
+  race ends with a cinematic podium and fireworks. The racing line can be
+  toggled in Gameplay settings and is on by default.
 - **Car details:** animated driver and steering wheel, cockpit mirrors, and
   player livery selection with an option to remove a saved custom livery.
 - **Telemetry:** live speed, lap times, vehicle dynamics, and tyre information.
-- **Graphics:** Default, Mid Optimized, and Max Optimized performance presets.
+- **Graphics:** Default, Mid Optimized, and Max Optimized performance presets
+  select matching supplied car assets; the optimized animated driver is used
+  in Default, Mid Optimized, and Max Optimized.
 - **Race control:** penalty and safety-car notices, a text-only team engineer,
   position-redress checks, pit-lane speed assistance, and AI caution near a
   recent severe collision.
@@ -144,7 +162,8 @@ complete a lap first.
 
 DRS, brake-only, ERS, emote, dress, and camera keys can be reassigned in Settings.
 WASD throttle and steering keys remain fixed. Pedals and keyboard steering
-ramp up and down rather than switching instantly.
+ramp up and down rather than switching instantly. The in-scene shortcut panel
+shows the active configurable DRS, ERS, and camera keys.
 
 To adjust the visor camera live, open the browser developer console and inspect
 `window.f1Lab.visorCamera()` for its current position in car-local metres
@@ -252,6 +271,9 @@ inspect its current settings.
 
 Project credits: **C1**, **CursorRacing**, **notparthyt**, and **CR**.
 Three.js is MIT licensed; see [`vendor/LICENSE-three`](vendor/LICENSE-three).
+The bundled Draco decoder is Apache-2.0 licensed; see
+[`vendor/draco/README.md`](vendor/draco/README.md) and
+[`vendor/draco/LICENSE`](vendor/draco/LICENSE).
 Third-party models and textures retain their own licenses and attributions;
 see [models/CREDITS.md](models/CREDITS.md).
 

@@ -97,8 +97,8 @@ function racingLine(xs, ys, headings, limit) {
 // room; the side needing the smaller slide gets it (left on a tie). No room
 // either side: null (no pit stops). The placement is illustrative: the
 // traced layouts carry no pit lane, so it is not each circuit's real one.
-function circuitPitLane({ half, point, offset, progress, signed, curvatureAt }, { reach = 700, minInsideRadius = 20, entryAt = 300, toLimit = 120, limitLength = 260, toMerge = 40, mergeLength = 130, side: preferredSide = null, tunnel: tunnelConfig = null } = {}) {
-  const layout = { inner: half + 1.2, outer: half + 11, lane: -(half + 1.5), boxOffset: -(half + 9.5), boxSpacing: 11, speedLimit: 80 / 3.6 };
+function circuitPitLane({ half, point, offset, progress, signed, curvatureAt }, { reach = 700, minInsideRadius = 20, entryAt = 300, toLimit = 120, limitLength = 260, toMerge = 40, mergeLength = 130, boxSpacing = 11, side: preferredSide = null, tunnel: tunnelConfig = null } = {}) {
+  const layout = { inner: half + 1.2, outer: half + 11, lane: -(half + 1.5), boxOffset: -(half + 9.5), boxSpacing, speedLimit: 80 / 3.6 };
   const total = toLimit + limitLength + toMerge + mergeLength, edge = layout.outer + 1;
   const fits = (s, side) => {
     const o = -side * edge, [x, y] = point(s, o);
@@ -128,7 +128,9 @@ function circuitPitLane({ half, point, offset, progress, signed, curvatureAt }, 
 
 export function createCircuitTrack({ name = 'Circuit', points, length: officialLength, roadWidth = 13, wallOffset = roadWidth / 2 + 12,
   step = 2, smoothing = 40, kerbCurvature = 1 / 600, kerbReach = 30, lineMargin = 1.6, minRadius = 15, pitLane = true, timingLine = 0, drs = null,
-  elevationProfile = [], pitSide = null, pitTunnel = null }) {
+  elevationProfile = [], pitSide = null, pitTunnel = null, runoffWidth = 6.8, grassWidth = 30,
+  runoffSurface = 'runoff', runoffSections = [], sausageKerbs = [], paintedKerbs = [],
+  scraperKerbs = false, racingLineColors = null, urban = false, night = false, pitConfig = {} }) {
   const pairs = points.length && typeof points[0] === 'number' ? Array.from({ length: points.length / 2 }, (_, i) => [points[2 * i], points[2 * i + 1]]) : points;
   let poly = spline(pairs, step);
   const polyLength = () => poly.reduce((L, a, i) => { const b = poly[(i + 1) % poly.length]; return L + Math.hypot(b[0] - a[0], b[1] - a[1]); }, 0);
@@ -210,8 +212,19 @@ export function createCircuitTrack({ name = 'Circuit', points, length: officialL
     const h0 = Math.atan2(ly[i] - ly[a], lx[i] - lx[a]), h1 = Math.atan2(ly[b] - ly[i], lx[b] - lx[i]);
     lineCurvature[i] = Math.atan2(Math.sin(h1 - h0), Math.cos(h1 - h0)) / ((lineStep[a] + lineStep[i]) / 2);
   }
-  const kerb = new Uint8Array(n), reach = Math.round(kerbReach / step);
+  const kerb = new Uint8Array(n), kerbType = new Uint8Array(n), reach = Math.round(kerbReach / step);
   for (let i = 0; i < n; i++) if (Math.abs(curvature[i]) > kerbCurvature) for (let k = -reach; k <= reach; k++) kerb[(i + k + n) % n] = 1;
+  for (let i = 0; i < n; i++) if (kerb[i]) kerbType[i] = 1;
+  const inSection = (s, [start, end]) => {
+    const fraction = ((s / length) % 1 + 1) % 1;
+    return start <= end ? fraction >= start && fraction <= end : fraction >= start || fraction <= end;
+  };
+  const kerbSection = (s, ranges) => ranges.find(range => inSection(s, range));
+  for (let i = 0; i < n; i++) {
+    if (!kerb[i]) continue;
+    if (kerbSection(ss[i], sausageKerbs)) kerbType[i] = 2;
+    else if (kerbSection(ss[i], paintedKerbs)) kerbType[i] = 3;
+  }
 
   // Uniform grid of segment indices for nearest-segment queries near the road.
   const cell = 25, near = wallOffset + 15, grid = new Map();
@@ -259,7 +272,7 @@ export function createCircuitTrack({ name = 'Circuit', points, length: officialL
   const progress = (x, y) => locate(x, y).progress;
   const offset = (x, y) => locate(x, y).offset;
   const signed = s => (s = wrap(s)) > length / 2 ? s - length : s;
-  const pit = pitLane ? circuitPitLane({ length, half, wallOffset, point, offset, progress, signed, curvatureAt: s => curvature[index(s)] }, { side: pitSide, tunnel: pitTunnel }) : null;
+  const pit = pitLane ? circuitPitLane({ length, half, wallOffset, point, offset, progress, signed, curvatureAt: s => curvature[index(s)] }, { ...pitConfig, side: pitSide ?? pitConfig.side, tunnel: pitTunnel }) : null;
   const pitHeightAt = s => {
     const height = elevationAt(s);
     if (!pit?.tunnel) return height;
@@ -272,19 +285,27 @@ export function createCircuitTrack({ name = 'Circuit', points, length: officialL
     return pit?.tunnel && pitOffset < -pit.inner && pitOffset > -pit.outer && p >= pit.tunnel.start && p <= pit.tunnel.end
       ? pitHeightAt(q.progress) : elevationAt(q.progress);
   };
+  const runoffAt = s => runoffSections.find(section => inSection(s, [section.start, section.end]))?.surface ?? runoffSurface;
   const surface = (x, y) => {
     const q = nearest(x, y), d = q.d;
     // The pit apron, and its entry and exit roads from the road edge.
     if (pit && pit.side * q.offset < -half && pit.side * q.offset > -pit.outer && (s => s > pit.entry && s < pit.exit)(signed(ss[q.i] + (ss[q.i + 1] - ss[q.i]) * q.f))) return 'pit';
-    return d <= half ? 'asphalt' : d <= half + 1.2 && kerb[q.i] ? 'kerb' : d <= half + 8 ? 'runoff' : 'grass';
+    const s = ss[q.i] + (ss[q.i + 1] - ss[q.i]) * q.f;
+    if (d <= half) return 'asphalt';
+    if (d <= half + 1.2 && kerb[q.i]) return ['kerb', 'kerb', 'sausage', 'painted'][kerbType[q.i]];
+    if (scraperKerbs && d <= half + 1.6 && kerb[q.i]) return 'scraper';
+    if (d <= half + 1.2 + runoffWidth) return runoffAt(s);
+    if (d <= half + 1.2 + runoffWidth + grassWidth) return 'grass';
+    return 'grass';
   };
   return {
     kind: 'circuit', name, length, roadWidth, wallOffset, step, locate, offset, surface, progress, point, pit,
+    runoffWidth, grassWidth, runoffSurface, runoffAt, runoffSections, scraperKerbs, racingLineColors, urban, night,
     // DRS zones [open, close] (lap progress, m), or null: drs gives them as
     // fractions of the lap from the real timing line, which lies timingLine m
     // along the trace (the lap here still starts at its first point).
     drsZones: drs && drs.map(z => z.map(f => ((f * length + timingLine) % length + length) % length)),
-    samples: { x: xs, y: ys, z: elevation, s: ss, heading: headings, curvature, kerb, line, lineStep, lineCurvature },
+    samples: { x: xs, y: ys, z: elevation, s: ss, heading: headings, curvature, kerb, kerbType, line, lineStep, lineCurvature },
     heightAt: elevationAt, pitHeightAt, heightAtPosition,
     heading: s => headings[index(s)], curvatureAt: s => curvature[index(s)],
     // Racing-line offset (m, + right) at arc length s, interpolated.

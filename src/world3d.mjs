@@ -65,6 +65,68 @@ function ribbon(pts, a, b, y0, material, vScale, y1) {
   return m;
 }
 
+export function createRacingLineMesh(points, palette = ['#39e0ae', '#ffd166', '#ff6b5f'], width = 0.42) {
+  if (!Array.isArray(points) || points.length < 3 || !Array.isArray(palette) || palette.length < 3
+    || !palette.every(color => /^#[\da-f]{6}$/i.test(color)) || !Number.isFinite(width) || width <= 0
+    || points.some(point => ![point.x, point.y].every(Number.isFinite))) {
+    throw new RangeError('Racing line points, colors, and width must be valid');
+  }
+  const count = points.length > 3 && Math.hypot(points.at(-1).x - points[0].x, points.at(-1).y - points[0].y) < 1e-6
+    ? points.length - 1 : points.length;
+  const positions = [], colors = [], indices = [];
+  const spacing = 24, arrowLength = 1.8, stemWidth = Math.min(0.3, width * 0.7);
+  const headWidth = Math.min(0.95, width * 2.2);
+  const colorAt = curvature => palette[Math.abs(curvature) > 0.008 ? 2 : Math.abs(curvature) > 0.0025 ? 1 : 0];
+  const appendTriangle = (triangle, color) => {
+    const first = positions.length / 3;
+    for (const [x, y, z] of triangle) {
+      positions.push(x, y, z);
+      colors.push(color.r, color.g, color.b);
+    }
+    indices.push(first, first + 1, first + 2);
+  };
+  let distanceSinceArrow = spacing;
+  for (let i = 0; i < count; i++) {
+    const previous = points[(i - 1 + count) % count], current = points[i], next = points[(i + 1) % count];
+    if (i) distanceSinceArrow += Math.hypot(current.x - points[i - 1].x, current.y - points[i - 1].y);
+    if (distanceSinceArrow < spacing) continue;
+    distanceSinceArrow %= spacing;
+    const dx = next.x - previous.x, dy = next.y - previous.y, length = Math.hypot(dx, dy) || 1;
+    const tx = dx / length, ty = dy / length, nx = -ty, ny = tx, h = (current.h ?? 0) + 0.06;
+    const vertex = (along, across) => [
+      current.x + tx * along + nx * across,
+      h,
+      -(current.y + ty * along + ny * across),
+    ];
+    const beforeHeading = Math.atan2(current.y - previous.y, current.x - previous.x);
+    const nextHeading = Math.atan2(next.y - current.y, next.x - current.x);
+    const headingDelta = Math.atan2(Math.sin(nextHeading - beforeHeading), Math.cos(nextHeading - beforeHeading));
+    const curvature = current.curvature ?? headingDelta / Math.max(1, (Math.hypot(current.x - previous.x, current.y - previous.y)
+      + Math.hypot(next.x - current.x, next.y - current.y)) / 2);
+    const color = new THREE.Color(colorAt(curvature));
+    const stem = [vertex(-arrowLength * 0.58, -stemWidth / 2), vertex(arrowLength * 0.12, -stemWidth / 2),
+      vertex(arrowLength * 0.12, stemWidth / 2), vertex(-arrowLength * 0.58, stemWidth / 2)];
+    appendTriangle([stem[0], stem[1], stem[2]], color);
+    appendTriangle([stem[0], stem[2], stem[3]], color);
+    appendTriangle([
+      vertex(arrowLength * 0.02, -headWidth / 2),
+      vertex(arrowLength * 0.5, 0),
+      vertex(arrowLength * 0.02, headWidth / 2),
+    ], color);
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+  geometry.setIndex(indices); geometry.computeVertexNormals();
+  const mesh = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({
+    vertexColors: true, transparent: true, opacity: 0.95, depthWrite: false, side: THREE.DoubleSide,
+    polygonOffset: true, polygonOffsetFactor: -1,
+  }));
+  mesh.name = 'racing-line-arrows';
+  mesh.renderOrder = 2;
+  return mesh;
+}
+
 // boxColors: one paint colour per pit box (car index order).
 export function buildWorld({ halfStraight, radius, roadWidth, boxColors = [] }) {
   const world = new THREE.Group();
@@ -98,6 +160,9 @@ export function buildWorld({ halfStraight, radius, roadWidth, boxColors = [] }) 
   const runoff = texture(256, (g, s) => noise(g, s, '#8b8170', 0.3, 20000), 4, 1);
   const road = asphaltMaterial(roadWidth);
   world.add(ribbon(pts, -half, half, 0, road, 30));
+  const racingLine = createRacingLineMesh(pts, ['#39e0ae', '#ffd166', '#ff6b5f']);
+  world.add(racingLine);
+  world.userData.racingLine = racingLine;
   for (const s of [-1, 1]) {
     world.add(ribbon(pts, s * half, s * (half + 1.2), 0.012, std({ map: kerb, roughness: 0.7 }), 4));
     world.add(ribbon(pts, s * (half - 0.45), s * (half - 0.2), 0.008, std({ color: 0xf2f2ee, roughness: 0.6 }), 10));
@@ -288,7 +353,7 @@ export function buildWorld({ halfStraight, radius, roadWidth, boxColors = [] }) 
 export function buildCircuitWorld(track, { boxColors = [], night = false, urban = false } = {}) {
   const world = new THREE.Group(), half = track.roadWidth / 2, wallAt = track.wallOffset;
   world.userData.detailLod = [];
-  const { x: X, y: Y, z: Z, s: S, heading: H, kerb } = track.samples, n = X.length;
+  const { x: X, y: Y, z: Z, s: S, heading: H, kerbType } = track.samples, n = X.length;
   const pts = Array.from({ length: n + 1 }, (_, k) => { const i = k % n; return { x: X[i], y: Y[i], h: Z?.[i] ?? 0, nx: -Math.sin(H[i]), ny: Math.cos(H[i]), s: k < n ? S[i] : track.length, i }; });
   // Consecutive runs of samples meeting a predicate (each run shares its end point).
   const runs = keep => { const out = []; let cur = null; for (const p of pts) { if (keep(p)) (cur ??= (out.push([]), out.at(-1))).push(p); else cur = null; } return out.filter(r => r.length > 1); };
@@ -373,6 +438,10 @@ export function buildCircuitWorld(track, { boxColors = [], night = false, urban 
     g.fillStyle = '#6fffc3'; g.fillRect(0, s * 0.55, s, s * 0.05);
   });
   const runoffTex = texture(256, (g, s) => noise(g, s, '#8b8170', 0.3, 20000), 4, 1);
+  const sandTex = texture(256, (g, s) => noise(g, s, '#ad946d', 0.38, 24000), 4, 1);
+  const gravelTex = texture(256, (g, s) => noise(g, s, '#68645d', 0.5, 28000), 4, 1);
+  const scraperTex = texture(128, (g, s) => noise(g, s, '#45494a', 0.45, 6000), 2, 1);
+  const paintedRunoff = new THREE.MeshStandardMaterial({ color: 0x167fa6, roughness: 0.72, metalness: 0.04, side: THREE.DoubleSide });
   const meshTex = texture(64, (g, s) => {
     g.clearRect(0, 0, s, s); g.strokeStyle = '#b9c0c4'; g.lineWidth = 3;
     g.beginPath(); g.moveTo(0, 0); g.lineTo(s, s); g.moveTo(s, 0); g.lineTo(0, s); g.stroke();
@@ -380,11 +449,37 @@ export function buildCircuitWorld(track, { boxColors = [], night = false, urban 
   const fenceMat = new THREE.MeshStandardMaterial({ map: meshTex, alphaTest: 0.4, side: THREE.DoubleSide, metalness: 0.6, roughness: 0.5 });
   const steel = new THREE.MeshStandardMaterial({ color: 0x2b2f35, metalness: 0.7, roughness: 0.4 });
   world.add(ribbon(pts, -half, half, 0, asphaltMaterial(track.roadWidth), 30));
+  const linePoints = Array.from({ length: n }, (_, i) => ({
+    x: X[i] + Math.sin(H[i]) * track.samples.line[i],
+    y: Y[i] - Math.cos(H[i]) * track.samples.line[i],
+    h: Z?.[i] ?? 0,
+    curvature: track.samples.lineCurvature[i],
+  }));
+  const racingLine = createRacingLineMesh(linePoints, track.racingLineColors ?? undefined);
+  world.add(racingLine);
+  world.userData.racingLine = racingLine;
   const postSpots = [];
   for (const side of [-1, 1]) {
     world.add(ribbon(pts, side * (half - 0.45), side * (half - 0.2), 0.008, std({ color: 0xf2f2ee, roughness: 0.6 }), 10));
-    for (const r of runs(p => kerb[p.i])) world.add(ribbon(r, side * half, side * (half + 1.2), 0.012, std({ map: kerbTex, roughness: 0.7 }), 4));
-    world.add(ribbon(pts, side * (half + 1.2), side * (half + 8), 0.004, std({ map: runoffTex, roughness: 1 }), 20));
+    for (const type of [1, 2, 3]) for (const r of runs(p => kerbType[p.i] === type)) {
+      const material = type === 3 ? std({ map: kerbTex, roughness: 0.85 }) : std({ map: kerbTex, roughness: 0.7 });
+      world.add(ribbon(r, side * half, side * (half + 1.2), type === 2 ? 0.11 : type === 3 ? 0.006 : 0.012, material, 4));
+    }
+    if (track.scraperKerbs) for (const r of runs(p => kerbType[p.i] > 0))
+      world.add(ribbon(r, side * (half + 1.2), side * (half + 1.6), 0.006, std({ map: scraperTex, roughness: 0.96 }), 2));
+    const runoffStart = half + (track.scraperKerbs ? 1.6 : 1.2);
+    const runoffStyles = new Set([track.runoffSurface, ...(track.runoffSections ?? []).map(section => section.surface)]);
+    for (const surface of runoffStyles) {
+      const material = surface === 'sand' ? std({ map: sandTex, roughness: 1 })
+        : surface === 'gravel' ? std({ map: gravelTex, roughness: 1 })
+          : surface === 'painted' ? paintedRunoff
+            : surface === 'asphalt' ? std({ color: 0x53585c, roughness: 0.9 })
+              : std({ map: runoffTex, roughness: 1 });
+      for (const r of runs(p => (track.runoffAt?.(p.s) ?? track.runoffSurface) === surface))
+        world.add(ribbon(r, side * runoffStart, side * (half + 1.2 + track.runoffWidth), 0.004, material, 20));
+    }
+    if (track.grassWidth > 0) world.add(ribbon(pts, side * (half + 1.2 + track.runoffWidth),
+      side * (half + 1.2 + track.runoffWidth + track.grassWidth), -0.002, std({ color: 0x456832, roughness: 1 }), 30));
     // Barrier where its line is still nearest this part of the circuit.
     const clear = p => Math.abs(track.offset(p.x + p.nx * side * wallAt, p.y + p.ny * side * wallAt)) > wallAt - 1;
     for (const r of runs(clear)) {
@@ -474,10 +569,10 @@ export function buildCircuitWorld(track, { boxColors = [], night = false, urban 
 
   if (night) {
     const poleMat = new THREE.MeshStandardMaterial({ color: 0x252a32, metalness: 0.72, roughness: 0.36 });
-    const lampMat = new THREE.MeshStandardMaterial({ color: 0xffefc2, emissive: 0xffd77a, emissiveIntensity: 3.8, roughness: 0.25 });
+    const lampMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 4.2, roughness: 0.25 });
     const buildingMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.78, emissive: 0x111a2a, emissiveIntensity: 0.35 });
     const windowMat = new THREE.MeshStandardMaterial({ color: 0xffd88a, emissive: 0xffb84d, emissiveIntensity: 2.2, roughness: 0.25 });
-    const lampCount = 36;
+    const lampCount = 64;
     for (let i = 0; i < lampCount; i++) {
       const s = track.length * i / lampCount, side = i % 2 ? -1 : 1, h = track.heightAt(s);
       const [x, y] = track.point(s, side * (wallAt + 22));
@@ -491,8 +586,8 @@ export function buildCircuitWorld(track, { boxColors = [], night = false, urban 
       bulb.position.set(lx, h + 14.5, -ly); bulb.rotation.y = track.heading(s); world.add(bulb);
       // Keep the repeated lamp fixtures emissive; only every third mast adds
       // a dynamic light to the scene to keep the night renderer light.
-      if (i % 3 === 0) {
-        const light = new THREE.PointLight(0xffdfa0, 1400, 190, 2);
+      if (i % 4 === 0) {
+        const light = new THREE.PointLight(0xfff8ec, 1250, 190, 2);
         light.position.set(lx, h + 13.5, -ly); world.add(light);
       }
     }

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createCircuitTrack } from '../src/circuit.mjs';
 import { CIRCUITS } from '../src/circuits.mjs';
 import { createTimeTrial } from '../src/trial.mjs';
-import { canExitVehicle, moveOnFoot, moveOnFootColliding, onFootEmoteAt, ON_FOOT_EMOTES, ON_FOOT_WALK_SPEED, shouldAutoPauseOnBlur, shouldShowSeatedDriver } from '../src/onfoot.mjs';
+import { canExitVehicle, moveOnFoot, moveOnFootColliding, onFootEmoteAt, onFootSpawn, ON_FOOT_EMOTES, ON_FOOT_WALK_SPEED, shouldAutoPauseOnBlur, shouldShowSeatedDriver } from '../src/onfoot.mjs';
 
 test('on-foot W/S movement follows camera forward and backward at any heading', () => {
   const start = { x: 2, y: 3 };
@@ -39,6 +39,20 @@ test('on-foot movement stops at barriers and the car while sliding along barrier
     car: { x: 0, y: 0, heading: 0 },
   });
   assert.deepEqual(carBlocked, start);
+});
+
+test('on-foot spawn faces down the track so forward movement is not blocked by the player car', () => {
+  for (const key of Object.keys(CIRCUITS)) {
+    const track = createCircuitTrack(CIRCUITS[key]);
+    const [x, y] = track.point(0), heading = track.heading(0);
+    const car = { x, y, heading, bodyFront: 2.95, bodyRear: 2.35, bodyHalfWidth: 1 };
+    const spawn = onFootSpawn(car, track.pit.side);
+    const moved = moveOnFootColliding(spawn.player, spawn.heading, { forward: 1 }, 1, {
+      car,
+      barrierAt: track.barrierAt,
+    });
+    assert.ok(Math.hypot(moved.x - spawn.player.x, moved.y - spawn.player.y) > 3.4, `${key} allows walking a full second without getting stuck on the grid car`);
+  }
 });
 
 test('only finished races or completed practice laps allow exiting the car', () => {

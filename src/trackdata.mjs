@@ -20,11 +20,44 @@ export const CIRCUIT_ELEVATION_PROFILES = Object.freeze({
   zandvoort: [[0,0],[.12,3],[.25,8],[.38,12],[.5,7],[.62,1],[.75,-4],[.88,-1]],
   jeddah: [[0,0],[.12,1],[.25,2],[.38,1],[.5,-1],[.64,-2],[.78,-1],[.9,0]],
   miami: [[0,0],[.12,2],[.25,5],[.38,3],[.5,-1],[.64,-4],[.78,-2],[.9,1]],
+  singapore: [[0,0],[.15,1],[.32,0],[.48,1],[.60,4],[.72,2],[.85,0],[.95,0]],
+  buddh: [[0,0],[.11,4],[.18,14],[.35,-4],[.55,6],[.72,-1],[.85,-8],[.95,-2]],
 });
 
-export const NIGHT_CIRCUITS = new Set(['bahrain', 'jeddah', 'yas-marina']);
+export const NIGHT_CIRCUITS = new Set(['bahrain', 'jeddah', 'yas-marina', 'singapore']);
+
+export const CIRCUIT_TRACK_STYLE = Object.freeze({
+  bahrain: { wallOffset: 29, runoffWidth: 17, grassWidth: 24, runoffSurface: 'sand', scraperKerbs: true },
+  shanghai: { wallOffset: 27, runoffWidth: 13, grassWidth: 22, runoffSurface: 'asphalt', scraperKerbs: true },
+  catalunya: { wallOffset: 26, runoffWidth: 12, grassWidth: 25, runoffSurface: 'gravel', scraperKerbs: true },
+  monaco: { wallOffset: 12.5, runoffWidth: 3, grassWidth: 0, runoffSurface: 'painted', urban: true, scraperKerbs: false },
+  montreal: { wallOffset: 21, runoffWidth: 8, grassWidth: 24, runoffSurface: 'asphalt', scraperKerbs: true },
+  'red-bull-ring': { wallOffset: 24, runoffWidth: 16, grassWidth: 25, runoffSurface: 'gravel', scraperKerbs: true },
+  silverstone: { wallOffset: 27, runoffWidth: 13, grassWidth: 25, runoffSurface: 'asphalt', scraperKerbs: true },
+  hungaroring: { wallOffset: 24, runoffWidth: 9, grassWidth: 24, runoffSurface: 'gravel', scraperKerbs: true },
+  monza: { wallOffset: 30, runoffWidth: 19, grassWidth: 14, runoffSurface: 'sand', scraperKerbs: true },
+  spa: { wallOffset: 32, runoffWidth: 18, grassWidth: 16, runoffSurface: 'gravel', scraperKerbs: true },
+  cota: { wallOffset: 28, runoffWidth: 20, grassWidth: 16, runoffSurface: 'painted', scraperKerbs: true },
+  mexico: { wallOffset: 23, runoffWidth: 10, grassWidth: 18, runoffSurface: 'painted', scraperKerbs: true },
+  interlagos: { wallOffset: 23, runoffWidth: 10, grassWidth: 22, runoffSurface: 'gravel', scraperKerbs: true },
+  'yas-marina': {
+    wallOffset: 32, runoffWidth: 23, grassWidth: 3, runoffSurface: 'painted',
+    runoffSections: [{ start: 0.18, end: 0.29, surface: 'sand' }, { start: 0.73, end: 0.81, surface: 'sand' }],
+    racingLineColors: ['#39e0ae', '#ffd166', '#ff6b5f'],
+  },
+  imola: { wallOffset: 23, runoffWidth: 10, grassWidth: 23, runoffSurface: 'gravel', scraperKerbs: true },
+  zandvoort: { wallOffset: 23, runoffWidth: 10, grassWidth: 18, runoffSurface: 'sand', scraperKerbs: true },
+  jeddah: { wallOffset: 10, runoffWidth: 3, grassWidth: 0, runoffSurface: 'painted', urban: true, scraperKerbs: false },
+  miami: { wallOffset: 26, runoffWidth: 18, grassWidth: 16, runoffSurface: 'painted', scraperKerbs: true },
+  buddh: { wallOffset: 35, runoffWidth: 22, grassWidth: 10, runoffSurface: 'sand', scraperKerbs: true },
+  nurburgring: { wallOffset: 28, runoffWidth: 10, grassWidth: 20, runoffSurface: 'gravel', scraperKerbs: true },
+  singapore: { wallOffset: 18, urban: true, runoffSurface: 'painted', night: true, scraperKerbs: false },
+});
 
 const STARTING_TYRES = Object.freeze({
+  singapore: 'medium',
+  buddh: 'hard',
+  nurburgring: 'medium',
   bahrain: 'hard',
   shanghai: 'hard',
   catalunya: 'hard',
@@ -50,6 +83,7 @@ export function startingTyreForTrack(key) {
 }
 
 const RAIN_CHANCE = Object.freeze({
+  singapore: .03, buddh: .12, nurburgring: .2,
   bahrain: .04, shanghai: .18, catalunya: .12, monaco: .18, montreal: .24,
   'red-bull-ring': .22, silverstone: .4, hungaroring: .12, spa: .48,
   monza: .14, cota: .2, mexico: .08, interlagos: .42, 'yas-marina': .03,

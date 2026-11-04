@@ -4,24 +4,24 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Cursor Racing · F1 Simulator</title>
-<meta name="description" content="Race an open-wheel car against an AI field in 3D in your browser, on a stadium test track or 18 real circuits like Monza, Silverstone, Spa and Monaco. Standing starts, pit stops, tyre compounds, ERS and DRS on 240 Hz physics.">
+<meta name="description" content="Race an open-wheel car against an AI field in 3D on 21 circuits including Singapore, Buddh and Nürburgring GP. Standing starts, pit stops, tyre compounds, ERS and DRS.">
 <link rel="canonical" href="https://f1.gokart.games/">
 <meta name="theme-color" content="#101822">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Cursor Racing">
 <meta property="og:url" content="https://f1.gokart.games/">
 <meta property="og:title" content="Cursor Racing · F1 Simulator">
-<meta property="og:description" content="Race an open-wheel car against an AI field in 3D in your browser, on 18 real circuits. Pit stops, tyre compounds, ERS and DRS on 240 Hz physics.">
+<meta property="og:description" content="Race an open-wheel car against an AI field in 3D on 21 circuits, including Singapore, Buddh and Nürburgring GP.">
 <meta property="og:image" content="https://f1.gokart.games/og-image.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="An open-wheel race car on the grid at Monza">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Cursor Racing · F1 Simulator">
-<meta name="twitter:description" content="Race an open-wheel car against an AI field in 3D in your browser, on 18 real circuits.">
+<meta name="twitter:description" content="Race an open-wheel car against an AI field in 3D on 21 circuits, including Singapore, Buddh and Nürburgring GP.">
 <meta name="twitter:image" content="https://f1.gokart.games/og-image.jpg">
 <meta name="twitter:image:alt" content="An open-wheel race car on the grid at Monza">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoGame","name":"Cursor Racing · F1 Simulator","url":"https://f1.gokart.games/","image":"https://f1.gokart.games/og-image.jpg","description":"Browser 3D open-wheel racing game against an AI field on 18 real circuits, with pit stops, tyre compounds, ERS and DRS.","genre":"Racing","gamePlatform":"Web browser","applicationCategory":"Game","operatingSystem":"Any (WebGL browser)","playMode":"SinglePlayer","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoGame","name":"Cursor Racing · F1 Simulator","url":"https://f1.gokart.games/","image":"https://f1.gokart.games/og-image.jpg","description":"Browser 3D open-wheel racing game against an AI field on 21 circuits, with pit stops, tyre compounds, ERS and DRS.","genre":"Racing","gamePlatform":"Web browser","applicationCategory":"Game","operatingSystem":"Any (WebGL browser)","playMode":"SinglePlayer","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}</script>
 <link rel="icon" href="data:,">
 <style>
 :root{color-scheme:dark;font:14px system-ui,sans-serif;background:#080d14;color:#e9f0f6}*{box-sizing:border-box}body{margin:0}header{height:76px;padding:15px 26px;margin:8px;display:flex;align-items:center;justify-content:space-between;background:#0b121a8c;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid #ffffff1f;border-radius:10px;text-shadow:0 1px 2px #000a}h1{font-size:19px;margin:0;letter-spacing:.12em}h1 span{color:#6fffc3}.subtitle{font-size:11px;letter-spacing:.12em;color:#91a4b6;margin-top:6px}button{background:#0b121a8c;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#e9f0f6;border:1px solid #ffffff1f;border-radius:7px;padding:9px 13px;cursor:pointer}select{background:#0b121a8c;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#e9f0f6;border:1px solid #ffffff1f;border-radius:7px;padding:8px 10px;width:220px}a.btn{display:inline-flex;align-items:center;gap:6px;background:#0b121a8c;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#e9f0f6;border:1px solid #ffffff1f;border-radius:7px;padding:9px 13px;font-size:13.33px;text-decoration:none}a.btn:hover,a.btn:focus-visible{border-color:#6fffc3;outline:2px solid #6fffc344}@media(max-width:760px){a.btn{padding:6px 8px;font-size:11px}}button:disabled{opacity:.5;cursor:default}button:hover,button:focus-visible{border-color:#6fffc3;outline:2px solid #6fffc344}nav{display:flex;gap:8px}main{height:calc(100vh - 92px);position:relative}.scene{position:absolute;inset:0;overflow:hidden;background:#162923}canvas{display:block;width:100%;height:100%}.tag{position:absolute;top:20px;left:8px;background:#0b121a8c;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid #ffffff1f;text-shadow:0 1px 2px #000a;border-radius:6px;padding:10px 14px;color:#b0c1cb;font-size:11px;letter-spacing:.1em}.tag strong{color:#6fffc3}#hud-left{position:absolute;bottom:12px;left:8px;width:300px;display:flex;flex-direction:column;gap:8px;pointer-events:none}#minimap{width:100%;height:220px;background:#0b121a59;-webkit-backdrop-filter:blur(14px) saturate(140%);backdrop-filter:blur(14px) saturate(140%);border:1px solid #ffffff2e;border-radius:10px;box-shadow:inset 0 1px 0 #ffffff1a,0 8px 24px #0006}#status{background:#0b121a59;-webkit-backdrop-filter:blur(14px) saturate(140%);backdrop-filter:blur(14px) saturate(140%);border:1px solid #ffffff2e;border-radius:10px;box-shadow:inset 0 1px 0 #ffffff1a,0 8px 24px #0006;text-shadow:0 1px 2px #000a;padding:12px 16px;font-size:13px}aside{position:absolute;top:12px;right:8px;bottom:12px;width:290px;background:#0b121a8c;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid #ffffff1f;border-radius:10px;padding:24px 20px;overflow:auto;text-shadow:0 1px 2px #000a}main.hud-off aside{display:none}#hud-speed{display:none;position:absolute;left:14px;top:8px;bottom:30px;align-items:center;font-size:64px;line-height:1;font-weight:700;letter-spacing:-2px;font-variant-numeric:tabular-nums;text-align:left;pointer-events:none}#hud-speed .unit{font-size:16px;letter-spacing:0;opacity:.7}main.hud-off #hud-speed{display:flex;gap:6px;align-items:baseline;padding-top:12px}main.hud-off #timing{box-sizing:border-box;min-width:min(331px,calc(100vw - 40px));max-width:min(351px,calc(100vw - 40px))}main:not(.hud-off) #timing{right:318px}.label{font-size:10px;color:#91a4b6;letter-spacing:.14em;text-transform:uppercase}.speed{font-variant-numeric:tabular-nums;font-size:76px;font-weight:650;line-height:1.2;letter-spacing:-4px}.unit{color:#91a4b6;font-size:12px}.section{padding:20px 0;border-bottom:1px solid #273442}.stats{display:grid;grid-template-columns:1fr 1fr;gap:19px 12px}.number{font-variant-numeric:tabular-nums;font-size:21px;margin-top:5px}.wheels{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:13px}.wheel{background:#18233080;border-radius:6px;padding:10px;font-size:11px}.wheel span{float:right;color:#9fb5c5}.wheel meter{display:block;width:100%;height:12px;margin-top:6px;accent-color:#6fffc3}.note{font-size:11px;line-height:1.6;color:#91a4b6}kbd{font:11px monospace;background:#233242;border:1px solid #3b5062;border-radius:3px;padding:2px 5px}.controls{line-height:2.2;font-size:12px;color:#b8c8d5}#timing{position:absolute;top:20px;right:20px;background:#0b121a8c;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid #ffffff1f;text-shadow:0 1px 2px #000a;border-radius:6px;padding:10px 14px;text-align:right;font-variant-numeric:tabular-nums}#lap-time{font-size:26px;font-weight:650}#lap-delta{font-size:15px;min-height:18px}.sectors{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}.sector{background:#18233080;border-radius:5px;padding:6px;font-size:12px;font-variant-numeric:tabular-nums;border-bottom:3px solid #3a5065}.sector.best{border-color:#c77dff}.sector.slower{border-color:#ffc86f}.invalid{color:#ff8e86}#standings{list-style:none;margin:10px 0 0;padding:0;font-size:12px;font-variant-numeric:tabular-nums}#standings li{display:grid;grid-template-columns:22px 12px 1fr auto;gap:6px;align-items:center;padding:4px 6px;border-radius:4px}#standings li.you{background:#1b293799;color:#6fffc3}#standings i{width:10px;height:10px;border-radius:2px;display:block}#standings b{font-weight:500;color:#91a4b6}#race-pos{font-size:13px;color:#6fffc3;letter-spacing:.08em}#pause-state{color:#ffc86f;margin-bottom:10px;min-height:16px}#lights{position:absolute;top:22px;left:50%;transform:translateX(-50%);display:flex;gap:10px;background:#05080ce6;border:1px solid #2a3540;border-radius:8px;padding:10px 14px}#lights[hidden]{display:none}#lights span{width:30px;height:30px;border-radius:50%;background:#2a1010;border:2px solid #1a0a0a}#pit-info{font-size:12px;color:#b8c8d5;margin-top:4px;min-height:15px}.tyre{display:inline-block;width:15px;height:15px;line-height:13px;border-radius:50%;border:2px solid;font:700 9px system-ui;text-align:center;margin-right:4px;vertical-align:-3px}#standings .tyre{margin:0 0 0 4px}#lights span.on{background:#ff2a1f;box-shadow:0 0 16px #ff2a1f}@media(max-width:760px){#hud-speed{font-size:36px;left:8px;bottom:22px}main.hud-off #timing{min-width:min(320px,calc(100vw - 16px));max-width:calc(100vw - 16px)}#timing{top:8px;right:8px;padding:6px 8px}#lap-time{font-size:17px}header{padding:12px;height:94px;align-items:flex-start}h1{font-size:15px}.subtitle{font-size:9px}nav{flex-wrap:wrap;justify-content:flex-end;max-width:180px}button{padding:6px 8px;font-size:11px}main{height:calc(100vh - 110px)}main:not(.hud-off) #timing{right:204px}aside{padding:15px 12px;top:8px;right:8px;bottom:8px;width:180px}.speed{font-size:54px}.stats{gap:12px 6px}.number{font-size:17px}.tag{left:8px;top:8px;font-size:9px;padding:8px}#hud-left{width:200px}#minimap{height:150px}.wheels{gap:5px}.wheel{padding:6px}.controls{font-size:10px}}
@@ -62,6 +62,11 @@ header{position:absolute;top:0;left:0;right:0;z-index:20}main{height:100vh}.tag,
 <style>
 #menu-screen{position:fixed;inset:0;z-index:100;display:grid;grid-template-rows:auto 1fr auto;padding:32px clamp(20px,5vw,76px);background:radial-gradient(ellipse at 68% 48%,#182b38 0%,#0b141e 42%,#070b11 100%);color:#eef5fa}
 #menu-screen[hidden]{display:none}
+#menu-screen .menu-icon svg,.menu-card svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.menu-content:not([hidden]){animation:menu-enter .32s ease-out both}
+.menu-card{transition:transform .18s ease,border-color .18s ease,background-color .18s ease}
+.menu-card:not(:disabled):hover{transform:translateY(-3px);border-color:#6fffc3}
+@keyframes menu-enter{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 .menu-top,.menu-bottom{display:flex;align-items:center;justify-content:space-between}
 .menu-brand{font-size:clamp(20px,2.4vw,30px);font-weight:850;letter-spacing:.14em}.menu-brand span{color:#6fffc3}
 .menu-icon{width:50px;height:50px;border-radius:50%;font-size:22px}
@@ -125,18 +130,42 @@ header{position:absolute;top:0;left:0;right:0;z-index:20}main{height:100vh}.tag,
 .pause-card{display:grid;gap:14px;width:min(390px,calc(100vw - 32px));padding:26px;border:1px solid #ffffff30;border-radius:12px;background:#0c1620}
 .pause-card h2{margin:0 0 8px;font-size:27px}.pause-card label{display:grid;gap:8px;color:#c5d0d9}.pause-card input,.pause-card select{width:100%;accent-color:#6fffc3}
 .driver-name-tag{white-space:nowrap;padding:3px 6px;border-radius:4px;background:#071019aa;color:#f1f5f8;font:700 11px system-ui,sans-serif;text-shadow:0 1px 3px #000}
+#vehicle-transition{position:fixed;inset:0;z-index:140;background:#000;opacity:0;pointer-events:none}
+#vehicle-transition.closing{opacity:1;transition:opacity .13s linear}
+#vehicle-transition.opening{opacity:0;transition:opacity .18s ease-out}
+#podium-overlay{position:fixed;z-index:60;top:7vh;left:50%;transform:translateX(-50%);width:min(560px,calc(100vw - 32px));padding:16px 22px;border:1px solid #6fffc399;border-radius:12px;background:#071019d9;box-shadow:0 12px 40px #0008;text-align:center;pointer-events:none;opacity:0;transition:opacity .8s ease}
+#podium-overlay[hidden]{display:none}
+#podium-overlay.visible{opacity:1}
+#podium-overlay strong{display:block;color:#6fffc3;font-size:clamp(22px,4vw,36px);letter-spacing:.18em}
+#podium-results{display:block;margin-top:8px;color:#e9f0f6;font-size:13px;line-height:1.7}
+@media(prefers-reduced-motion:reduce){.menu-content:not([hidden]),.menu-card{animation:none;transition:none}#podium-overlay{transition:none}}
 @media(max-width:650px){#menu-screen{padding:20px;grid-template-rows:auto 1fr auto}.menu-actions,.menu-form,.settings-pane{grid-template-columns:1fr}.menu-card{min-height:115px;padding:18px}.menu-panel{max-height:80vh}#settings-screen{grid-template-columns:1fr}#settings-screen>.menu-tabs{grid-column:1;grid-row:auto;flex-direction:row;border-right:0;border-bottom:1px solid #ffffff20;padding:0 0 12px;overflow:auto}#settings-screen>.settings-pane{grid-column:1;grid-row:auto}.map-preview{grid-template-columns:1fr}.menu-bottom{align-items:flex-end}.menu-footer{align-items:stretch;flex-direction:column}}
 @media(max-width:650px){#race-control-panel{top:auto;bottom:250px;left:8px;width:min(230px,60vw);padding:10px}#race-notification{top:8px;font-size:12px;padding:9px 12px}}
+</style>
+<style>
+.track-tag{max-width:min(330px,calc(100vw - 24px));line-height:1.55}
+.track-tag strong{display:block;margin-top:3px;font-size:12px;letter-spacing:.04em}
+.scene-shortcuts{position:absolute;top:164px;left:8px;z-index:8;width:min(290px,calc(100vw - 24px));color:#e9f0f6}
+.scene-shortcuts summary{width:max-content;max-width:100%;padding:8px 12px;border:1px solid #ffffff2e;border-radius:7px;background:#0b121ad9;backdrop-filter:blur(10px);font-size:11px;font-weight:650;letter-spacing:.04em;cursor:pointer;list-style:none}
+.scene-shortcuts summary::-webkit-details-marker{display:none}
+.scene-shortcuts[open]{border:1px solid #ffffff2e;border-radius:8px;background:#0b121af0;backdrop-filter:blur(12px);box-shadow:0 8px 24px #0007}
+.scene-shortcuts[open] summary{width:100%;border:0;border-bottom:1px solid #ffffff20;border-radius:8px 8px 0 0;background:transparent}
+.scene-shortcut-list{display:grid;gap:7px;padding:10px 12px;font-size:11px}
+.scene-shortcut-list>div{display:flex;justify-content:space-between;align-items:center;gap:8px;color:#b8c8d5}
+.scene-shortcut-list kbd{white-space:nowrap;color:#e9f0f6;transition:background-color .12s,border-color .12s,color .12s,box-shadow .12s}
+.scene-shortcut-list kbd.key-pressed{border-color:#6fffc3;background:#174b3d;color:#fff;box-shadow:0 0 12px #6fffc366}
+@media(min-width:761px){#race-control-panel{left:306px;width:min(270px,calc(100vw - 620px))}}
+@media(max-width:760px){.scene-shortcuts{top:174px}.track-tag{max-width:calc(100vw - 24px)}.track-tag strong{font-size:10px}}
 </style>
 </head>
 <body>
 <div id="menu-screen">
-  <div class="menu-top"><div class="menu-brand"><span>Cursor</span>RACING</div><button id="menu-settings" class="menu-icon" type="button" aria-label="Settings" title="Settings">⚙</button></div>
+  <div class="menu-top"><div class="menu-brand"><span>Cursor</span>RACING</div><button id="menu-settings" class="menu-icon" type="button" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"/><path d="m19.4 15 .1.1 1.4 1.1-1.4 2.4-1.7-.7a8 8 0 0 1-1.6.9l-.3 1.8h-2.8l-.3-1.8a8 8 0 0 1-1.6-.9l-1.7.7-1.4-2.4 1.4-1.1a7 7 0 0 1 0-1.9l-1.4-1.2 1.4-2.4 1.7.7a8 8 0 0 1 1.6-.9l.3-1.8h2.8l.3 1.8a8 8 0 0 1 1.6.9l1.7-.7 1.4 2.4-1.4 1.2a7 7 0 0 1 0 1.8Z"/></svg></button></div>
   <section id="home-screen" class="menu-content" aria-labelledby="home-title">
     <div class="menu-kicker">Race your way</div><h1 id="home-title" class="menu-title">Own the<br>circuit.</h1>
     <div class="menu-actions">
-      <button id="menu-singleplayer" class="menu-card primary" type="button"><strong>Singleplayer</strong><span>Choose your circuit and race setup</span></button>
-      <button class="menu-card" type="button" disabled><strong>Multiplayer</strong><span>Coming soon</span></button>
+      <button id="menu-singleplayer" class="menu-card primary" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16.5h14l-1.3-6.2a2 2 0 0 0-2-1.6h-1.2l-1.1-2.2h-3l-1.1 2.2H8.1a2 2 0 0 0-2 1.6L5 16.5Z"/><path d="M7.5 16.5 6 19m10.5-2.5L18 19M8 12h.01M16 12h.01M12 10.5v3m-1.5-1.5h3"/></svg><strong>Singleplayer</strong><span>Choose your circuit and race setup</span></button>
+      <button class="menu-card" type="button" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 12a4 4 0 1 0 8 0 4 4 0 0 0-8 0Z"/><path d="M4.5 9.5 3 8l2-2 2 1M19.5 9.5 21 8l-2-2-2 1M8 18l-1 2m9-2 1 2"/></svg><strong>Multiplayer</strong><span>Coming soon</span></button>
     </div>
   </section>
   <section id="singleplayer-screen" class="menu-content menu-panel" aria-labelledby="singleplayer-title" hidden>
@@ -177,6 +206,7 @@ header{position:absolute;top:0;left:0;right:0;z-index:20}main{height:100vh}.tag,
     <section class="settings-pane" data-settings-pane="gameplay" hidden>
       <label class="menu-field">Units<select id="setting-units"><option value="kmh">km/h</option><option value="mph">mph</option></select></label>
       <label class="menu-switch"><span>Trackside TV</span><input id="setting-trackside" type="checkbox"></label>
+      <label class="menu-switch"><span>Racing line <small>Show the colored ideal line on the track</small></span><input id="setting-racing-line" type="checkbox" checked></label>
     </section>
     <section class="settings-pane" data-settings-pane="keybinds" hidden>
       <div class="keybind-row"><span>Throttle · W (locked)</span><button type="button" disabled>W</button></div>
@@ -215,6 +245,8 @@ header{position:absolute;top:0;left:0;right:0;z-index:20}main{height:100vh}.tag,
   }));
 })();
 </script>
+<div id="vehicle-transition" aria-hidden="true"></div>
+<div id="podium-overlay" role="status" aria-live="polite" hidden><strong>PODIUM</strong><span id="podium-results"></span></div>
 <div id="loading-screen" hidden role="status" aria-live="polite">
   <div class="loading-card"><strong>Loading circuit</strong><span id="loading-detail">Preparing race assets…</span><div class="loading-track"><div id="loading-progress"></div></div><b id="loading-percent">0%</b></div>
 </div>
@@ -242,23 +274,23 @@ import { RoomEnvironment } from './vendor/RoomEnvironment.js';
 import { DEFAULT_CAR, TIRE_COMPOUNDS, shift } from './src/physics.mjs?v=20261103-2';
 import { createRace, DEFAULT_GRID } from './src/race.mjs?v=20261103-5';
 import { buildF1Car } from './src/car3d.mjs';
-import { loadRB22Template, buildRB22Car, STEERING_RATIO, DRIVER_SUIT_STYLES, createDriverSuitTexture } from './src/rb22.mjs?v=20261103';
+import { loadGLTFAsset, loadRB22Template, buildRB22Car, STEERING_RATIO, DRIVER_SUIT_STYLES, createDriverSuitTexture } from './src/rb22.mjs?v=20261104';
+import { carModelForGraphics, driverModelForGraphics } from './src/modelassets.mjs';
 import { buildWorld, buildCircuitWorld, updateWorldDetailLod, worldDetailsInRadius } from './src/world3d.mjs?v=20261103-8';
 import { mergeGeometries } from './vendor/BufferGeometryUtils.js';
 import { makeMirror } from './src/mirror3d.mjs';
-import { GLTFLoader } from './vendor/GLTFLoader.js';
 import { createStadiumTrack } from './src/track.mjs';
 import { createCircuitTrack } from './src/circuit.mjs';
 import { CIRCUITS } from './src/circuits.mjs';
 import { CIRCUIT_PIT_SIDES, CIRCUIT_PIT_TUNNELS } from './src/pitconfig.mjs';
-import { CIRCUIT_ELEVATION_PROFILES, NIGHT_CIRCUITS, startingTyreForTrack, weatherOptionsForTrack } from './src/trackdata.mjs';
+import { CIRCUIT_ELEVATION_PROFILES, CIRCUIT_TRACK_STYLE, NIGHT_CIRCUITS, startingTyreForTrack, weatherOptionsForTrack } from './src/trackdata.mjs';
 import { createTimeTrial } from './src/trial.mjs?v=20261103-3';
 import { createLapTimer, formatLapTime } from './src/laptimer.mjs';
 import { applyArcadeSteeringAssist, createDriverInput, readGamepad } from './src/input.mjs';
 import { createSoundModel, createAudioEngine } from './src/audio.mjs?v=20261103';
 import { createWeather } from './src/weather.mjs';
 import { captureHandlingBaseline, applyHandlingMode as applyCarHandlingMode } from './src/handling.mjs';
-import { canExitVehicle, moveOnFootColliding, onFootEmoteAt, ON_FOOT_EMOTES, shouldAutoPauseOnBlur, shouldShowSeatedDriver } from './src/onfoot.mjs';
+import { canExitVehicle, moveOnFootColliding, onFootEmoteAt, onFootSpawn, ON_FOOT_EMOTES, shouldAutoPauseOnBlur, shouldShowSeatedDriver } from './src/onfoot.mjs?v=20261104-1';
 const $ = id => document.getElementById(id);
 const assetLoadingManager = new THREE.LoadingManager();
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
@@ -311,7 +343,7 @@ const optimizationProfiles = {
 };
 const DEFAULT_GAME_SETTINGS = {
   handling: 'arcade', camera: 'tcam', fullscreen: false, autoPit: true, lightsAssist: true,
-  graphics: 'default', originalCar: false, nameLivery: false, units: 'kmh', trackside: false,
+  graphics: 'default', originalCar: false, nameLivery: false, units: 'kmh', trackside: false, racingLine: true,
   driverName: 'notparthyt', keybinds: { drs: 'KeyF', brakeOnly: 'Space', ers: 'KeyO', emote: 'KeyE', dress: 'KeyM', camera: 'KeyC' },
 };
 function readGameSettings() {
@@ -322,6 +354,7 @@ function readGameSettings() {
     if (!['arcade', 'sim'].includes(settings.handling)) settings.handling = DEFAULT_GAME_SETTINGS.handling;
     if (!['tcam', 'chase', 'cockpit'].includes(settings.camera)) settings.camera = DEFAULT_GAME_SETTINGS.camera;
     if (!['kmh', 'mph'].includes(settings.units)) settings.units = DEFAULT_GAME_SETTINGS.units;
+    if (typeof settings.racingLine !== 'boolean') settings.racingLine = DEFAULT_GAME_SETTINGS.racingLine;
     settings.driverName = String(settings.driverName ?? DEFAULT_GAME_SETTINGS.driverName).replace(/[^\w -]/g, '').slice(0, 24) || DEFAULT_GAME_SETTINGS.driverName;
     return settings;
   } catch (error) {
@@ -333,6 +366,7 @@ let gameSettings = readGameSettings();
 let settingsDraft = { ...gameSettings, keybinds: { ...gameSettings.keybinds } };
 let optimizationMode = 'default', adaptiveResolution = 1, frameTimeAverage = 16.7, qualityCheckAt = 0;
 let sim, paused = false, overview = false, cockpit = false, tcam = false, look360 = false, previousTime = null, snapCamera = true;
+let podiumActive = false, podiumSequenceAttempted = false, podiumStartedAt = 0, podiumEntries = [];
 let lookYaw = 0, lookPitch = 0.18, lookDistance = 6, lookPointer = null, onFootCameraMode = 'thirdPerson';
 let onFoot = true, canEnterCar = false, avatarLoaded = false, avatarLoadError = null, emoteMenuOpen = false, wardrobeMenuOpen = false;
 let playerSuitIndex = 0, avatarCharacter = null;
@@ -424,7 +458,17 @@ const halfStraight = 220, radius = 90, roadWidth = 15;
 const circuitKey = Object.hasOwn(CIRCUITS, new URLSearchParams(location.search).get('track')) ? new URLSearchParams(location.search).get('track') : null;
 const nightTrack = NIGHT_CIRCUITS.has(circuitKey);
 const weatherForTrack = () => createWeather({ options: weatherOptionsForTrack(circuitKey) });
-const track = circuitKey ? createCircuitTrack({ ...CIRCUITS[circuitKey], pitSide: CIRCUIT_PIT_SIDES[circuitKey], pitTunnel: CIRCUIT_PIT_TUNNELS[circuitKey], elevationProfile: CIRCUIT_ELEVATION_PROFILES[circuitKey] }) : createStadiumTrack({ halfStraight, radius, roadWidth });
+const track = circuitKey ? createCircuitTrack({
+  ...CIRCUITS[circuitKey], ...CIRCUIT_TRACK_STYLE[circuitKey],
+  pitSide: CIRCUIT_PIT_SIDES[circuitKey], pitTunnel: CIRCUIT_PIT_TUNNELS[circuitKey],
+  elevationProfile: CIRCUIT_ELEVATION_PROFILES[circuitKey], night: nightTrack,
+}) : createStadiumTrack({ halfStraight, radius, roadWidth });
+const trackNameTag = document.createElement('div');
+trackNameTag.id = 'track-name';
+trackNameTag.className = 'tag track-tag';
+trackNameTag.setAttribute('aria-label', 'Current circuit');
+trackNameTag.textContent = circuitKey ? track.name : 'Stadium test track';
+canvas.before(trackNameTag);
 const { surfaceAt, barrierAt } = track;
 let timer = createLapTimer(track, circuitKey ? { lineProgress: 0 } : undefined);
 const handlingModes = Object.freeze(['sim', 'arcade']);
@@ -668,6 +712,8 @@ function reset() {
   // Qualifying starts on fresh Soft tires; the race starting compound is selected for the track.
   // Solo time trials honor ?tyre=soft|medium|hard.
   clearTimeout(qualifyingBreakTimer); qualifyingBreakTimer = null;
+  podiumActive = false; podiumSequenceAttempted = false; podiumStartedAt = 0; podiumEntries = [];
+  $('podium-overlay').hidden = true; $('podium-overlay').classList.remove('visible');
   autopilot = autoPitActive = autoPitEntered = ersOvertakeActive = false;
   lastYellowFlagNotice = null;
   lastPlayerDsq = false;
@@ -723,7 +769,7 @@ function reset() {
       player: { tyres: [tyre, tyre === 'hard' ? 'medium' : 'hard'] } });
     timer = createLapTimer(track, circuitKey ? { lineProgress: 0 } : undefined);
   }
-  const spawn = onFootSpawn();
+  const spawn = onFootSpawn(sim.car, track.pit?.side ?? 1);
   onFootPosition = spawn.player;
   onFootYaw = spawn.heading;
   lookYaw = onFootYaw; lookPitch = -0.12;
@@ -752,6 +798,24 @@ function playerCanExit() {
 function setPlayerDriverVisible(visible) {
   if (model.setDriverVisible) model.setDriverVisible(visible);
   else model.driver.forEach(part => { part.visible = visible; });
+}
+let vehicleTransitionActive = false;
+async function blinkVehicleTransition(action) {
+  if (vehicleTransitionActive) return;
+  vehicleTransitionActive = true;
+  const overlay = $('vehicle-transition');
+  overlay.classList.remove('opening');
+  overlay.classList.add('closing');
+  try {
+    await new Promise(resolve => setTimeout(resolve, 130));
+    action();
+  } finally {
+    overlay.classList.remove('closing');
+    overlay.classList.add('opening');
+    await new Promise(resolve => setTimeout(resolve, 180));
+    overlay.classList.remove('opening');
+    vehicleTransitionActive = false;
+  }
 }
 function toggleEmoteMenu() {
   if (emoteMenuOpen) closeEmoteMenu();
@@ -881,7 +945,12 @@ canvas.addEventListener('wheel', event => {
   lookDistance = THREE.MathUtils.clamp(lookDistance + Math.sign(event.deltaY) * 0.8, 3, 14);
 }, { passive: false });
 canvas.addEventListener('pointerdown', () => {
-  if (onFoot && !paused && $('menu-screen').hidden && !document.pointerLockElement) canvas.requestPointerLock?.();
+  if (!onFoot || paused || !$('menu-screen').hidden || document.pointerLockElement) return;
+  try {
+    canvas.requestPointerLock?.()?.catch(error => console.warn('Could not capture the pointer for on-foot camera control', error));
+  } catch (error) {
+    console.warn('Could not capture the pointer for on-foot camera control', error);
+  }
 });
 document.addEventListener('mousemove', event => {
   if (!onFoot || document.pointerLockElement !== canvas) return;
@@ -1035,6 +1104,14 @@ const TYRE_COLOR = { soft: '#ff3b30', medium: '#ffd60a', hard: '#f2f2f2' };
 const tyreBadge = c => `<span class="tyre" style="border-color:${TYRE_COLOR[c]};color:${TYRE_COLOR[c]}" title="${c}">${c[0].toUpperCase()}</span>`;
 const title = c => c[0].toUpperCase() + c.slice(1);
 const drivingKeys = ['KeyW','KeyS','KeyA','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','KeyQ','KeyE','KeyF','KeyL','KeyC','KeyN','KeyI'];
+const pressedKeys = new Set();
+function updatePressedKey(code, pressed) {
+  if (pressed) pressedKeys.add(code);
+  else pressedKeys.delete(code);
+  document.querySelectorAll('[data-active-code]').forEach(key => {
+    key.classList.toggle('key-pressed', pressedKeys.has(key.dataset.activeCode));
+  });
+}
 window.addEventListener('keydown', e => {
   const listeningKeybind = document.querySelector('[data-keybind][data-listening="true"]');
   if (listeningKeybind) {
@@ -1061,6 +1138,7 @@ window.addEventListener('keydown', e => {
     && !(onFoot && (emoteMenuOpen || wardrobeMenuOpen) && (emoteNumberKey || e.code === 'Escape' || e.code === gameSettings.keybinds.dress))) return;
   if ([...drivingKeys,...Object.values(gameSettings.keybinds),'Space','KeyR','KeyV','KeyC','KeyN','KeyM','KeyO','KeyB','KeyH','KeyZ','KeyX','KeyG','KeyT','KeyU','KeyL','Escape'].includes(e.code)
     || (onFoot && ((emoteMenuOpen || wardrobeMenuOpen) && emoteNumberKey))) e.preventDefault();
+  updatePressedKey(e.code, true);
   if (e.repeat) return;
   if (e.code !== gameSettings.keybinds.dress) startAudio();
   if (!onFoot && !paused && e.code === gameSettings.keybinds.drs) {
@@ -1068,8 +1146,8 @@ window.addEventListener('keydown', e => {
     return;
   }
   if (e.code === 'KeyL') {
-    if (onFoot) { if (canEnterCar) enterVehicle(); }
-    else if (playerCanExit()) exitVehicle();
+    if (onFoot) { if (canEnterCar) void blinkVehicleTransition(() => enterVehicle()); }
+    else if (playerCanExit()) void blinkVehicleTransition(exitVehicle);
     return;
   }
   if (e.code === 'KeyI') { toggleAutopilot(); return; }
@@ -1119,7 +1197,14 @@ window.addEventListener('keydown', e => {
 });
 window.addEventListener('keyup', e => {
   keys.delete(e.code);
+  updatePressedKey(e.code, false);
   if (e.code === 'KeyW') runningOnFoot = false;
+});
+window.addEventListener('blur', () => {
+  keys.clear();
+  runningOnFoot = false;
+  pressedKeys.clear();
+  document.querySelectorAll('[data-active-code]').forEach(key => key.classList.remove('key-pressed'));
 });
 function pauseForBlur() {
   // Exiting the car releases pointer lock and can blur the window. Keep the
@@ -1165,11 +1250,14 @@ function playAvatarAction(name, emote = false) {
   avatarActionName = name;
   if (emote) avatarEmote = action;
 }
-async function loadPlayerAvatar() {
+let avatarModelAsset = null, avatarLoadSequence = 0;
+async function loadPlayerAvatar(mode = gameSettings.graphics) {
+  const asset = driverModelForGraphics(mode);
+  if (asset === avatarModelAsset) return;
+  const sequence = ++avatarLoadSequence;
   try {
-    const gltf = await new GLTFLoader(assetLoadingManager).loadAsync('./models/Realistic_Male_F1_Racer_Rigged_Animated.gltf');
+    const gltf = await loadGLTFAsset(asset, assetLoadingManager);
     const character = gltf.scene;
-    avatarCharacter = character;
     character.updateMatrixWorld(true);
     const initialBounds = new THREE.Box3().setFromObject(character);
     const height = initialBounds.getSize(new THREE.Vector3()).y;
@@ -1180,12 +1268,27 @@ async function loadPlayerAvatar() {
     character.position.x -= (bounds.min.x + bounds.max.x) / 2;
     character.position.y -= bounds.min.y;
     character.position.z -= (bounds.min.z + bounds.max.z) / 2;
-    applySuitToAvatar(playerSuitIndex);
     character.traverse(object => {
       if (!object.isMesh) return;
       object.castShadow = false;
       object.receiveShadow = false;
     });
+    if (sequence !== avatarLoadSequence) return;
+    avatarMixer?.stopAllAction();
+    if (avatarCharacter) {
+      playerAvatar.remove(avatarCharacter);
+      avatarCharacter.traverse(object => {
+        if (!object.isMesh) return;
+        object.geometry.dispose();
+        for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
+          for (const value of Object.values(material)) if (value?.isTexture) value.dispose();
+          material.dispose();
+        }
+      });
+    }
+    avatarCharacter = character;
+    avatarModelAsset = asset;
+    applySuitToAvatar(playerSuitIndex);
     playerAvatar.add(character);
     avatarMixer = new THREE.AnimationMixer(character);
     avatarActions = new Map(gltf.animations.map(clip => [clip.name, avatarMixer.clipAction(clip)]));
@@ -1195,15 +1298,16 @@ async function loadPlayerAvatar() {
       const moving = ['KeyW','KeyA','KeyS','KeyD'].some(code => keys.has(code));
       playAvatarAction(moving ? (runningOnFoot ? 'Standard_Run' : 'Walking') : 'Idle');
     });
+    avatarLoadError = null;
     avatarLoaded = true;
     playerAvatar.visible = onFoot;
     playAvatarAction('Idle');
   } catch (error) {
+    if (sequence !== avatarLoadSequence) return;
     avatarLoadError = error;
     console.error('On-foot driver model failed to load', error);
   }
 }
-void loadPlayerAvatar();
 const dryFog = new THREE.Color(nightTrack ? 0x10182b : 0xc8d8e4), rainFog = new THREE.Color(nightTrack ? 0x20283a : 0x72808b);
 let weather = weatherForTrack();
 const camera = new THREE.PerspectiveCamera(58, 1, 0.1, 4000);
@@ -1214,8 +1318,9 @@ Object.assign(sun.shadow.camera, { left: -14, right: 14, top: 14, bottom: -14, n
 sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.02;
 scene.add(sun, sun.target);
 const boxColors = [0x39e0ae, ...DEFAULT_GRID.map(g => g.color)];
-const world = circuitKey ? buildCircuitWorld(track, { boxColors, night: nightTrack, urban: circuitKey === 'monaco' }) : buildWorld({ halfStraight, radius, roadWidth, boxColors });
+const world = circuitKey ? buildCircuitWorld(track, { boxColors, night: nightTrack, urban: track.urban }) : buildWorld({ halfStraight, radius, roadWidth, boxColors });
 scene.add(world);
+world.userData.racingLine.visible = gameSettings.racingLine;
 const rainCount = 180, rainDrops = Array.from({ length: rainCount }, () => ({
   x: (Math.random() - 0.5) * 44, y: 1 + Math.random() * 28, z: (Math.random() - 0.5) * 44,
 }));
@@ -1245,15 +1350,97 @@ if (circuitKey) camera.far = 2 * world.userData.extent + 3000;
 // colours with our sponsors, each car with a different title sponsor. ?car=procedural, or a
 // model that fails to load, uses the built-in car.
 let carTemplate = null;
+let carModelAsset = null;
+const carTemplateLoads = new Map();
 if (new URLSearchParams(location.search).get('car') !== 'procedural') {
-  try { carTemplate = await loadRB22Template(undefined, assetLoadingManager); }
-  catch (err) { console.warn('rb22 car model failed to load', err); }
+  carModelAsset = carModelForGraphics(gameSettings.graphics);
+  try { carTemplate = await loadRB22Template(carModelAsset, assetLoadingManager); }
+  catch (err) {
+    carModelAsset = null;
+    console.warn('rb22 car model failed to load', err);
+  }
 }
 const buildCar = (livery = {}, suitIndex = 0) => carTemplate ? buildRB22Car(carTemplate, DEFAULT_CAR, { ...livery, suitIndex }) : buildF1Car(DEFAULT_CAR, livery);
 // One model per livery: the navy car, then each AI opponent's (helmets match the accent;
 // index: its place in the sponsor rotation and race number).
 const cars = [buildCar({}, 0), ...DEFAULT_GRID.map((spec, i) => buildCar({ paint: spec.color, accent: spec.accent, helmet: spec.accent, index: i + 1 }, (i + 1) % DRIVER_SUIT_STYLES.length))]
   .map(m => { scene.add(m.group); return { model: m, wheelAngle: [0, 0, 0, 0] }; });
+const podiumCenter = world.userData.center ?? [0, 0];
+const podiumGround = track.heightAtPosition
+  ? track.heightAtPosition(podiumCenter[0], podiumCenter[1])
+  : track.heightAt?.(0) ?? 0;
+const podiumStage = new THREE.Group();
+podiumStage.position.set(podiumCenter[0], podiumGround, -podiumCenter[1]);
+podiumStage.visible = false;
+world.add(podiumStage);
+const podiumCarPosition = new THREE.Vector3();
+const podiumCameraTarget = new THREE.Vector3();
+const podiumCameraPosition = new THREE.Vector3();
+const podiumSlot = new Map([[1, [0, 1.8]], [2, [-6.4, 0.9]], [3, [6.4, 0.55]]]);
+for (const [rank, [x, height]] of podiumSlot) {
+  const block = new THREE.Mesh(
+    new THREE.BoxGeometry(5.8, height, 5),
+    new THREE.MeshStandardMaterial({ color: rank === 1 ? 0xb69a50 : 0x586776, metalness: 0.25, roughness: 0.65 }),
+  );
+  block.position.set(x, height / 2, 0);
+  block.castShadow = block.receiveShadow = true;
+  podiumStage.add(block);
+}
+const fireworkPositions = new Float32Array(3 * 32 * 3);
+const fireworkColors = new Float32Array(3 * 32 * 3);
+const fireworkBases = [0, 1, 2].map((group, i) => {
+  const [x, y] = circuitKey
+    ? track.point(0, track.wallOffset + 6 + i * 8)
+    : [-halfStraight, -radius - track.wallOffset - 6 - i * 8];
+  const height = track.heightAtPosition ? track.heightAtPosition(x, y) : track.heightAt?.(0) ?? 0;
+  return new THREE.Vector3(x, height, -y);
+});
+const fireworkPalette = [0xffe083, 0x6fffc3, 0xb891ff].map(color => new THREE.Color(color));
+for (let i = 0; i < 3 * 32; i++) {
+  const color = fireworkPalette[Math.floor(i / 32)];
+  fireworkColors.set([color.r, color.g, color.b], i * 3);
+  fireworkPositions[i * 3 + 1] = -100;
+}
+const fireworkGeometry = new THREE.BufferGeometry();
+fireworkGeometry.setAttribute('position', new THREE.BufferAttribute(fireworkPositions, 3));
+fireworkGeometry.setAttribute('color', new THREE.BufferAttribute(fireworkColors, 3));
+const fireworks = new THREE.Points(fireworkGeometry, new THREE.PointsMaterial({
+  size: 1.15, vertexColors: true, transparent: true, opacity: 0.95, depthWrite: false,
+}));
+fireworks.visible = false;
+world.add(fireworks);
+function startPodiumSequence() {
+  podiumEntries = sim.classification().filter(row => row.finished && !row.dsq).slice(0, 3);
+  if (!podiumEntries.length) return;
+  podiumActive = true;
+  podiumStartedAt = performance.now();
+  podiumStage.visible = true;
+  fireworks.visible = true;
+  $('podium-results').textContent = podiumEntries
+    .map((row, index) => `P${index + 1} · ${row.name}`)
+    .join('  ·  ');
+  $('podium-overlay').hidden = false;
+  requestAnimationFrame(() => $('podium-overlay').classList.add('visible'));
+}
+function updateFireworks(elapsed) {
+  for (let group = 0; group < 3; group++) {
+    const base = fireworkBases[group];
+    let cycle = (elapsed - group * 0.55) % 1.9;
+    if (cycle < 0) cycle += 1.9;
+    for (let particle = 0; particle < 32; particle++) {
+      const index = group * 32 + particle, angle = particle / 32 * Math.PI * 2;
+      const progress = cycle < 0.72 ? cycle / 0.72 : 1;
+      const burst = cycle - 0.72;
+      const radius = burst > 0 ? burst * (3.4 + (particle % 4) * 0.35) : 0;
+      const y = burst > 0 ? 19 - burst * burst * 8 : progress * 19;
+      const offset = index * 3;
+      fireworkPositions[offset] = base.x + Math.cos(angle) * radius;
+      fireworkPositions[offset + 1] = cycle > 1.6 ? -100 : base.y + 1 + y;
+      fireworkPositions[offset + 2] = base.z + Math.sin(angle) * radius;
+    }
+  }
+  fireworkGeometry.attributes.position.needsUpdate = true;
+}
 const distantCarGeometry = (() => {
   const parts = [];
   const add = (geometry, position, rotation = [0, 0, 0]) => {
@@ -1310,7 +1497,7 @@ if (gameSettings.customLivery) {
     console.error('Could not restore the saved custom livery', error);
   }
 }
-const safetyCarModel = buildCar({ paint: 0xf2c230, accent: 0x15191e, helmet: 0x15191e });
+let safetyCarModel = buildCar({ paint: 0xf2c230, accent: 0x15191e, helmet: 0x15191e });
 safetyCarModel.group.name = 'safety-car';
 safetyCarModel.group.visible = false;
 safetyCarModel.group.traverse(object => {
@@ -1339,6 +1526,8 @@ let originalCar = !!gameSettings.originalCar;
 function applyOptimizationMode(mode, persist = true) {
   if (!optimizationProfiles[mode]) mode = 'default';
   optimizationMode = mode;
+  void updateCarModelForGraphics(mode).catch(error => console.error('Could not update the car model for graphics mode', error));
+  void loadPlayerAvatar(mode);
   adaptiveResolution = 1;
   const profile = optimizationProfiles[mode];
   renderer.shadowMap.enabled = profile.shadows && !onFoot;
@@ -1355,6 +1544,7 @@ function applyOptimizationMode(mode, persist = true) {
 }
 function setOnFootMode(value) {
   onFoot = value;
+  sceneShortcuts.open = value;
   const shadowsEnabled = optimizationProfiles[optimizationMode].shadows && !onFoot;
   renderer.shadowMap.enabled = sun.castShadow = shadowsEnabled;
   resize();
@@ -1397,6 +1587,68 @@ originalCarButton.onclick = () => {
   updateOriginalCarButton();
 };
 updateOriginalCarButton();
+function replaceCarModelTemplate(template, asset) {
+  const previousTemplate = carTemplate;
+  const previousSafety = safetyCarModel;
+  let nextModels, nextSafety;
+  carTemplate = template;
+  try {
+    nextModels = cars.map((_, index) => {
+      const spec = DEFAULT_GRID[index - 1];
+      return index === 0
+        ? buildCar({}, 0)
+        : buildCar({
+          paint: spec.color, accent: spec.accent, helmet: spec.accent, index,
+        }, index % DRIVER_SUIT_STYLES.length);
+    });
+    nextSafety = buildCar({ paint: 0xf2c230, accent: 0x15191e, helmet: 0x15191e });
+  } catch (error) {
+    carTemplate = previousTemplate;
+    throw error;
+  }
+  cars.forEach((car, index) => {
+    const old = car.model, next = nextModels[index];
+    next.group.position.copy(old.group.position);
+    next.group.rotation.copy(old.group.rotation);
+    next.group.visible = old.group.visible;
+    scene.add(next.group);
+    scene.remove(old.group);
+    car.model = next;
+  });
+  const safetyVisible = previousSafety.group.visible;
+  scene.remove(previousSafety.group);
+  safetyBeacon.removeFromParent();
+  safetyCarModel = nextSafety;
+  safetyCarModel.group.name = 'safety-car';
+  safetyCarModel.group.visible = safetyVisible;
+  safetyCarModel.group.traverse(object => {
+    if (!object.isMesh) return;
+    object.castShadow = false;
+    object.receiveShadow = false;
+  });
+  safetyCarModel.group.add(safetyBeacon);
+  scene.add(safetyCarModel.group);
+  carModelAsset = asset;
+  wearSkins([...skins]);
+  updateOriginalCarButton();
+}
+async function updateCarModelForGraphics(mode) {
+  if (new URLSearchParams(location.search).get('car') === 'procedural') return;
+  const asset = carModelForGraphics(mode);
+  if (asset === carModelAsset) return;
+  let pending = carTemplateLoads.get(asset);
+  if (!pending) {
+    pending = loadRB22Template(asset, assetLoadingManager);
+    carTemplateLoads.set(asset, pending);
+  }
+  try {
+    const template = await pending;
+    if (asset !== carModelForGraphics(optimizationMode)) return;
+    replaceCarModelTemplate(template, asset);
+  } finally {
+    if (carTemplateLoads.get(asset) === pending) carTemplateLoads.delete(asset);
+  }
+}
 const MAX_SPIN_STEP = 0.3; // rad of drawn wheel rotation per frame
 const hex = n => `#${n.toString(16).padStart(6, '0')}`;
 // HUD colour of an entry's car: its livery's paint, or `mine` for the navy car.
@@ -1490,6 +1742,8 @@ function setVisorCamera(position) {
   return visorCameraPosition();
 }
 function placeScene(dt) {
+  podiumStage.visible = podiumActive;
+  fireworks.visible = podiumActive;
   const c = sim.car, g = model.group;
   sun.position.set(c.x + 35, 70, -c.y + 25); sun.target.position.copy(g.position);
   forward.set(Math.cos(c.heading), 0, -Math.sin(c.heading));
@@ -1503,14 +1757,38 @@ function placeScene(dt) {
     lastOnFootPoseAt = poseNow;
     sim.entries.forEach((e, i) => {
       const car = cars[skins[i]].model;
-      car.group.visible = !e.retired && (e.player || opponents);
+      car.group.visible = !e.retired && (e.player || opponents)
+        && (!podiumActive || podiumEntries.some(row => row.index === e.index));
       const showDriver = shouldShowSeatedDriver({ player: e.player, onFoot, cockpit });
       if (car.setDriverVisible) car.setDriverVisible(showDriver);
       else car.driver.forEach(m => { m.visible = showDriver; });
       poseCar(car, e.car, cars[skins[i]].wheelAngle, dt, sim.yellowFlag.active);
     });
   }
-  if (onFoot) {
+  if (podiumActive) {
+    podiumEntries.forEach((row, index) => {
+      const car = cars[skins[row.index]].model;
+      const [x, height] = podiumSlot.get(index + 1);
+      podiumCarPosition.set(x, height + 0.06, 0);
+      car.group.position.copy(podiumStage.localToWorld(podiumCarPosition));
+      car.group.rotation.set(0, -Math.PI / 2, 0);
+    });
+  }
+  if (podiumActive) {
+    playerAvatar.visible = false;
+    camera.fov = 52; camera.near = 0.1; camera.up.set(0, 1, 0);
+    const elapsed = Math.max(0, (performance.now() - podiumStartedAt) / 1000);
+    const angle = elapsed * 0.16 - Math.PI / 2;
+    podiumCameraTarget.set(podiumCenter[0], podiumGround + 3, -podiumCenter[1]);
+    podiumCameraPosition.set(
+      podiumCenter[0] + Math.cos(angle) * 28,
+      podiumGround + 11 + Math.sin(elapsed * 0.32) * 1.2,
+      -podiumCenter[1] + Math.sin(angle) * 28,
+    );
+    if (elapsed < 0.25) camera.position.copy(podiumCameraPosition);
+    else camera.position.lerp(podiumCameraPosition, 1 - Math.exp(-dt * 1.8));
+    camera.lookAt(podiumCameraTarget);
+  } else if (onFoot) {
     camera.fov = 66; camera.near = 0.1; camera.up.set(0, 1, 0);
     const fx = Math.cos(lookYaw), fz = -Math.sin(lookYaw);
     const rx = -fz, rz = fx;
@@ -1583,7 +1861,8 @@ function placeScene(dt) {
   sim.entries.forEach((entry, index) => {
     const car = cars[skins[index]].model;
     const proxy = distantCars[skins[index]];
-    const active = !entry.retired && (entry.player || opponents);
+    const active = !entry.retired && (entry.player || opponents)
+      && (!podiumActive || podiumEntries.some(row => row.index === entry.index));
     const distant = active && !entry.player && opponents
       && camera.position.distanceToSquared(car.group.position) > 125 ** 2;
     car.group.visible = active && !distant;
@@ -1634,16 +1913,6 @@ const stadiumPoint = s => {
 function stadiumHeading(s) {
   const [x0, y0] = stadiumPoint(s - 0.1), [x1, y1] = stadiumPoint(s + 0.1);
   return Math.atan2(y1 - y0, x1 - x0);
-}
-function onFootSpawn() {
-  const car = sim.car, side = 2.4;
-  const pitSide = track.pit?.side ?? 1;
-  const acrossTrack = pitSide > 0 ? -side : side;
-  const player = { x: car.x - Math.sin(car.heading) * acrossTrack, y: car.y + Math.cos(car.heading) * acrossTrack };
-  return {
-    player,
-    heading: Math.atan2(car.y - player.y, car.x - player.x),
-  };
 }
 function warmWorldAroundPlayer() {
   const spawn = onFootPosition, height = track.heightAtPosition
@@ -1721,6 +1990,7 @@ function updateOnFootInteraction() {
   }
 }
 function placeSafetyCar() {
+  if (podiumActive) { safetyCarModel.group.visible = false; return; }
   const flag = sim.yellowFlag;
   const pace = sim.safetyCar;
   safetyCarModel.group.visible = opponents && flag.active && pace.progress !== null;
@@ -2247,6 +2517,11 @@ function frame(now) {
       recordQualifyingLap();
     }
   }
+  if (!podiumSequenceAttempted && opponents && sim.finish.done) {
+    podiumSequenceAttempted = true;
+    startPodiumSequence();
+  }
+  if (podiumActive) updateFireworks(Math.max(0, (now - podiumStartedAt) / 1000));
   if (audio) {
     // Quieter from the overview camera; silent while paused or muted.
     if (onFoot || paused || !soundOn) { soundParams = null; audio.silence(); }
@@ -2262,6 +2537,21 @@ function frame(now) {
 $('track-select').innerHTML = `<option value="">Stadium test track · race</option>${Object.entries(CIRCUITS).map(([k, c]) => `<option value="${k}">${c.name}</option>`).join('')}`;
 $('track-select').value = circuitKey ?? '';
 $('track-select').onchange = e => { const q = new URLSearchParams(location.search); if (e.target.value) q.set('track', e.target.value); else q.delete('track'); location.search = q.toString(); };
+const sceneShortcuts = document.createElement('details');
+sceneShortcuts.className = 'scene-shortcuts';
+sceneShortcuts.id = 'scene-shortcuts';
+sceneShortcuts.innerHTML = `<summary>Keyboard shortcuts</summary>
+  <div class="scene-shortcut-list">
+    <div><span>Throttle · brake</span><span><kbd data-active-code="KeyW">W</kbd> / <kbd data-active-code="ArrowUp">↑</kbd> · <kbd data-active-code="KeyS">S</kbd> / <kbd data-active-code="ArrowDown">↓</kbd></span></div>
+    <div><span>Steer · shift</span><span><kbd data-active-code="KeyA">A</kbd> / <kbd data-active-code="KeyD">D</kbd> · <kbd data-active-code="KeyX">X</kbd> / <kbd data-active-code="KeyZ">Z</kbd></span></div>
+    <div><span>Brake only</span><kbd data-scene-keybind="brakeOnly">Space</kbd></div>
+    <div><span>DRS · ERS</span><span><kbd data-scene-keybind="drs">F</kbd> · <kbd data-scene-keybind="ers">O</kbd></span></div>
+    <div><span>Enter / exit · auto-pit</span><span><kbd data-active-code="KeyL">L</kbd> · <kbd data-active-code="KeyI">I</kbd></span></div>
+    <div><span>Tyres · camera · view</span><span><kbd data-active-code="KeyB">B</kbd> · <kbd data-scene-keybind="camera">C</kbd> · <kbd data-active-code="KeyV">V</kbd></span></div>
+    <div><span>Pause · reset · HUD</span><span><kbd data-active-code="Escape">Esc</kbd> · <kbd data-active-code="KeyR">R</kbd> · <kbd data-active-code="KeyH">H</kbd></span></div>
+    <div><span>On foot</span><span><kbd data-active-code="KeyW">W</kbd> / <kbd data-active-code="KeyA">A</kbd> / <kbd data-active-code="KeyS">S</kbd> / <kbd data-active-code="KeyD">D</kbd> · <kbd data-active-code="Space">Space</kbd></span></div>
+  </div>`;
+document.querySelector('.scene').append(sceneShortcuts);
 $('field').textContent = `Opponents: ${opponents ? 'on' : 'off'}`; $('field').setAttribute('aria-pressed', String(opponents)); $('race-section').hidden = !opponents;
 function showMenu(screen) {
   $('home-screen').hidden = screen !== 'home';
@@ -2275,6 +2565,17 @@ function setSettingsDirty() {
 }
 function keyName(code) {
   return code?.replace(/^Key/, '').replace(/^Digit/, '').replace(/^Arrow/, '←↑→↓') ?? '';
+}
+function sceneKeyName(code) {
+  return ({ ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→', Space: 'Space', Escape: 'Esc' })[code] ?? keyName(code);
+}
+function renderSceneShortcuts(settings = gameSettings) {
+  document.querySelectorAll('[data-scene-keybind]').forEach(key => {
+    const code = settings.keybinds[key.dataset.sceneKeybind];
+    key.textContent = sceneKeyName(code);
+    key.dataset.activeCode = code;
+    key.classList.toggle('key-pressed', pressedKeys.has(code));
+  });
 }
 function renderKeybinds(settings) {
   document.querySelectorAll('[data-keybind]').forEach(button => {
@@ -2298,6 +2599,7 @@ function populateSettingsForm(source = gameSettings) {
   $('setting-name-livery').checked = settingsDraft.nameLivery;
   $('setting-units').value = settingsDraft.units;
   $('setting-trackside').checked = settingsDraft.trackside;
+  $('setting-racing-line').checked = settingsDraft.racingLine;
   $('setting-driver-name').value = settingsDraft.driverName;
   updateLiveryControls();
   drawLiveryPreview(settingsDraft.customLivery);
@@ -2360,6 +2662,7 @@ function saveSettings() {
   settingsDraft.nameLivery = $('setting-name-livery').checked;
   settingsDraft.units = $('setting-units').value;
   settingsDraft.trackside = $('setting-trackside').checked;
+  settingsDraft.racingLine = $('setting-racing-line').checked;
   settingsDraft.driverName = $('setting-driver-name').value.trim().replace(/[^\w -]/g, '').slice(0, 24) || DEFAULT_GAME_SETTINGS.driverName;
   $('setting-driver-name').value = settingsDraft.driverName;
   try {
@@ -2370,6 +2673,7 @@ function saveSettings() {
     return;
   }
   gameSettings = { ...settingsDraft, keybinds: { ...settingsDraft.keybinds } };
+  renderSceneShortcuts(gameSettings);
   if (pendingCustomLiveryTexture) {
     customLiveryTexture?.dispose();
     customLiveryTexture = pendingCustomLiveryTexture;
@@ -2386,6 +2690,7 @@ function saveSettings() {
   model.setDriverName?.(gameSettings.nameLivery ? gameSettings.driverName : null);
   updateOriginalCarButton();
   applyOptimizationMode(gameSettings.graphics);
+  world.userData.racingLine.visible = gameSettings.racingLine;
   cockpit = gameSettings.camera === 'cockpit';
   tcam = gameSettings.camera === 'tcam';
   overview = look360 = false; snapCamera = true; updateCameraButtons();
@@ -2519,6 +2824,7 @@ $('save-settings').onclick = saveSettings;
 if (!$('singleplayer-screen').hidden) $('menu-singleplayer').onclick();
 else if (!$('settings-screen').hidden) populateSettingsForm();
 renderKeybinds(settingsDraft);
+renderSceneShortcuts(gameSettings);
 const startupQuery = new URLSearchParams(location.search);
 if (startupQuery.has('start')) {
   $('menu-screen').hidden = true;
@@ -2542,7 +2848,7 @@ window.f1Lab = {
     const result = cars.map(car => car.model.setRearFlap({ pivotOffset, angle }))[0];
     return result;
   },
-  snapshot: () => ({ car: structuredClone(sim.car), timing: structuredClone(timer.state), paused, onFoot, onFootPosition: { ...onFootPosition }, avatarLoaded, avatarAnimation: avatarActionName, canEnterCar, canExit: playerCanExit(), avatarError: avatarLoadError?.message ?? null, overview, cockpit, tcam, look360, ersOvertakeActive, ersGapToAhead: ersGapToAhead(), recording: mediaRecorder?.state === 'recording', broadcastTarget: broadcastTarget?.name ?? null, broadcastShot: broadcastShotIndex, keys: [...keys], command: { ...command }, inputSource: autopilot ? 'autopilot' : driver.source }),
+  snapshot: () => ({ car: structuredClone(sim.car), timing: structuredClone(timer.state), paused, onFoot, onFootPosition: { ...onFootPosition }, avatarLoaded, avatarAnimation: avatarActionName, canEnterCar, canExit: playerCanExit(), avatarError: avatarLoadError?.message ?? null, overview, cockpit, tcam, look360, podium: podiumActive, racingLine: world.userData.racingLine.visible, ersOvertakeActive, ersGapToAhead: ersGapToAhead(), recording: mediaRecorder?.state === 'recording', broadcastTarget: broadcastTarget?.name ?? null, broadcastShot: broadcastShotIndex, keys: [...keys], command: { ...command }, inputSource: autopilot ? 'autopilot' : driver.source }),
   track: () => ({ key: circuitKey, name: circuitKey ? track.name : 'Stadium test track', length: track.length, surface: track.surface(sim.car.x, sim.car.y), offset: track.offset(sim.car.x, sim.car.y), progress: track.progress(sim.car.x, sim.car.y) }),
   race: () => ({ opponents, finish: sim.finish, yellowFlag: sim.yellowFlag, safetyCar: sim.safetyCar, safetyCarVisible: safetyCarModel.group.visible, classification: sim.classification(), standings: opponents ? sim.standings() : [], cars: sim.entries.map(e => ({ name: e.name, x: e.car.x, y: e.car.y, speed: e.car.telemetry.speed, lane: e.lane, compound: e.car.compound, pit: e.pit?.phase ?? null, pitRequest: e.pitRequest, stops: structuredClone(e.stops), compounds: [...e.compounds], penalty: e.penalty, wake: e.car.wake.strength ?? 0, contact: e.car.contact ?? null, drs: e.car.drs, drsAllowed: !!e.drsAllowed, drsGap: e.drsGap, retired: !!e.retired, ...(m => ({ visible: m.group.visible, drawn: [m.group.position.x, -m.group.position.z], flap: m.drsFlap.rotation.x, frontFlap: m.frontWingFlap?.rotation.x ?? null, holderSteer: m.wheels[0].pivot.rotation.y }))(cars[skins[e.index]].model) })) }),
   start: () => (m => ({ ...sim.start, jumpStart: m.jumpStart, penalty: m.penalty, reaction: m.reaction, shown: !$('lights').hidden, litShown: $('lights').querySelectorAll('.on').length, status: $('status').textContent }))(sim.entries[0]),
