@@ -49,6 +49,13 @@ test('on-foot collision checks cannot be skipped by a long movement step', () =>
   assert.ok(stopped.x < 2.65, 'the player stops before crossing the car footprint');
 });
 
+test('on-foot movement stops at scenery obstacles', () => {
+  const stopped = moveOnFootColliding({ x: 0, y: 0 }, 0, { forward: 1 }, 1, {
+    obstacleAt: (x, y) => (x - 1) ** 2 + y ** 2 < 0.5 ** 2,
+  });
+  assert.ok(stopped.x > 0 && stopped.x < 0.7);
+});
+
 test('on-foot spawn faces down the track so forward movement is not blocked by the player car', () => {
   for (const key of Object.keys(CIRCUITS)) {
     const track = createCircuitTrack(CIRCUITS[key]);
@@ -76,6 +83,8 @@ test('seated driver stays visible in cockpit and is hidden only while on foot', 
   assert.equal(shouldShowSeatedDriver({ player: true, onFoot: true }), false);
   assert.equal(shouldShowSeatedDriver({ player: false, cockpit: true }), true);
   assert.equal(shouldShowSeatedDriver({ player: false, onFoot: true }), true);
+  assert.equal(shouldShowSeatedDriver({ player: false, onFoot: true, networked: true }), false);
+  assert.equal(shouldShowSeatedDriver({ player: false, onFoot: false, networked: true }), true);
 });
 
 test('finished-race on-foot mode is not auto-paused on blur', () => {

@@ -29,3 +29,13 @@ test('dry conditions stay at full grip and nonpositive frame times do not advanc
   assert.deepEqual(weather.update(-1), before);
   assert.equal(weather.surfaceGrip(0.7), 0.7);
 });
+
+test('a received weather snapshot replaces locally generated conditions', () => {
+  const weather = createWeather({ random: () => 1, options: { initialRainChance: 0 } });
+  const state = weather.setState({ raining: true, intensity: 0.8, wetness: 0.5 });
+
+  assert.equal(state.label, 'Heavy rain');
+  assert.equal(state.wetness, 0.5);
+  assert.ok(Math.abs(weather.surfaceGrip(1) - 0.84) < 1e-12);
+  assert.throws(() => weather.setState({ raining: true, intensity: 2, wetness: 0 }), TypeError);
+});

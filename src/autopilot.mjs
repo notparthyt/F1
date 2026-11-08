@@ -138,7 +138,9 @@ export function createCircuitAutopilot(track, tuning = {}) {
   // lane, off the road); lane: the passing lane
   // the car is on or heading for (its path's plan also caps the speed);
   // late: diving down the inside on that lane, its plan alone (braking later).
-  const drive = function drive(car, { offset = 0, lane = 0, late = false, maxSpeed = Infinity, grip = 1 } = {}) {
+  /** @param {{ offset?: number | ((s: number) => number), lane?: number, late?: boolean, maxSpeed?: number, grip?: number }} options */
+  const drive = function drive(car, options = {}) {
+    const { offset = 0, lane = 0, late = false, maxSpeed = Infinity, grip = 1 } = options;
     plan ??= speedPlan(car.config);
     const lp = lane ? lanePlan(car.config, lane, late) : plan, atLane = late && lane ? s => lp[index(s)] : s => Math.min(at(s), lp[index(s)]);
     const c = car.config, speed = car.telemetry.speed, s = track.progress(car.x, car.y);

@@ -18,6 +18,15 @@ export const SOUND_DEFAULTS = Object.freeze({
   limiterHz: 22,             // fuel-cut flutter rate at the rev limiter
 });
 
+export const LEGACY_SOUND_DEFAULTS = Object.freeze({
+  ...SOUND_DEFAULTS,
+  brightnessBase: 2.5,
+  brightnessThrottle: 5.5,
+  turboGain: 0.05,
+  squealGain: 0.35,
+  windGain: 0.3,
+});
+
 const clamp01 = v => Math.min(1, Math.max(0, v));
 
 // Firing (fundamental) frequency in Hz for an engine speed in rpm.
@@ -65,7 +74,11 @@ export function createAudioEngine(ctx, cfg = SOUND_DEFAULTS) {
   Object.assign(compressor.ratio, { value: 6 });
   Object.assign(compressor.attack, { value: 0.003 });
   Object.assign(compressor.release, { value: 0.18 });
-  master.connect(compressor); compressor.connect(ctx.destination);
+  const compressedOutput = ctx.createGain(), directOutput = ctx.createGain();
+  compressedOutput.gain.value = 1;
+  directOutput.gain.value = 0;
+  master.connect(compressor); compressor.connect(compressedOutput); compressedOutput.connect(ctx.destination);
+  master.connect(directOutput); directOutput.connect(ctx.destination);
   const gain = (v, to) => { const g = ctx.createGain(); g.gain.value = v; g.connect(to); return g; };
   const osc = (type, to) => { const o = ctx.createOscillator(); o.type = type; o.connect(to); o.start(); return o; };
   // Engine: firing order sawtooth, half-order rumble and a second harmonic, low-passed.
@@ -86,8 +99,10 @@ export function createAudioEngine(ctx, cfg = SOUND_DEFAULTS) {
   const glide = (param, value, tau = 0.03) => param.setTargetAtTime(value, ctx.currentTime, tau);
   return {
     master,
-    apply(p, volume = 1) {
-      glide(master.gain, clamp01(volume) * 0.45, 0.05);
+    apply(p, volume = 1, legacyMix = false) {
+      glide(master.gain, clamp01(volume) * (legacyMix ? 1 : 0.45), 0.05);
+      glide(compressedOutput.gain, legacyMix ? 0 : 1);
+      glide(directOutput.gain, legacyMix ? 1 : 0);
       for (const t of tones) glide(t.o.frequency, p.firingHz * t.order, 0.015);
       glide(lowpass.frequency, Math.min(p.cutoffHz, ctx.sampleRate / 2 - 100));
       glide(engineOut.gain, p.engineGain);

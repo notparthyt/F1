@@ -15,12 +15,10 @@ come from racing-line data or documented map traces.
 > testbed, not an official or validated Formula 1 simulator. Vehicle
 > specifications and physics values are illustrative, not measured F1 data.
 
-> **Proprietary software:** This project is not open source or free to reuse.
-> Copyright is reserved. Viewing the code does not grant permission to use,
-> modify, or redistribute it outside rights provided by GitHub's Terms of
-> Service. Contact the maintainer for a separate license. Third-party assets
-> retain their own terms; see [models/CREDITS.md](models/CREDITS.md) and
-> [LICENSE](LICENSE).
+> **Open-source code:** Original source code owned by the project maintainer is
+> available under the [MIT License](LICENSE), including for commercial use.
+> Third-party assets are excluded and retain their own terms; see
+> [models/CREDITS.md](models/CREDITS.md) and the relevant vendor license files.
 
 ## Highlights
 
@@ -31,8 +29,9 @@ come from racing-line data or documented map traces.
   safety-car periods. Q1, Q2, and Q3 set the race grid; each player session
   starts on fresh Soft tyres, and tyre wear begins with the main race.
 - **3D cameras:** cockpit, chase, T-Cam, overview, and a car-following 360
-  Look. Chase and free cameras follow track elevation. A separate trackside TV
-  camera can record the race to WebM.
+  Look that opens overhead and stays outside the car, terrain, and track
+  barriers. Chase and free cameras follow track elevation. A separate
+  trackside TV camera can record the race to WebM.
 - **Circuit details:** Singapore Marina Bay, Buddh International Circuit, and
   Nürburgring GP-Strecke join the 21-circuit roster, with track-specific
   runoff, painted surfaces, kerbs, barriers, and colored directional racing-line arrows. Singapore and
@@ -51,13 +50,20 @@ come from racing-line data or documented map traces.
   use the same circuit spline as existing tracks.
 - **Race presentation:** night circuits use white track lighting; a completed
   race ends with a cinematic driver podium, emotes, map/restart/menu controls,
-  and fireworks. The sky has moving clouds and directional sun/moon lighting;
-  daytime circuits transition into night, Singapore stays at night, and Yas
-  Marina fades from evening into night. Nürburgring has a continuous outer
-  boundary beyond its gravel and grass runoff. The racing line can be toggled
-  in Gameplay settings and is on by default.
+  distinct driver suits, and a raised Cursor Racing logo. The sky has stars,
+  clouds, and visible sun/moon; daytime circuits transition into night,
+  Singapore stays at night, and Yas Marina fades from evening into night.
+  Yas Marina's pit exit crosses below the main track from the right-side lane
+  to the left, emerges at the Turn 3 approach, and rejoins through a short
+  merge. The painted runoff is cut away only across the tunnel footprint;
+  pit-side catch fencing runs from the speed limiter to the exit without
+  adding extra painted lane lines.
+  Nürburgring has a continuous outer boundary beyond its gravel and grass
+  runoff. The racing line can be toggled in Gameplay settings and is on by
+  default.
 - **Car details:** animated driver and steering wheel, cockpit mirrors, and
-  player livery selection with an option to remove a saved custom livery.
+  hand-over-hand steering at extreme lock, plus player livery selection with
+  an option to remove a saved custom livery.
 - **Telemetry:** live speed, lap times, vehicle dynamics, and tyre information.
 - **Graphics:** Default, Mid Optimized, and Max Optimized performance presets
   tune rendering quality. Max Optimized uses the validated optimized car model;
@@ -83,7 +89,7 @@ The app uses vendored Three.js and has no runtime package install or bundler.
 Run the test suite with Node.js:
 
 ```powershell
-node --test
+node --test test/*.test.mjs
 ```
 
 GitHub Pages publishes the project from the `main` branch root. The site is
@@ -96,8 +102,20 @@ the files excluded from that deployment are listed in `.assetsignore`.
 1. Choose **Singleplayer**, select a circuit, and set at least three laps.
    With opponents on, configure qualifying, DNF retirements, and penalties
    independently. Turning opponents off disables and locks those options;
-   races without qualifying use a randomized grid. Multiplayer is marked as
-   coming soon. Use the gear icon for controls, graphics,
+   races without qualifying use a randomized grid. Multiplayer supports
+   private 22-player lobbies and server-authoritative online races in casual
+   or competitive mode. Multiplayer uses the full vehicle physics and the
+   driver's selected handling mode with human drivers only, including shared
+   weather, tire wear, race-distance fuel, and tow/dirty-air effects; drivers
+   start beside their uniquely liveried cars and can walk, change outfits with
+   **M**, and emote with **E**. ERS, DRS, and pit requests are processed by the
+   server; Auto-pit is enabled by default. Finished drivers can continue
+   driving or get on foot while others finish; the podium appears when the
+   race is complete.
+   Once the host enters their car, they can force everyone into their cars with
+   the one-use start button; this begins the countdown. Qualifying has no
+   car-to-car collisions, and enabled penalties are enforced by the server.
+   Use the gear icon for controls, graphics,
    gameplay, keybind, and driver-profile settings.
 2. With qualifying enabled, Q1–Q3 set the grid; otherwise, the AI grid is
    randomized. Your driver spawns beside the car; click the viewport to aim at
@@ -106,7 +124,7 @@ the files excluded from that deployment are listed in `.assetsignore`.
    at a stop, and **A / D** or **← / →** to steer. Press **Esc** to pause;
    choose **Exit to main menu** in the pause menu to return.
 4. Use the HUD and standings to follow lap timing, position, tyres, fuel, and
-   penalties. Press **R** to reset the session.
+   penalties. Use **Reset car** in singleplayer to restart the session.
 
 Race starts use a track-specific starting compound and require a pit stop onto a second compound.
 Press **B** to cycle a requested tyre. With **Auto-pit** enabled, the assistant
@@ -126,9 +144,9 @@ press **O** again or brake to return to Normal.
 
 Outside the car, **W** walks forward, **S** walks backward, and **A / D**
 strafe relative to the camera; double-tap **W** to run and press **Space** to
-jump. Barriers and cars block the driver. **Shift** stands the driver. Press
-**E** while standing still to open the emote menu, then press **1–9** or click
-an emote; **E** or **Esc** closes the menu. **M** opens the driver suit menu.
+jump. Barriers, cars, trees, and buildings block the driver. **Shift** stands
+the driver. Press **E** while standing still to open the emote menu, then press
+**1–9** or click an emote; **E** or **Esc** closes the menu. **M** opens the driver suit menu.
 Moving cancels an emote and resumes the walking animation. In a race, you can
 exit with **L** only after finishing; in practice or a solo time trial,
 complete a lap first.
@@ -158,11 +176,10 @@ complete a lap first.
 | Space (on foot) | Jump |
 | Double-tap W (on foot) | Run |
 | Shift (on foot) | Stand |
-| M (on foot) | Open driver suit menu |
-| R | Reset the session |
+| M (on foot) | Open the suit menu in singleplayer; cycle outfits in multiplayer |
 | C | Cycle Cockpit → Chase Cam → T-Cam |
 | V | Toggle Overview |
-| U | Toggle 360 Look; drag to orbit and scroll to zoom |
+| U | Toggle overhead 360 Look; drag to orbit and scroll to zoom |
 | T | Start / stop trackside TV recording |
 | O | Toggle ERS deployment; status and charge appear in the timing HUD |
 | H | Toggle HUD |
@@ -215,10 +232,13 @@ small deadzone; steering authority decreases with speed.
 - **Original car:** toggles the player's car between its authored model livery
   and the CursorRacing livery. A cropped custom image or your driver name can
   be applied to the player car; AI liveries are unaffected.
-- **DRS:** in a race, DRS is limited to enabled zones and eligibility rules.
-  In a solo time trial or with opponents disabled, it can be requested anywhere.
+- **DRS:** during a race, the player can request DRS anywhere on track; braking
+  closes it. Multiplayer DRS input is applied by the authoritative server and
+  is disabled under yellow flags and in the pit lane.
 - **Weather:** rain changes track grip and the AI's corner-speed targets, with
   denser rain streaks and a progressively reflective wet-track surface.
+  Multiplayer weather is generated by the server and shared by every driver,
+  including its effect on vehicle grip.
 - **Pit stops and race control:** races use a mandatory two-compound stop.
   Auto-pit assistance is optional. Safety cars deploy after retirements or
   major car-to-car crashes; nearby traffic is speed-capped. During a safety-car
@@ -229,7 +249,9 @@ small deadzone; steering authority decreases with speed.
   major crash. Off-track gained positions are also penalized. Penalties affect
   final classification rather than instantly changing running order; outstanding
   time can be served during a pit stop, and only unserved time counts at the
-  finish. Penalties can be disabled when opponents are off.
+  finish. Multiplayer safety-car deployment, speed control, overtaking decisions,
+  penalties, and disqualification are authoritative on the server. Penalties can
+  be disabled when opponents are off.
 - **Team engineer and notices:** suggestions and race-control messages appear
   as text at the left of the screen. Penalties, retirements, and flags briefly
   display in a yellow banner at the top; these are in-game notices, not desktop
@@ -288,12 +310,14 @@ see [models/CREDITS.md](models/CREDITS.md).
 
 ## License and reuse
 
-The original project code is proprietary and all rights are reserved; it is
-not licensed for general use, modification, or redistribution. A public GitHub
-repository cannot disable cloning, downloading, or forking, and code delivered
-to a browser can be inspected. GitHub allows users to view and fork public
-repositories under its platform terms. The notice and [LICENSE](LICENSE)
-describe the project's rights; they cannot technically prevent copies. For
-code that is not publicly accessible, the source repository must be private,
-which requires a GitHub plan that supports public Pages from a private repo or
-a separate public-site deployment.
+Original source code owned by the project maintainer is licensed under the
+[MIT License](LICENSE). You may use, modify, distribute, and sell copies or
+derivatives of that code, subject to the license's notice and warranty terms.
+Contributions are accepted for inclusion under the same license; contributors
+retain their copyright.
+
+This license covers original source code only. It does not relicense third-
+party software, models, textures, or other assets. Those materials remain
+under their own terms; see [models/CREDITS.md](models/CREDITS.md) and each
+asset's license before redistribution. Some asset rights may need confirmation,
+so do not assume every downloadable game asset is MIT-licensed.

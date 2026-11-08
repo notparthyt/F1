@@ -104,13 +104,13 @@ test('the visor camera mount follows driver head animation', () => {
   assert.ok(car.visor.getWorldPosition(new THREE.Vector3()).distanceTo(restPosition) < 1e-8);
 });
 
-test('driver wrists stay on their steering-wheel grips through full lock', () => {
+test('the opposite hand quickly crosses the wheel only past 165 degrees of lock', () => {
   const car = buildRB22Car(template, DEFAULT_CAR);
   car.group.updateMatrixWorld(true);
   const grips = car.driverHands.map(hand =>
     car.steeringWheel.worldToLocal(hand.getWorldPosition(new THREE.Vector3())));
 
-  for (const angle of [-DEFAULT_CAR.maxSteer * STEERING_RATIO, -0.2, 0.2, DEFAULT_CAR.maxSteer * STEERING_RATIO]) {
+  for (const angle of [-Math.PI * 164 / 180, -0.2, 0.2, Math.PI * 164 / 180]) {
     car.steeringWheel.rotation.x = angle;
     car.updateArms();
     car.group.updateMatrixWorld(true);
@@ -118,6 +118,20 @@ test('driver wrists stay on their steering-wheel grips through full lock', () =>
       const currentGrip = car.steeringWheel.worldToLocal(hand.getWorldPosition(new THREE.Vector3()));
       assert.ok(currentGrip.distanceTo(grips[i]) < 1e-4, `hand ${i} follows its wheel grip at ${angle} rad`);
     });
+  }
+
+  for (const side of [-1, 1]) {
+    car.steeringWheel.rotation.x = side * Math.PI;
+    car.updateArms();
+    car.group.updateMatrixWorld(true);
+    const currentGrips = car.driverHands.map(hand =>
+      car.steeringWheel.worldToLocal(hand.getWorldPosition(new THREE.Vector3())));
+    const moved = currentGrips.map((grip, i) => grip.distanceTo(grips[i]) > 1e-3);
+    assert.equal(moved.filter(Boolean).length, 1);
+    const crossingHand = moved.findIndex(Boolean);
+    assert.ok(currentGrips[crossingHand].z * side > 0, 'the other hand reaches the side of the wheel the driver is pulling toward');
+    assert.ok(currentGrips[moved.indexOf(false)].distanceTo(grips[moved.indexOf(false)]) < 1e-4,
+      'the pulling hand keeps its existing grip');
   }
 });
 

@@ -702,9 +702,11 @@ export function buildRB22Car(template, config, { paint = 0x0e1626, accent = 0x39
       // At extreme lock, smoothly gather both hands onto the side the driver
       // is pulling toward, as a short hand-over-hand correction for hairpins.
       const wheelAngle = steeringWheel.rotation.x, lock = Math.abs(wheelAngle);
-      const transfer = THREE.MathUtils.smoothstep(lock, Math.PI * 0.58, Math.PI * 0.88);
       const side = Math.sign(wheelAngle);
-      if (transfer > 0 && side) {
+      const transfer = side && arm.grip.z * side < 0
+        ? THREE.MathUtils.smoothstep(lock, Math.PI * 165 / 180, Math.PI)
+        : 0;
+      if (transfer > 0) {
         const radius = Math.hypot(arm.grip.y, arm.grip.z);
         const vertical = (arm.handIndex === 0 ? 1 : -1) * radius * 0.28;
         transferGrip.set(arm.grip.x, vertical, side * Math.sqrt(Math.max(0, radius * radius - vertical * vertical)));

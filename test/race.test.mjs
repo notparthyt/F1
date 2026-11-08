@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createCar, step, FIXED_DT } from '../src/physics.mjs';
+import { createCar, step, stepArcade, FIXED_DT } from '../src/physics.mjs';
 import { createStadiumTrack } from '../src/track.mjs';
 import { createRace, wakeStrength, resolveCarContact, RACE_DEFAULTS, DEFAULT_GRID } from '../src/race.mjs';
 
@@ -30,6 +30,31 @@ test('the default field has 22 safe grid slots and pit boxes inside the speed-li
   assert.ok(boxes[0] >= race.pit.limitStart && boxes.at(-1) <= race.pit.limitEnd);
   assert.ok(boxes.slice(1).every((box, i) => box - boxes[i] === race.pit.boxSpacing));
   assert.equal(race.pit.boxSpacing, 12);
+});
+
+test('networked races use full vehicle physics locally and leave remote entries to the server', () => {
+  const race = createRace(track, { grid: DEFAULT_GRID.slice(0, 1), options: { networked: true } });
+  const playerStartX = race.car.x;
+  const remote = race.entries[1].car;
+  const remoteStart = { x: remote.x, y: remote.y, heading: remote.heading, vx: remote.vx, vy: remote.vy };
+  race.advance(0.25, { throttle: 1, brake: 0, steer: 0 }, track.surfaceAt, track.barrierAt);
+  assert.ok(race.car.x > playerStartX, 'local player prediction should continue');
+  assert.ok(race.car.telemetry.powertrain, 'networked player prediction should use full vehicle physics');
+  assert.deepEqual(
+    { x: remote.x, y: remote.y, heading: remote.heading, vx: remote.vx, vy: remote.vy },
+    remoteStart,
+    'remote entries should be driven only by authoritative server snapshots',
+  );
+});
+
+test('arcade physics helper accelerates, steers and keeps a bounded speed', () => {
+  const car = createCar();
+  for (let i = 0; i < 240; i++) stepArcade(car, { throttle: 1, steer: 0.5 }, FIXED_DT);
+  assert.ok(car.telemetry.speed > 15);
+  assert.ok(car.heading > 0);
+  for (let i = 0; i < 2400; i++) stepArcade(car, { throttle: 1 }, FIXED_DT);
+  assert.ok(car.telemetry.speed <= 92);
+  assert.equal(car.telemetry.wheels.length, 4);
 });
 
 test('staging the player in the pit lane resets their progress without moving the AI grid', () => {

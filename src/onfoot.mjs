@@ -44,6 +44,7 @@ export function moveOnFoot(position, heading, { forward = 0, strafe = 0 } = {}, 
 export function moveOnFootColliding(position, heading, input, elapsed, {
   speed = ON_FOOT_WALK_SPEED,
   barrierAt = null,
+  obstacleAt = null,
   car = null,
   cars = null,
   playerRadius = ON_FOOT_PLAYER_RADIUS,
@@ -52,6 +53,7 @@ export function moveOnFootColliding(position, heading, input, elapsed, {
     throw new RangeError('On-foot collision radius must be finite and nonnegative');
   const target = moveOnFoot(position, heading, input, elapsed, speed);
   const collides = point => {
+    if (obstacleAt?.(point.x, point.y)) return true;
     if (barrierAt) {
       for (let i = 0; i < ON_FOOT_COLLISION_SAMPLES; i++) {
         const angle = 2 * Math.PI * i / ON_FOOT_COLLISION_SAMPLES;
@@ -108,8 +110,8 @@ export function canExitVehicle({ race = false, playerFinished = false, completed
   return race ? playerFinished : completedLaps > 0;
 }
 
-export function shouldShowSeatedDriver({ player = false, onFoot = false, cockpit = false } = {}) {
-  return !player || !onFoot;
+export function shouldShowSeatedDriver({ player = false, onFoot = false, cockpit = false, networked = false } = {}) {
+  return networked ? !onFoot : !player || !onFoot;
 }
 
 export function shouldAutoPauseOnBlur({ onFoot = false, raceFinished = false } = {}) {

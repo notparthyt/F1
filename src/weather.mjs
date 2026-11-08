@@ -36,6 +36,18 @@ export function createWeather({ random = Math.random, options = {} } = {}) {
 
   return {
     get state() { return snapshot(); },
+    setState(state) {
+      if (!state || typeof state !== 'object'
+        || typeof state.raining !== 'boolean'
+        || !Number.isFinite(state.intensity) || state.intensity < 0 || state.intensity > 1
+        || !Number.isFinite(state.wetness) || state.wetness < 0 || state.wetness > 1) {
+        throw new TypeError('Weather state must contain a raining flag and normalized intensity and wetness.');
+      }
+      raining = state.raining;
+      intensity = state.intensity;
+      wetness = state.wetness;
+      return snapshot();
+    },
     update(dt) {
       if (!Number.isFinite(dt) || dt <= 0) return snapshot();
       let remaining = dt;

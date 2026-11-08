@@ -83,9 +83,39 @@ function addSky(world, radius, position = new THREE.Vector3()) {
   );
   clouds.position.copy(position);
   world.add(clouds);
+  const starPositions = new Float32Array(900 * 3);
+  for (let i = 0; i < starPositions.length; i += 3) {
+    const y = Math.random() * 2 - 1, angle = Math.random() * Math.PI * 2;
+    const horizontal = Math.sqrt(1 - y * y), distance = radius * 0.99;
+    starPositions[i] = Math.cos(angle) * horizontal * distance;
+    starPositions[i + 1] = y * distance;
+    starPositions[i + 2] = Math.sin(angle) * horizontal * distance;
+  }
+  const starGeometry = new THREE.BufferGeometry();
+  starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starPositions, 3));
+  const stars = new THREE.Points(starGeometry, new THREE.PointsMaterial({
+    color: 0xc8dcff, size: Math.max(0.8, radius * 0.0011), transparent: true,
+    opacity: 0, depthWrite: false, sizeAttenuation: false,
+  }));
+  stars.position.copy(position);
+  stars.frustumCulled = false;
+  world.add(stars);
+  const sun = new THREE.Mesh(
+    new THREE.SphereGeometry(radius * 0.012, 24, 16),
+    new THREE.MeshBasicMaterial({ color: 0xffe6a8, transparent: true, opacity: 0, depthWrite: false }),
+  );
+  const moon = new THREE.Mesh(
+    new THREE.SphereGeometry(radius * 0.008, 24, 16),
+    new THREE.MeshBasicMaterial({ color: 0xd8e4ff, transparent: true, opacity: 0, depthWrite: false }),
+  );
+  world.add(sun, moon);
   world.userData.skyMesh = skyMesh;
   world.userData.skyRadius = radius;
   world.userData.clouds = clouds;
+  world.userData.stars = stars;
+  world.userData.skySun = sun;
+  world.userData.skyMoon = moon;
+  world.userData.skyCenter = position.clone();
   updateWorldDaylight(world, 1);
 }
 
@@ -104,7 +134,34 @@ export function updateWorldDaylight(world, daylight) {
     colors.setXYZ(i, color.r, color.g, color.b);
   }
   colors.needsUpdate = true;
-  world.userData.clouds.material.opacity = 0.3 + 0.18 * amount;
+  world.userData.clouds.material.opacity = 0.08 + 0.32 * amount;
+  const night = 1 - THREE.MathUtils.smoothstep(amount, 0.08, 0.38);
+  const stars = world.userData.stars;
+  if (stars) {
+    stars.material.opacity = night;
+    stars.visible = night > 0.01;
+  }
+  const sunAmount = THREE.MathUtils.smoothstep(amount, 0.12, 0.42);
+  const moonAmount = 1 - THREE.MathUtils.smoothstep(amount, 0.12, 0.42);
+  const angle = amount * Math.PI * 1.5;
+  const sunDirection = new THREE.Vector3(
+    Math.cos(angle) * Math.cos(amount * 1.4),
+    -0.25 + amount * 1.45,
+    Math.sin(angle) * Math.cos(amount * 1.4),
+  ).normalize();
+  const center = world.userData.skyCenter;
+  const celestialDistance = radius * 0.82;
+  const skySun = world.userData.skySun, skyMoon = world.userData.skyMoon;
+  if (center && skySun) {
+    skySun.position.copy(center).addScaledVector(sunDirection, celestialDistance);
+    skySun.material.opacity = sunAmount;
+    skySun.visible = sunAmount > 0.01;
+  }
+  if (center && skyMoon) {
+    skyMoon.position.copy(center).addScaledVector(sunDirection, -celestialDistance);
+    skyMoon.material.opacity = moonAmount;
+    skyMoon.visible = moonAmount > 0.01;
+  }
 }
 
 export function updateWorldWeather(world, wetness) {
@@ -114,6 +171,75 @@ export function updateWorldWeather(world, wetness) {
     material.roughness = 1 - amount * 0.68;
     material.metalness = amount * 0.12;
   }
+}
+
+function collisionShapesNear(world, x, y) {
+  const data = world?.userData;
+  if (!data) return [];
+  if (!data.collisionGrid) {
+    const cellSize = 32, grid = new Map();
+    for (const shape of data.collisionShapes ?? []) {
+      const cosine = Math.cos(shape.heading ?? 0), sine = Math.sin(shape.heading ?? 0);
+      const extentX = shape.type === 'circle' ? shape.radius
+        : Math.abs(cosine) * shape.halfLength + Math.abs(sine) * shape.halfWidth;
+      const extentY = shape.type === 'circle' ? shape.radius
+        : Math.abs(sine) * shape.halfLength + Math.abs(cosine) * shape.halfWidth;
+      for (let gx = Math.floor((shape.x - extentX) / cellSize); gx <= Math.floor((shape.x + extentX) / cellSize); gx++)
+        for (let gy = Math.floor((shape.y - extentY) / cellSize); gy <= Math.floor((shape.y + extentY) / cellSize); gy++) {
+          const key = `${gx},${gy}`;
+          (grid.get(key) ?? grid.set(key, []).get(key)).push(shape);
+        }
+    }
+    data.collisionGrid = { cellSize, shapes: grid };
+  }
+  const { cellSize, shapes } = data.collisionGrid;
+  return shapes.get(`${Math.floor(x / cellSize)},${Math.floor(y / cellSize)}`) ?? [];
+}
+
+export function worldObstacleAt(world, x, y, padding = 0.3) {
+  if (![x, y, padding].every(Number.isFinite) || padding < 0)
+    throw new RangeError('World obstacle query must use finite coordinates and nonnegative padding');
+  for (const shape of collisionShapesNear(world, x, y)) {
+    if (shape.type === 'circle') {
+      if ((x - shape.x) ** 2 + (y - shape.y) ** 2 <= (shape.radius + padding) ** 2) return true;
+      continue;
+    }
+    const dx = x - shape.x, dy = y - shape.y;
+    const along = dx * Math.cos(shape.heading) + dy * Math.sin(shape.heading);
+    const across = dx * Math.sin(shape.heading) - dy * Math.cos(shape.heading);
+    if (Math.abs(along) <= shape.halfLength + padding
+      && Math.abs(across) <= shape.halfWidth + padding) return true;
+  }
+  return false;
+}
+
+export function worldBarrierAt(world, x, y, padding = 0.8) {
+  if (![x, y, padding].every(Number.isFinite) || padding < 0)
+    throw new RangeError('World barrier query must use finite coordinates and nonnegative padding');
+  for (const shape of collisionShapesNear(world, x, y)) {
+    if (shape.type === 'circle') {
+      const dx = x - shape.x, dy = y - shape.y, distance = Math.hypot(dx, dy);
+      if (distance >= shape.radius + padding) continue;
+      return {
+        depth: shape.radius + padding - distance,
+        nx: distance > 1e-8 ? dx / distance : 1,
+        ny: distance > 1e-8 ? dy / distance : 0,
+      };
+    }
+    const cosine = Math.cos(shape.heading), sine = Math.sin(shape.heading);
+    const dx = x - shape.x, dy = y - shape.y;
+    const along = dx * cosine + dy * sine, across = dx * sine - dy * cosine;
+    const alongDepth = shape.halfLength + padding - Math.abs(along);
+    const acrossDepth = shape.halfWidth + padding - Math.abs(across);
+    if (alongDepth <= 0 || acrossDepth <= 0) continue;
+    if (alongDepth < acrossDepth) {
+      const side = Math.sign(along) || 1;
+      return { depth: alongDepth, nx: side * cosine, ny: side * sine };
+    }
+    const side = Math.sign(across) || 1;
+    return { depth: acrossDepth, nx: side * sine, ny: -side * cosine };
+  }
+  return null;
 }
 
 // Centerline samples (counter-clockwise from the start line) with left normals.
@@ -132,15 +258,58 @@ export function centerline(halfStraight, radius, step = 2) {
 }
 
 // Strip between left offsets a and b; vertical when y1 is given (walls).
-function ribbon(pts, a, b, y0, material, vScale, y1) {
+function ribbon(pts, a, b, y0, material, vScale, y1, cutoutAt = null) {
   const pos = [], uv = [], idx = [];
-  pts.forEach((p, i) => {
-    const base = p.h ?? 0;
-    if (y1 === undefined) pos.push(p.x + p.nx * a, base + y0, -(p.y + p.ny * a), p.x + p.nx * b, base + y0, -(p.y + p.ny * b));
-    else pos.push(p.x + p.nx * a, base + y0, -(p.y + p.ny * a), p.x + p.nx * a, base + y1, -(p.y + p.ny * a));
-    uv.push(0, p.s / vScale, 1, p.s / vScale);
-    if (i) { const k = 2 * i; idx.push(k - 2, k - 1, k, k - 1, k + 1, k); }
-  });
+  if (!cutoutAt) {
+    pts.forEach((p, i) => {
+      const base = p.h ?? 0;
+      const bottom = typeof y0 === 'function' ? y0(p) : y0, top = typeof y1 === 'function' ? y1(p) : y1;
+      if (y1 === undefined) pos.push(p.x + p.nx * a, base + bottom, -(p.y + p.ny * a), p.x + p.nx * b, base + bottom, -(p.y + p.ny * b));
+      else pos.push(p.x + p.nx * a, base + bottom, -(p.y + p.ny * a), p.x + p.nx * a, base + top, -(p.y + p.ny * a));
+      uv.push(0, p.s / vScale, 1, p.s / vScale);
+      if (i) { const k = 2 * i; idx.push(k - 2, k - 1, k, k - 1, k + 1, k); }
+    });
+  } else {
+    if (y1 !== undefined) throw new RangeError('Ribbon cutouts are supported only on horizontal surfaces');
+    const subdivisionsAlong = 8, subdivisionsAcross = 16;
+    const vertex = (p, q, t, u) => {
+      const x = p.x + (q.x - p.x) * t, y = p.y + (q.y - p.y) * t;
+      const nx = p.nx + (q.nx - p.nx) * t, ny = p.ny + (q.ny - p.ny) * t;
+      const offset = a + (b - a) * u;
+      const ground = p.h + (q.h - p.h) * t, base = typeof y0 === 'function'
+        ? y0({ ...p, h: ground, s: p.s + (q.s - p.s) * t })
+        : y0;
+      return { x: x + nx * offset, y: y + ny * offset, h: ground + base, s: p.s + (q.s - p.s) * t, u };
+    };
+    const addVertex = point => {
+      const index = pos.length / 3;
+      pos.push(point.x, point.h, -point.y);
+      uv.push(point.u, point.s / vScale);
+      return index;
+    };
+    for (let i = 1; i < pts.length; i++) {
+      const p = pts[i - 1], q = pts[i], mx = (p.x + q.x) / 2, my = (p.y + q.y) / 2;
+      const distance = cutoutAt(mx, my), radius = Math.max(Math.abs(a), Math.abs(b)) + Math.hypot(q.x - p.x, q.y - p.y) / 2;
+      if (distance > radius) {
+        const k = pos.length / 3, p0 = vertex(p, q, 0, 0), p1 = vertex(p, q, 0, 1);
+        const q0 = vertex(p, q, 1, 0), q1 = vertex(p, q, 1, 1);
+        for (const point of [p0, p1, q0, q1]) addVertex(point);
+        idx.push(k, k + 1, k + 2, k + 1, k + 3, k + 2);
+        continue;
+      }
+      for (let along = 0; along < subdivisionsAlong; along++) for (let across = 0; across < subdivisionsAcross; across++) {
+        const t0 = along / subdivisionsAlong, t1 = (along + 1) / subdivisionsAlong;
+        const u0 = across / subdivisionsAcross, u1 = (across + 1) / subdivisionsAcross;
+        const p0 = vertex(p, q, t0, u0), p1 = vertex(p, q, t0, u1);
+        const p2 = vertex(p, q, t1, u0), p3 = vertex(p, q, t1, u1);
+        const first = cutoutAt((p0.x + p1.x + p2.x) / 3, (p0.y + p1.y + p2.y) / 3);
+        const second = cutoutAt((p1.x + p3.x + p2.x) / 3, (p1.y + p3.y + p2.y) / 3);
+        const k = pos.length / 3;
+        if (first > 0) { addVertex(p0); addVertex(p1); addVertex(p2); idx.push(k, k + 1, k + 2); }
+        if (second > 0) { const next = pos.length / 3; addVertex(p1); addVertex(p3); addVertex(p2); idx.push(next, next + 1, next + 2); }
+      }
+    }
+  }
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
   g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
@@ -216,6 +385,7 @@ export function buildWorld({ halfStraight, radius, roadWidth, boxColors = [] }) 
   const world = new THREE.Group();
   world.userData.detailLod = [];
   world.userData.roadMaterials = [];
+  world.userData.collisionShapes = [];
   const pts = centerline(halfStraight, radius);
   const half = roadWidth / 2, pit = stadiumPitLane(halfStraight, radius, roadWidth);
   const std = (o) => new THREE.MeshStandardMaterial({ side: THREE.DoubleSide, ...o });
@@ -269,6 +439,10 @@ export function buildWorld({ halfStraight, radius, roadWidth, boxColors = [] }) 
   const garageLength = pit.boxSpacing * (Math.max(boxColors.length, 22) - 1) + 60;
   const garage = new THREE.Mesh(new THREE.BoxGeometry(garageLength, 6, 7), std({ color: 0xd9dcd6, roughness: 0.7 }));
   garage.position.set(pit.boxStart - 30 + garageLength / 2 - halfStraight, 3, radius - (half + 12 + 4.5)); garage.castShadow = garage.receiveShadow = true; world.add(garage);
+  world.userData.collisionShapes.push({
+    type: 'box', x: garage.position.x, y: -garage.position.z, heading: 0,
+    halfLength: garageLength / 2, halfWidth: 3.5,
+  });
   const garageBay = new THREE.MeshStandardMaterial({ color: 0x243140, roughness: 0.8 });
   const garageAccent = new THREE.MeshStandardMaterial({ color: 0x6fffc3, roughness: 0.55 });
   for (let i = 0; i < Math.max(boxColors.length, 22); i++) {
@@ -317,6 +491,9 @@ export function buildWorld({ halfStraight, radius, roadWidth, boxColors = [] }) 
   const endGeo = new THREE.ExtrudeGeometry(endShape, { depth: 0.6, bevelEnabled: false });
   const add = (mesh) => { mesh.castShadow = mesh.receiveShadow = true; world.add(mesh); return mesh; };
   for (const x of [-140, 0, 140]) {
+    world.userData.collisionShapes.push({
+      type: 'box', x, y: -(radius + half + 25), heading: 0, halfLength: 57, halfWidth: 10,
+    });
     for (let r = 0; r < 8; r++) add(new THREE.Mesh(new THREE.BoxGeometry(110, 1.2, 2), stepMats)).position.set(x, 0.6 + r * 1.2, z0 + r * 2);
     for (const ex of [x - 55.6, x + 55]) { const e = add(new THREE.Mesh(endGeo, concrete)); e.rotation.y = Math.PI / 2; e.position.x = ex; }
     add(new THREE.Mesh(new THREE.BoxGeometry(111.2, roofY, 0.6), concrete)).position.set(x, roofY / 2, zBack + 0.3);
@@ -402,6 +579,9 @@ export function buildWorld({ halfStraight, radius, roadWidth, boxColors = [] }) 
       if (clear(x, y)) spots.push([x, y, 0.75 + rng() * 0.6, rng() * Math.PI * 2, rng()]);
     }
   }
+  spots.forEach(([x, y, scale]) => world.userData.collisionShapes.push({
+    type: 'circle', x, y, radius: 0.35 * scale,
+  }));
   const treeMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 });
   const treeGeometries = [treeGeometry('conifer'), treeGeometry('broadleaf')];
   const treeCells = new Map(), cellSize = 300;
@@ -435,6 +615,7 @@ export function buildCircuitWorld(track, { boxColors = [], night = false, urban 
   const world = new THREE.Group(), half = track.roadWidth / 2, wallAt = track.wallOffset;
   world.userData.detailLod = [];
   world.userData.roadMaterials = [];
+  world.userData.collisionShapes = [];
   const { x: X, y: Y, z: Z, s: S, heading: H, kerbType } = track.samples, n = X.length;
   const pts = Array.from({ length: n + 1 }, (_, k) => { const i = k % n; return { x: X[i], y: Y[i], h: Z?.[i] ?? 0, nx: -Math.sin(H[i]), ny: Math.cos(H[i]), s: k < n ? S[i] : track.length, i }; });
   // Consecutive runs of samples meeting a predicate (each run shares its end point).
@@ -469,9 +650,7 @@ export function buildCircuitWorld(track, { boxColors = [], night = false, urban 
       (terrainCells.get(key) ?? terrainCells.set(key, []).get(key)).push(k);
     }
   }
-  for (let j = 0; j <= terrainSegments; j++) for (let i = 0; i <= terrainSegments; i++) {
-    const x = cx + (i / terrainSegments - 0.5) * size;
-    const y = cy + (j / terrainSegments - 0.5) * size;
+  const terrainProjection = (x, y) => {
     const candidates = terrainCells.get(terrainCellKey(Math.floor(x / terrainCellSize), Math.floor(y / terrainCellSize))) ?? [];
     let progress = 0, bestD2 = Infinity;
     for (const k of candidates) {
@@ -480,19 +659,82 @@ export function buildCircuitWorld(track, { boxColors = [], night = false, urban 
       const fraction = Math.max(0, Math.min(1, ((x - X[k]) * dx + (y - Y[k]) * dy) / lengthSquared));
       const px = X[k] + dx * fraction, py = Y[k] + dy * fraction;
       const distanceSquared = (x - px) ** 2 + (y - py) ** 2;
-      if (distanceSquared < bestD2) {
-        bestD2 = distanceSquared;
-        progress = S[k] + (S[k + 1] - S[k]) * fraction;
-      }
+      if (distanceSquared < bestD2) { bestD2 = distanceSquared; progress = S[k] + (S[k + 1] - S[k]) * fraction; }
     }
-    const distance = Math.sqrt(bestD2), fade = 1 - THREE.MathUtils.smoothstep(distance, wallAt + 20, 190);
-    const localHeight = bestD2 < Infinity ? track.pit?.tunnel ? track.heightAtPosition(x, y) : track.heightAt(progress) : 0;
-    const height = (bestD2 < Infinity ? localHeight * fade : 0) - 0.055;
+    return { progress, distance: Math.sqrt(bestD2) };
+  };
+  const pitTunnel = track.pit?.tunnel ? track.pit : null;
+  // Only the two open ramps (cut-and-cover trench mouths) are cut out of the ground and its
+  // overlays; the covered middle keeps its ground as the roof's cover. The cut is a little wider
+  // than the walls and a concrete coping strip hides the seam.
+  const tunnelCutWidth = pitTunnel ? pitTunnel.tunnelHalfWidth + 0.6 : 0;
+  const rampPaths = [];
+  if (pitTunnel) {
+    const { start, end, ramp } = pitTunnel.tunnel;
+    for (const [a, b] of [[start, start + ramp], [end - ramp, end]]) {
+      const path = [], count = Math.ceil((b - a) / 2);
+      for (let i = 0; i <= count; i++) {
+        const s = a + (b - a) * i / count, [x, y] = track.point(s, pitTunnel.laneOffsetAt(s));
+        path.push({ x, y, s });
+      }
+      rampPaths.push(path);
+    }
+  }
+  const tunnelAt = (x, y) => {
+    let closest = null, bestD2 = Infinity;
+    for (const path of rampPaths) for (let i = 1; i < path.length; i++) {
+      const a = path[i - 1], b = path[i], dx = b.x - a.x, dy = b.y - a.y;
+      const f = ((x - a.x) * dx + (y - a.y) * dy) / (dx * dx + dy * dy);
+      // no end caps: the cut stops square at each end of a ramp
+      if (f < -0.02 || f > 1.02) continue;
+      const fc = Math.max(0, Math.min(1, f));
+      const px = a.x + dx * fc, py = a.y + dy * fc, d2 = (x - px) ** 2 + (y - py) ** 2;
+      if (d2 < bestD2) { bestD2 = d2; closest = { distance: Math.sqrt(d2), progress: a.s + (b.s - a.s) * fc }; }
+    }
+    return closest;
+  };
+  const tunnelCutAt = (x, y) => (location => location && location.distance <= tunnelCutWidth)(tunnelAt(x, y));
+  const addTerrainVertex = (x, y, u, v) => {
+    const { progress, distance } = terrainProjection(x, y);
+    const fade = 1 - THREE.MathUtils.smoothstep(distance, wallAt + 20, 190);
+    const height = (Number.isFinite(distance) ? track.heightAt(progress) * fade : 0) - 0.055;
+    const index = terrainPositions.length / 3;
+    terrainPositions.push(x, height, -y);
+    terrainUvs.push(u, v);
+    return index;
+  };
+  const cellWidth = size / terrainSegments;
+  for (let j = 0; j <= terrainSegments; j++) for (let i = 0; i <= terrainSegments; i++) {
+    const x = cx + (i / terrainSegments - 0.5) * size;
+    const y = cy + (j / terrainSegments - 0.5) * size;
+    const { progress, distance } = terrainProjection(x, y), fade = 1 - THREE.MathUtils.smoothstep(distance, wallAt + 20, 190);
+    const height = (Number.isFinite(distance) ? track.heightAt(progress) * fade : 0) - 0.055;
     terrainPositions.push(x, height, -y);
     terrainUvs.push(i / terrainSegments * size / 8, j / terrainSegments * size / 8);
-    if (i && j) {
-      const k = j * (terrainSegments + 1) + i, a = k - terrainSegments - 2, b = a + 1, c = k - 1, e = k;
+  }
+  for (let j = 0; j < terrainSegments; j++) for (let i = 0; i < terrainSegments; i++) {
+    const x = cx + ((i + 0.5) / terrainSegments - 0.5) * size;
+    const y = cy + ((j + 0.5) / terrainSegments - 0.5) * size;
+    const tunnelDistance = tunnelAt(x, y)?.distance ?? Infinity;
+    const k = j * (terrainSegments + 1) + i, a = k, b = a + 1, c = a + terrainSegments + 1, e = c + 1;
+    if (!pitTunnel || tunnelDistance > tunnelCutWidth + cellWidth * 1.5) {
       terrainIndices.push(a, b, c, b, e, c);
+      continue;
+    }
+    const subdivisions = 8;
+    for (let sy = 0; sy < subdivisions; sy++) for (let sx = 0; sx < subdivisions; sx++) {
+      const x0 = cx + ((i + sx / subdivisions) / terrainSegments - 0.5) * size;
+      const x1 = cx + ((i + (sx + 1) / subdivisions) / terrainSegments - 0.5) * size;
+      const y0 = cy + ((j + sy / subdivisions) / terrainSegments - 0.5) * size;
+      const y1 = cy + ((j + (sy + 1) / subdivisions) / terrainSegments - 0.5) * size;
+      const u0 = (i + sx / subdivisions) / terrainSegments * size / 8, u1 = (i + (sx + 1) / subdivisions) / terrainSegments * size / 8;
+      const v0 = (j + sy / subdivisions) / terrainSegments * size / 8, v1 = (j + (sy + 1) / subdivisions) / terrainSegments * size / 8;
+      const q0 = addTerrainVertex(x0, y0, u0, v0), q1 = addTerrainVertex(x1, y0, u1, v0);
+      const q2 = addTerrainVertex(x0, y1, u0, v1), q3 = addTerrainVertex(x1, y1, u1, v1);
+      const firstX = (x0 + x1 + x0) / 3, firstY = (y0 + y0 + y1) / 3;
+      const secondX = (x1 + x1 + x0) / 3, secondY = (y0 + y1 + y1) / 3;
+      if (!tunnelCutAt(firstX, firstY)) terrainIndices.push(q0, q1, q2);
+      if (!tunnelCutAt(secondX, secondY)) terrainIndices.push(q1, q3, q2);
     }
   }
   const terrainGeometry = new THREE.BufferGeometry();
@@ -552,7 +794,8 @@ export function buildCircuitWorld(track, { boxColors = [], night = false, urban 
             : surface === 'asphalt' ? std({ color: 0x53585c, roughness: 0.9 })
               : std({ map: runoffTex, roughness: 1 });
       for (const r of runs(p => (track.runoffAt?.(p.s) ?? track.runoffSurface) === surface))
-        world.add(ribbon(r, side * runoffStart, side * (half + 1.2 + track.runoffWidth), 0.004, material, 20));
+        world.add(ribbon(r, side * runoffStart, side * (half + 1.2 + track.runoffWidth), 0.004, material, 20, undefined,
+          pitTunnel ? (x, y) => (tunnelAt(x, y)?.distance ?? Infinity) - tunnelCutWidth : null));
     }
     if (track.grassWidth > 0) world.add(ribbon(pts, side * (half + 1.2 + track.runoffWidth),
       side * (half + 1.2 + track.runoffWidth + track.grassWidth), -0.002, std({ color: 0x456832, roughness: 1 }), 30));
@@ -604,6 +847,13 @@ export function buildCircuitWorld(track, { boxColors = [], night = false, urban 
   if (!urban && standSide) {
     const stand = new THREE.Group(); stand.position.copy(start.position); stand.rotation.y = H[0]; world.add(stand);
     const z0 = wallAt + 6;
+    const localX = -60, localZ = standSide * (z0 + 7);
+    world.userData.collisionShapes.push({
+      type: 'box',
+      x: start.position.x + Math.cos(H[0]) * localX + Math.sin(H[0]) * localZ,
+      y: Y[0] + Math.sin(H[0]) * localX - Math.cos(H[0]) * localZ,
+      heading: H[0], halfLength: 57, halfWidth: 10,
+    });
     for (let r = 0; r < 8; r++) {
       const step = new THREE.Mesh(new THREE.BoxGeometry(110, 1.2, 2), stepMats); step.castShadow = step.receiveShadow = true;
       step.position.set(-60, 0.6 + r * 1.2, standSide * (z0 + r * 2)); stand.add(step);
@@ -620,6 +870,9 @@ export function buildCircuitWorld(track, { boxColors = [], night = false, urban 
     const [x, y] = track.point(s, side * (wallAt + 31)), h = track.heightAt(s);
     if (Math.abs(track.offset(x, y)) < wallAt + 18) continue;
     const stand = new THREE.Group(); stand.position.set(x, h, -y); stand.rotation.y = track.heading(s); world.add(stand);
+    world.userData.collisionShapes.push({
+      type: 'box', x, y, heading: track.heading(s), halfLength: 35, halfWidth: 7,
+    });
     const sign = side;
     const base = new THREE.Mesh(new THREE.BoxGeometry(68, 1.2, 13), concrete); base.position.set(0, 0.7, 0); base.castShadow = base.receiveShadow = true; stand.add(base);
     for (let row = 0; row < 7; row++) {
@@ -708,37 +961,116 @@ export function buildCircuitWorld(track, { boxColors = [], night = false, urban 
       geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2)); geometry.setIndex(indices); geometry.computeVertexNormals();
       const mesh = new THREE.Mesh(geometry, material); mesh.receiveShadow = true; world.add(mesh); return mesh;
     };
+    const pitRouteStrip = (a, b, offsetAt) => {
+      const count = Math.max(1, Math.round((b - a) / 2));
+      return Array.from({ length: count + 1 }, (_, i) => {
+        const s = a + (b - a) * i / count, before = track.point(s - 1, offsetAt(s - 1)), after = track.point(s + 1, offsetAt(s + 1));
+        const dx = after[0] - before[0], dy = after[1] - before[1], length = Math.hypot(dx, dy) || 1;
+        const [x, y] = track.point(s, offsetAt(s));
+        return { x, y, h: track.heightAt(s), nx: -dy / length, ny: dx / length, s: s - a, progress: s, heading: Math.atan2(dy, dx) };
+      });
+    };
+    const pitRouteRoadMesh = (a, b, material) => {
+      const path = pitRouteStrip(a, b, pit.exitOffsetAt), positions = [], uvs = [], indices = [];
+      const inner = -(pit.outer - pit.inner) / 2, outer = (pit.outer - pit.inner) / 2;
+      path.forEach(p => {
+        const h = (track.pitHeightAt?.(p.progress) ?? p.h) + 0.006;
+        positions.push(p.x + p.nx * inner, h, -(p.y + p.ny * inner), p.x + p.nx * outer, h, -(p.y + p.ny * outer));
+        uvs.push(0, p.s / 30, 1, p.s / 30);
+      });
+      for (let i = 1; i < path.length; i++) { const k = i * 2; indices.push(k - 2, k - 1, k, k - 1, k + 1, k); }
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2)); geometry.setIndex(indices); geometry.computeVertexNormals();
+      const mesh = new THREE.Mesh(geometry, material); mesh.receiveShadow = true; world.add(mesh); return mesh;
+    };
     const pitSurface = asphaltMaterial(Math.abs(pit.outer - half));
     world.userData.roadMaterials.push(pitSurface);
-    world.add(pitRoadMesh(pit.entry, pit.exit, pitSurface));
+    world.add(pitRoadMesh(pit.entry, pit.tunnel?.start ?? pit.exit, pitSurface));
+    if (pit.tunnel) world.add(pitRouteRoadMesh(pit.tunnel.start, pit.exit, pitSurface));
+    const innerFromLane = -(pit.outer - pit.inner) / 2;
+    const outerFromLane = (pit.outer - pit.inner) / 2;
+    const tunnelConcrete = std({ color: 0x777c80, roughness: 0.92 });
+    const smooth01 = t => { t = THREE.MathUtils.clamp(t, 0, 1); return t * t * (3 - 2 * t); };
     if (pit.tunnel) {
-      const tunnelPath = strip(pit.tunnel.start, pit.tunnel.end);
-      const centreOffset = pit.side * pit.lane;
-      const innerOffset = -pit.side * pit.inner, outerOffset = -pit.side * pit.outer;
-      const innerFromCentre = centreOffset - innerOffset, outerFromCentre = centreOffset - outerOffset;
-      const tunnelConcrete = std({ color: 0x777c80, roughness: 0.92 });
-      const wallBottom = -pit.tunnel.depth + 0.04, wallTop = -0.12;
-      const tunnelWallA = ribbon(tunnelPath, innerFromCentre, innerFromCentre, wallBottom, tunnelConcrete, 12, wallTop);
-      const tunnelWallB = ribbon(tunnelPath, outerFromCentre, outerFromCentre, wallBottom, tunnelConcrete, 12, wallTop);
+      const { start, end, ramp } = pit.tunnel, roofStart = start + ramp, roofEnd = end - ramp;
+      const tunnelPath = pitRouteStrip(start, end, pit.laneOffsetAt);
+      const centreOffset = s => pit.laneOffsetAt(s);
+      const wallBottom = p => track.pitHeightAt(p.progress) - track.heightAt(p.progress) + 0.04;
+      // Walls stand a little above ground along the open ramps (so no void shows beside them)
+      // and sink to just under the ground over the covered middle, which has its roof.
+      const rampTop = p => {
+        const open = p.progress < (start + end) / 2
+          ? 1 - smooth01((p.progress - (roofStart - 10)) / 10)
+          : smooth01((p.progress - roofEnd) / 10);
+        return -0.12 + 0.42 * open;
+      };
+      const tunnelWallA = ribbon(tunnelPath, innerFromLane, innerFromLane, wallBottom, tunnelConcrete, 12, rampTop);
+      const tunnelWallB = ribbon(tunnelPath, outerFromLane, outerFromLane, wallBottom, tunnelConcrete, 12, rampTop);
       tunnelWallA.castShadow = tunnelWallB.castShadow = true;
       world.add(tunnelWallA, tunnelWallB);
-      const tunnelRoof = ribbon(tunnelPath, innerFromCentre, outerFromCentre, wallTop, tunnelConcrete, 12);
+      const tunnelRoof = ribbon(pitRouteStrip(roofStart - 1, roofEnd + 1, centreOffset), innerFromLane, outerFromLane, -0.12, tunnelConcrete, 12);
       tunnelRoof.castShadow = true; world.add(tunnelRoof);
-      // Concrete portal frames make both ends of the lowered exit visibly read
-      // as an underpass rather than an ordinary covered pit-road section.
-      for (const s of [pit.tunnel.start, pit.tunnel.end]) {
-        const [x, y] = track.point(s, centreOffset), h = track.heightAt(s), heading = track.heading(s);
-        const portal = new THREE.Group();
-        const halfWidth = Math.abs(outerFromCentre - innerFromCentre) / 2;
-        const midLeft = (innerFromCentre + outerFromCentre) / 2;
-        const jamb = new THREE.Mesh(new THREE.BoxGeometry(0.9, pit.tunnel.depth, 0.9), tunnelConcrete);
-        const lintel = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.9, halfWidth * 2 + 0.9), tunnelConcrete);
-        jamb.position.set(0, -pit.tunnel.depth / 2, -midLeft - halfWidth);
-        const jamb2 = jamb.clone(); jamb2.position.z += halfWidth * 2;
-        lintel.position.set(0, -0.45, -midLeft);
-        portal.add(jamb, jamb2, lintel); portal.position.set(x, h, -y); portal.rotation.y = heading;
-        portal.traverse(node => { if (node.isMesh) node.castShadow = node.receiveShadow = true; }); world.add(portal);
+      // Coping slabs flush with the ground along both open ramps hide the seam between the
+      // ground cut-out and the trench walls.
+      const copingMaterial = std({ color: 0x8a8f93, roughness: 0.9 });
+      for (const [a0, b0] of [[start, roofStart], [roofEnd, end]]) {
+        const copingPath = pitRouteStrip(a0, b0, centreOffset);
+        const away = -Math.sign(pit.corridorAt((a0 + b0) / 2)); // + = away from the road (garage side)
+        // wide on the garage side, narrow on the road side so it never reaches the asphalt
+        world.add(ribbon(copingPath, away * (outerFromLane - 0.15), away * (outerFromLane + 1.5), 0.03, copingMaterial, 6));
+        world.add(ribbon(copingPath, -away * (outerFromLane - 0.15), -away * (outerFromLane + 0.6), 0.03, copingMaterial, 6));
       }
+      // Dark lintel across each end of the covered section: the mouth of the underpass.
+      for (const s of [roofStart, roofEnd]) {
+        const [x, y] = track.point(s, centreOffset(s));
+        const heading = pitRouteStrip(s - 1, s + 1, centreOffset)[1].heading;
+        const lintel = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.0, outerFromLane * 2), std({ color: 0x3b4146, roughness: 0.9 }));
+        lintel.position.set(x, 0, -y);
+        lintel.position.y = track.heightAt(s) - 0.12 - 0.5;
+        lintel.rotation.y = heading; lintel.castShadow = lintel.receiveShadow = true; world.add(lintel);
+      }
+    }
+    // Pit-lane boundary: white lines along both edges of the corridor, from the speed-limit
+    // line to the end of the pit lane, plus a catch fence behind the outer edge (the garage
+    // side). On a circuit with an underpass the fence stops at the open ramps, where the
+    // trench walls take over, and picks up again once the lane is back on the surface.
+    const boundaryPath = pitRouteStrip(pit.limitStart, pit.exit, pit.boundaryOffsetAt)
+      .map(p => ({ ...p, h: track.pitHeightAt(p.progress) }));
+    const pitBoundary = std({ color: 0xf2f2ee, roughness: 0.65 });
+    const lineSpans = pit.tunnel ? [[pit.limitStart, pit.tunnel.start], [pit.tunnel.start, pit.tunnel.end], [pit.tunnel.end, pit.exit]] : [[pit.limitStart, pit.exit]];
+    for (const [a0, b0] of lineSpans) {
+      const spanPath = boundaryPath.filter(p => p.progress >= a0 - 1e-6 && p.progress <= b0 + 1e-6);
+      if (spanPath.length > 1) for (const edge of [innerFromLane, outerFromLane]) world.add(ribbon(spanPath, edge - 0.12, edge + 0.12, 0.012, pitBoundary, 10));
+    }
+    {
+      const fenceBottom = p => track.pitHeightAt(p.progress) - track.heightAt(p.progress) + 0.04;
+      const fenceOffsetOf = s => -Math.sign(pit.corridorAt(s)) * (outerFromLane + 0.9);
+      const addPitFence = (a0, b0, heightAt) => {
+        const fencePath = pitRouteStrip(a0, b0, pit.boundaryOffsetAt);
+        const offset = fenceOffsetOf((a0 + b0) / 2);
+        const railTop = p => Math.min(1.1, heightAt(p));
+        const fenceRail = ribbon(fencePath, offset, offset, fenceBottom, tunnelConcrete, 8, p => fenceBottom(p) + railTop(p));
+        const pitFence = ribbon(fencePath, offset, offset, p => fenceBottom(p) + railTop(p), fenceMat, 0.16, p => fenceBottom(p) + heightAt(p));
+        fenceRail.castShadow = true; world.add(fenceRail, pitFence);
+        const fencePosts = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.06, 0.06, 1, 6), steel, Math.ceil(fencePath.length / 4) + 1);
+        let postIndex = 0;
+        fencePath.forEach((p, i) => {
+          const height = heightAt(p);
+          if (i % 4 !== 0 || height < 0.15) return;
+          const x = p.x + p.nx * offset, y = p.y + p.ny * offset;
+          fencePosts.setMatrixAt(postIndex++, new THREE.Matrix4().compose(
+            new THREE.Vector3(x, track.pitHeightAt(p.progress) + height / 2, -y), new THREE.Quaternion(), new THREE.Vector3(1, height, 1)));
+        });
+        fencePosts.count = postIndex;
+        world.add(fencePosts);
+      };
+      // 4.2 m catch fence, tapering to nothing across the merge zone back onto the circuit.
+      const fenceHeight = p => 4.2 * (1 - smooth01((p.progress - pit.mergeStart) / (pit.exit - pit.mergeStart) * 1.35));
+      if (pit.tunnel) {
+        addPitFence(pit.limitStart, pit.tunnel.start, fenceHeight);
+        addPitFence(pit.tunnel.end, pit.exit, fenceHeight);
+      } else addPitFence(pit.limitStart, pit.exit, fenceHeight);
     }
     const linePath = strip(pit.limitStart, pit.limitEnd), linePositions = [], lineUvs = [], lineIndices = [];
     linePath.forEach(p => {
@@ -804,7 +1136,12 @@ export function buildCircuitWorld(track, { boxColors = [], night = false, urban 
         const py = y + Math.sin(heading) * lx - Math.cos(heading) * lz;
         return Math.abs(track.offset(px, py)) > wallAt + 20;
       }));
-      if (clear) blocks.push({ x, y, s, heading, side, width, depth, floors, height, color: palette[i % palette.length] });
+      if (clear) {
+        blocks.push({ x, y, s, heading, side, width, depth, floors, height, color: palette[i % palette.length] });
+        world.userData.collisionShapes.push({
+          type: 'box', x, y, heading, halfLength: width / 2, halfWidth: depth / 2,
+        });
+      }
     }
 
     if (blocks.length) {
@@ -875,6 +1212,9 @@ export function buildCircuitWorld(track, { boxColors = [], night = false, urban 
         if (Math.abs(track.offset(x, y)) > half + 20) spots.push([x, y, 0.75 + rng() * 0.6, rng() * Math.PI * 2, rng()]);
       }
     }
+    spots.forEach(([x, y, scale]) => world.userData.collisionShapes.push({
+      type: 'circle', x, y, radius: 0.35 * scale,
+    }));
     const treeMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 });
     const treeGeometries = [treeGeometry('conifer'), treeGeometry('broadleaf')];
     const treeCells = new Map(), cellSize = 400;

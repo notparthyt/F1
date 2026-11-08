@@ -333,6 +333,13 @@ export function resolveBarrier(car, barrierAt) {
 
 // surfaceAt receives each contact's world position and returns a grip multiplier;
 // optional barrierAt (see resolveBarrier) stops the car at walls.
+/**
+ * @param {ReturnType<typeof createCar>} car
+ * @param {{ throttle?: number, brake?: number, steer?: number, reverse?: boolean, drs?: boolean, ers?: boolean }} input
+ * @param {number} dt
+ * @param {(x: number, y: number) => number} surfaceAt
+ * @param {((x: number, y: number) => { depth: number, nx: number, ny: number } | null) | null} [barrierAt]
+ */
 export function step(car, input = {}, dt = FIXED_DT, surfaceAt = () => 1, barrierAt = null) {
   if (!(Number.isFinite(dt) && dt > 0 && dt <= 1 / 60)) throw new RangeError('Use a positive timestep <= 1/60 s');
   const c = car.config, m = carMass(car);
@@ -521,6 +528,63 @@ export function step(car, input = {}, dt = FIXED_DT, surfaceAt = () => 1, barrie
       ers: ers ? { charge: ers.charge, deployed: ers.deployed, harvested: ers.harvested,
         deploy: ersTorque * crankOmega, harvest: ersHarvest } : null, clutchLocked, shifting, diffTransfer,
       limiter: rpm > c.maxRpm - c.limiterBand, fuel: car.fuel ?? null, fuelFlow: fuelFlow * 3600 } };
+  return car;
+}
+
+/**
+ * @param {ReturnType<typeof createCar>} car
+ * @param {{ throttle?: number, brake?: number, steer?: number, reverse?: boolean, drs?: boolean }} input
+ * @param {number} dt
+ * @param {(x: number, y: number) => number} surfaceAt
+ * @param {((x: number, y: number) => { depth: number, nx: number, ny: number } | null) | null} [barrierAt]
+ */
+export function stepArcade(car, input = {}, dt = FIXED_DT, surfaceAt = () => 1, barrierAt = null) {
+  if (!(Number.isFinite(dt) && dt > 0 && dt <= 1 / 60)) throw new RangeError('Use a positive timestep <= 1/60 s');
+  const throttle = clamp(input.throttle || 0, 0, 1);
+  const brake = clamp(input.brake || 0, 0, 1);
+  let speed = car.vx * Math.cos(car.heading) + car.vy * Math.sin(car.heading);
+  const requestedGear = input.reverse === true ? -1 : input.reverse === false ? 1 : car.gear;
+  if ((requestedGear < 0) !== (car.gear < 0) && Math.abs(speed) < 0.25 && brake > 0.5) {
+    car.gear = requestedGear;
+    speed = 0;
+  }
+  const direction = car.gear < 0 ? -1 : 1;
+  const grip = clamp(surfaceAt(car.x, car.y), 0.25, 1.5);
+  const rollingDrag = Math.sign(speed) * (0.12 + speed * speed * 0.0015);
+  let acceleration = throttle * 20 * direction - rollingDrag;
+  if (brake && Math.abs(speed) > 0.01) acceleration -= Math.sign(speed) * brake * 28 * grip;
+  else if (!throttle && Math.abs(speed) < 0.25) acceleration = 0;
+  const nextSpeed = clamp(speed + acceleration * dt, -40, 92);
+  const targetSteer = clamp(input.steer || 0, -1, 1) * car.config.maxSteer;
+  car.steer += clamp(targetSteer - car.steer, -car.config.steerRate * 5 * dt, car.config.steerRate * 5 * dt);
+  const yawRate = Math.abs(nextSpeed) > 0.1
+    ? clamp(Math.tan(car.steer) * nextSpeed / car.config.wheelbase, -1.5, 1.5)
+    : 0;
+  const midpointHeading = car.heading + yawRate * dt * 0.5;
+  car.heading += yawRate * dt;
+  car.vx = Math.cos(midpointHeading) * nextSpeed;
+  car.vy = Math.sin(midpointHeading) * nextSpeed;
+  car.yawRate = yawRate;
+  car.ax = acceleration * Math.cos(midpointHeading);
+  car.ay = acceleration * Math.sin(midpointHeading);
+  car.x += car.vx * dt;
+  car.y += car.vy * dt;
+  car.drs = input.drs === true && brake <= car.config.drsBrake ? 1 : 0;
+  if (barrierAt) resolveBarrier(car, barrierAt);
+  car.time += dt;
+  car.distance += Math.hypot(car.vx, car.vy) * dt;
+  car.wheelOmega.fill(nextSpeed / car.config.wheelRadius);
+  const load = carMass(car) * 9.81 / 4;
+  const wheels = car.wheelOmega.map(omega => ({
+    load, utilization: 0, locked: brake > 0 && Math.abs(nextSpeed) < 0.2,
+    slipRatio: 0, omega, capacity: load * grip * car.config.tireMu,
+    sliding: false, slipAngle: 0, kinematicSlipAngle: 0, tempGrip: 1, wearGrip: 1,
+  }));
+  car.telemetry = {
+    speed: Math.hypot(car.vx, car.vy), downforce: 0, drag: 0, wheels,
+    aero: { front: car.config.frontRideHeight, rear: car.config.rearRideHeight, bottoming: false, stalled: false, frontShare: car.config.frontAero },
+    frontShare: car.config.frontAero, drs: car.drs, powertrain: null,
+  };
   return car;
 }
 

@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createCircuitTrack } from '../src/circuit.mjs';
 import { CIRCUITS } from '../src/circuits.mjs';
+import { CIRCUIT_PIT_CONFIGS, CIRCUIT_PIT_SIDES, CIRCUIT_PIT_TUNNELS } from '../src/pitconfig.mjs';
 import { CIRCUIT_TRACK_STYLE } from '../src/trackdata.mjs';
 import { createTimeTrial } from '../src/trial.mjs';
 import { createLapTimer } from '../src/laptimer.mjs';
@@ -249,6 +250,47 @@ test('every circuit gets a pit lane beside the start/finish straight, with pit s
     assert.notEqual(track.surface(x, y), 'pit', `${key}: no pit surface away from the lane`);
   }
   assert.equal(createCircuitTrack({ ...CIRCUITS.monza, pitLane: false }).pit, null);
+});
+
+test('Yas Marina pit lane crosses right-to-left through the lowered underpass', () => {
+  const track = createCircuitTrack({
+    ...CIRCUITS['yas-marina'],
+    pitSide: CIRCUIT_PIT_SIDES['yas-marina'],
+    pitTunnel: CIRCUIT_PIT_TUNNELS['yas-marina'],
+    pitConfig: CIRCUIT_PIT_CONFIGS['yas-marina'],
+  });
+  const { pit } = track;
+  assert.equal(pit.side, -1);
+  assert.ok(pit.tunnel);
+  assert.ok(Math.abs(pit.exit - 300) < 1, 'the pit lane rejoins at the Turn 3 approach');
+  assert.ok(Math.abs(pit.lane) > pit.inner + 2.5);
+  assert.ok(Math.abs(pit.lane) < pit.outer);
+  assert.ok(pit.tunnel.start < pit.tunnel.end && pit.tunnel.end === pit.mergeStart);
+  assert.ok(pit.exit - pit.mergeStart >= pit.mergeLength);
+  assert.ok(Math.abs(pit.laneOffsetAt(pit.tunnel.start) - pit.side * pit.lane) < 1e-9, 'tunnel starts in the right-side lane');
+  assert.ok(Math.abs(pit.laneOffsetAt(pit.tunnel.end) + pit.side * pit.lane) < 1e-9, 'tunnel ends in the left-side lane');
+
+  const midpoint = (pit.tunnel.start + pit.tunnel.end) / 2;
+  const [underpassX, underpassY] = track.point(midpoint, pit.laneOffsetAt(midpoint));
+  const before = track.point(midpoint - 2, pit.laneOffsetAt(midpoint - 2));
+  const after = track.point(midpoint + 2, pit.laneOffsetAt(midpoint + 2));
+  const routeHeading = Math.atan2(after[1] - before[1], after[0] - before[0]);
+  const headingDifference = Math.atan2(Math.sin(routeHeading - track.heading(midpoint)), Math.cos(routeHeading - track.heading(midpoint)));
+  assert.ok(Math.abs(headingDifference) > 0.1, 'the tunnel heading follows its diagonal route, not the main track');
+  assert.ok(track.pitGradeAt(pit.tunnel.start + pit.tunnel.ramp / 2) < 0, 'the entry ramp descends');
+  assert.ok(track.pitGradeAt(pit.tunnel.end - pit.tunnel.ramp / 2) > 0, 'the exit ramp climbs');
+  const mainlineS = pit.tunnel.start + 10;
+  const [roadX, roadY] = track.point(mainlineS);
+  assert.equal(track.surface(underpassX, underpassY), 'pit');
+  assert.ok(track.heightAtPosition(underpassX, underpassY, midpoint, true) < track.heightAt(midpoint) - pit.tunnel.depth * 0.9);
+  assert.equal(track.heightAtPosition(underpassX, underpassY), track.heightAt(midpoint),
+    'the overlapping main-track surface stays at normal height');
+  assert.equal(track.heightAtPosition(roadX, roadY, mainlineS), track.heightAt(mainlineS));
+
+  const [exitX, exitY] = track.point(pit.tunnel.end, pit.laneOffsetAt(pit.tunnel.end));
+  assert.equal(track.surface(exitX, exitY), 'pit', 'the far-side lane remains surfaced through the merge');
+  assert.ok(pit.isOnTunnelAt(underpassX, underpassY, midpoint));
+  assert.ok(!pit.isOnTunnelAt(roadX, roadY, mainlineS));
 });
 
 test('pit-disabled circuits advance without pit strategy or compound requirements', () => {

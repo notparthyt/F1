@@ -17,3 +17,16 @@ test('360 camera stays on the track side of a barrier', () => {
   assert.ok(camera.x <= 5 && camera.x > 4.9);
   assert.equal(camera.y, 1 + (camera.x / 10));
 });
+
+test('360 camera detects barriers along the orbit, not just at its endpoint', () => {
+  const target = new THREE.Vector3(0, 1, 0), desired = new THREE.Vector3(10, 1, 0);
+  const camera = constrainLook360Camera(target, desired, (x) => x > 4 && x < 6 ? { depth: 1 } : null);
+  assert.ok(camera.x <= 4 && camera.x > 3.9);
+});
+
+test('360 camera remains above the ground surface', () => {
+  const target = new THREE.Vector3(0, 1, 0), desired = new THREE.Vector3(10, 0, 0);
+  const camera = constrainLook360Camera(target, desired, () => null, x => x > 5 ? 1 : 0);
+  assert.ok(camera.x <= 5 && camera.x > 4.9);
+  assert.ok(camera.y >= (camera.x > 5 ? 1 : 0) + 0.25);
+});

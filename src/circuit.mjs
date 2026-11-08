@@ -97,9 +97,12 @@ function racingLine(xs, ys, headings, limit) {
 // room; the side needing the smaller slide gets it (left on a tie). No room
 // either side: null (no pit stops). The placement is illustrative: the
 // traced layouts carry no pit lane, so it is not each circuit's real one.
-function circuitPitLane({ half, point, offset, progress, signed, curvatureAt }, { reach = 700, minInsideRadius = 20, entryAt = 300, toLimit = 120, limitLength = 260, toMerge = 40, mergeLength = 130, boxSpacing = 11, side: preferredSide = null, tunnel: tunnelConfig = null } = {}) {
-  const layout = { inner: half + 1.2, outer: half + 11, lane: -(half + 1.5), boxOffset: -(half + 9.5), boxSpacing, speedLimit: 80 / 3.6 };
+function circuitPitLane({ half, point, offset, progress, signed, curvatureAt, lineOffset }, { reach = 700, minInsideRadius = 20, entryAt = 300, exitAt = null, toLimit = 120, limitLength = 260, toMerge = 40, mergeLength = 130, boxSpacing = 11, laneOffset = 1.5, side: preferredSide = null, tunnel: tunnelConfig = null } = {}) {
+  const layout = { inner: half + 1.2, outer: half + 11, lane: -(half + laneOffset), boxOffset: -(half + 9.5), boxSpacing, speedLimit: 80 / 3.6 };
   const total = toLimit + limitLength + toMerge + mergeLength, edge = layout.outer + 1;
+  // exitAt: signed lap progress where the pit exit should end (e.g. at a given corner);
+  // the whole lane is slid so that it does.
+  if (exitAt !== null && Number.isFinite(exitAt)) entryAt = total - exitAt;
   const fits = (s, side) => {
     const o = -side * edge, [x, y] = point(s, o);
     let k = 0; for (let d = -10; d <= 10; d += 2) { const v = curvatureAt(s + d); if (Math.sign(v) === side) k = Math.max(k, Math.abs(v)); }
@@ -120,9 +123,50 @@ function circuitPitLane({ half, point, offset, progress, signed, curvatureAt }, 
   const { side, entry } = best, limitStart = entry + toLimit, limitEnd = limitStart + limitLength;
   // Five boxes centred between the limit lines.
   const exit = limitEnd + toMerge + mergeLength;
-  const tunnel = tunnelConfig ? Object.freeze({ start: exit - tunnelConfig.beforeExit, end: exit - tunnelConfig.endBeforeExit,
+  const mergeStart = limitEnd + toMerge;
+  // The pit corridor (apron) is centred between inner and outer; the
+  // underpass is centred on it, so its footprint never overlaps road, kerbs or run-off.
+  const corridor = -side * (layout.inner + layout.outer) / 2;
+  // The underpass must be back on the surface before the merge zone so the merge is open air.
+  const endAt = tunnelConfig ? Math.min(exit - tunnelConfig.endBeforeExit, mergeStart) : 0;
+  const tunnel = tunnelConfig ? Object.freeze({
+    start: Math.min(exit - tunnelConfig.beforeExit, endAt - (2 * tunnelConfig.ramp + 40)), end: endAt,
     depth: tunnelConfig.depth, ramp: tunnelConfig.ramp }) : null;
-  return Object.freeze({ ...layout, side, entry, limitStart, limitEnd, mergeStart: limitEnd + toMerge, exit, tunnel,
+  const smooth = t => { t = Math.max(0, Math.min(1, t)); return t * t * (3 - 2 * t); };
+  // Centre of the pit corridor: constant along the pit straight, crossing to the other side
+  // only in the deep section (under the circuit), then constant again until the merge.
+  const corridorAt = s => {
+    if (!tunnel || s <= tunnel.start) return corridor;
+    if (s >= tunnel.end) return -corridor;
+    return corridor * (1 - 2 * smooth((s - (tunnel.start + tunnel.ramp)) / (tunnel.end - tunnel.start - 2 * tunnel.ramp)));
+  };
+  const shiftLength = 30;
+  // Driving line: the fast lane beside the road, easing out to the corridor centre before the portal.
+  const laneOffsetAt = s => {
+    const lane = side * layout.lane;
+    if (!tunnel || s <= tunnel.start - shiftLength) return lane;
+    if (s < tunnel.start) return lane + (corridor - lane) * smooth((s - (tunnel.start - shiftLength)) / shiftLength);
+    return corridorAt(s);
+  };
+  const tunnelHalfWidth = tunnel ? (layout.outer - layout.inner) / 2 : 0;
+  const mergeBlend = s => smooth((s - mergeStart) / (exit - mergeStart));
+  const exitOffsetAt = s => laneOffsetAt(s) * (1 - mergeBlend(s)) + lineOffset(s) * mergeBlend(s);
+  // Centre of the pit lane's painted boundary / fence corridor (same for every circuit).
+  const boundaryOffsetAt = s => corridorAt(s) * (1 - mergeBlend(s)) + lineOffset(s) * mergeBlend(s);
+  const isOnTunnelAt = (x, y, s) => {
+    const u = signed(s);
+    if (!tunnel || u < tunnel.start || u > tunnel.end) return false;
+    const [tx, ty] = point(u, laneOffsetAt(u));
+    return Math.hypot(x - tx, y - ty) <= tunnelHalfWidth;
+  };
+  const isOnRouteAt = (x, y, s) => {
+    const u = signed(s);
+    if (!tunnel || u < tunnel.start || u > exit) return false;
+    const [tx, ty] = point(u, exitOffsetAt(u));
+    return Math.hypot(x - tx, y - ty) <= (layout.outer - layout.inner) / 2;
+  };
+  return Object.freeze({ ...layout, side, entry, limitStart, limitEnd, mergeStart, mergeLength, exit, tunnel,
+    laneOffsetAt, exitOffsetAt, boundaryOffsetAt, corridorAt, tunnelHalfWidth, isOnTunnelAt, isOnRouteAt,
     boxStart: (limitStart + limitEnd) / 2 - 10.5 * layout.boxSpacing });
 }
 
@@ -272,7 +316,11 @@ export function createCircuitTrack({ name = 'Circuit', points, length: officialL
   const progress = (x, y) => locate(x, y).progress;
   const offset = (x, y) => locate(x, y).offset;
   const signed = s => (s = wrap(s)) > length / 2 ? s - length : s;
-  const pit = pitLane ? circuitPitLane({ length, half, wallOffset, point, offset, progress, signed, curvatureAt: s => curvature[index(s)] }, { ...pitConfig, side: pitSide ?? pitConfig.side, tunnel: pitTunnel }) : null;
+  const lineOffsetAt = s => {
+    const i = index(s), f = (wrap(s) - ss[i]) / (ss[i + 1] - ss[i]);
+    return line[i] + (line[(i + 1) % n] - line[i]) * f;
+  };
+  const pit = pitLane ? circuitPitLane({ length, half, wallOffset, point, offset, progress, signed, curvatureAt: s => curvature[index(s)], lineOffset: lineOffsetAt }, { ...pitConfig, side: pitSide ?? pitConfig.side, tunnel: pitTunnel }) : null;
   const pitHeightAt = s => {
     const height = elevationAt(s);
     if (!pit?.tunnel) return height;
@@ -280,10 +328,9 @@ export function createCircuitTrack({ name = 'Circuit', points, length: officialL
     const rise = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
     return height - depth * rise(start, start + ramp, u) * (1 - rise(end - ramp, end, u));
   };
-  const heightAtPosition = (x, y) => {
-    const q = locate(x, y), pitOffset = pit ? pit.side * q.offset : 0, p = signed(q.progress);
-    return pit?.tunnel && pitOffset < -pit.inner && pitOffset > -pit.outer && p >= pit.tunnel.start && p <= pit.tunnel.end
-      ? pitHeightAt(q.progress) : elevationAt(q.progress);
+  const heightAtPosition = (x, y, progressHint, preferTunnel = false) => {
+    const q = locate(x, y), p = signed(progressHint ?? q.progress);
+    return preferTunnel && pit?.isOnTunnelAt(x, y, p) ? pitHeightAt(p) : elevationAt(q.progress);
   };
   const runoffAt = s => runoffSections.find(section => inSection(s, [section.start, section.end]))?.surface ?? runoffSurface;
   const headingAt = s => {
@@ -299,11 +346,24 @@ export function createCircuitTrack({ name = 'Circuit', points, length: officialL
   };
   const crossGradeAt = (s, heading) => heading == null
     ? 0 : -elevationGradeAt(s) * Math.sin(headingDeltaAt(s, heading));
+  const pitRoutePoint = s => point(s, pit?.laneOffsetAt(s) ?? 0);
+  const pitRouteHeadingAt = s => {
+    const a = pitRoutePoint(s - 1), b = pitRoutePoint(s + 1);
+    return Math.atan2(b[1] - a[1], b[0] - a[0]);
+  };
+  const pitGradeAt = (s, heading) => {
+    const a = pitRoutePoint(s - 2), b = pitRoutePoint(s + 2);
+    const grade = Math.atan2(pitHeightAt(s + 2) - pitHeightAt(s - 2), Math.hypot(b[0] - a[0], b[1] - a[1]));
+    return heading == null ? grade : grade * Math.cos(heading - pitRouteHeadingAt(s));
+  };
+  const pitCrossGradeAt = (s, heading) => heading == null
+    ? 0 : -pitGradeAt(s) * Math.sin(heading - pitRouteHeadingAt(s));
   const surface = (x, y) => {
     const q = nearest(x, y), d = q.d;
-    // The pit apron, and its entry and exit roads from the road edge.
-    if (pit && pit.side * q.offset < -half && pit.side * q.offset > -pit.outer && (s => s > pit.entry && s < pit.exit)(signed(ss[q.i] + (ss[q.i + 1] - ss[q.i]) * q.f))) return 'pit';
     const s = ss[q.i] + (ss[q.i + 1] - ss[q.i]) * q.f;
+    if (pit?.isOnRouteAt(x, y, s)) return 'pit';
+    // The pit apron, and its entry and exit roads from the road edge.
+    if (pit && pit.side * q.offset < -half && pit.side * q.offset > -pit.outer && (s => s > pit.entry && s < pit.exit)(signed(s))) return 'pit';
     if (d <= half) return 'asphalt';
     if (d <= half + 1.2 && kerb[q.i]) return ['kerb', 'kerb', 'sausage', 'painted'][kerbType[q.i]];
     if (scraperKerbs && d <= half + 1.6 && kerb[q.i]) return 'scraper';
@@ -319,10 +379,10 @@ export function createCircuitTrack({ name = 'Circuit', points, length: officialL
     // along the trace (the lap here still starts at its first point).
     drsZones: drs && drs.map(z => z.map(f => ((f * length + timingLine) % length + length) % length)),
     samples: { x: xs, y: ys, z: elevation, s: ss, heading: headings, curvature, kerb, kerbType, line, lineStep, lineCurvature },
-    heightAt: elevationAt, gradeAt, crossGradeAt, pitHeightAt, heightAtPosition,
+    heightAt: elevationAt, gradeAt, crossGradeAt, pitHeightAt, pitGradeAt, pitCrossGradeAt, heightAtPosition,
     heading: headingAt, curvatureAt: s => curvature[index(s)],
     // Racing-line offset (m, + right) at arc length s, interpolated.
-    lineOffset: s => { const i = index(s), f = (wrap(s) - ss[i]) / (ss[i + 1] - ss[i]); return line[i] + (line[(i + 1) % n] - line[i]) * f; },
+    lineOffset: lineOffsetAt,
     surfaceAt: (x, y) => SURFACE_GRIP[surface(x, y)],
     // Walls wallOffset either side of the centreline; where two parts of the
     // circuit run closer than that, the boundary is the midline between them.

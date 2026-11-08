@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { SOUND_DEFAULTS, firingFrequency, createSoundModel, createAudioEngine } from '../src/audio.mjs';
+import { SOUND_DEFAULTS, LEGACY_SOUND_DEFAULTS, firingFrequency, createSoundModel, createAudioEngine } from '../src/audio.mjs';
 import { createCar, step, DEFAULT_CAR, FIXED_DT } from '../src/physics.mjs';
 
 const run = (car, seconds, input) => {
@@ -30,6 +30,15 @@ test('engine level and brightness rise with throttle and rpm; shifts and the lim
   assert.ok(open.engineGain <= 1 && closed.engineGain > 0);
   const idle = m.update(0, { speed: 0, wheels: [] }, {}); // no powertrain yet: idle
   assert.equal(idle.rpm, DEFAULT_CAR.idleRpm);
+});
+
+test('legacy sound profile restores the previous brighter and louder multiplayer mix', () => {
+  assert.equal(LEGACY_SOUND_DEFAULTS.brightnessBase, 2.5);
+  assert.equal(LEGACY_SOUND_DEFAULTS.brightnessThrottle, 5.5);
+  assert.equal(LEGACY_SOUND_DEFAULTS.turboGain, 0.05);
+  assert.equal(LEGACY_SOUND_DEFAULTS.squealGain, 0.35);
+  assert.equal(LEGACY_SOUND_DEFAULTS.windGain, 0.3);
+  assert.equal(SOUND_DEFAULTS.brightnessBase, 1.8);
 });
 
 test('turbo spool lags throttle exponentially, independent of frame rate', () => {
@@ -95,11 +104,15 @@ test('audio graph builds, starts its sources and schedules finite parameters', (
   const ctx = fakeContext(), engine = createAudioEngine(ctx), m = createSoundModel(DEFAULT_CAR);
   assert.equal(ctx.started, 6); // 3 engine tones, limiter LFO, turbo, noise
   const compressor = engine.master.connected[0];
-  assert.ok(compressor && compressor.connected.includes(ctx.destination));
+  assert.ok(compressor && compressor.connected[0].connected.includes(ctx.destination));
   const noise = ctx.nodes.find(n => n.buffer).buffer.data;
   assert.ok(noise.every(x => x >= -1 && x <= 1) && Math.abs(noise.reduce((s, x) => s + x, 0) / noise.length) < 0.02);
   engine.apply(m.update(1 / 60, pt(14900, { limiter: true }), { throttle: 1 }), 0.8);
   assert.ok(Math.abs(engine.master.gain.targets.at(-1) - 0.36) < 1e-12);
+  engine.apply(m.update(1 / 60, pt(14900, { limiter: true }), { throttle: 1 }), 0.8, true);
+  assert.ok(Math.abs(engine.master.gain.targets.at(-1) - 0.8) < 1e-12);
+  assert.equal(engine.master.connected[1].gain.targets.at(-1), 1);
+  assert.equal(compressor.connected[0].gain.targets.at(-1), 0);
   assert.equal(compressor.threshold.value, -22);
   assert.equal(compressor.knee.value, 12);
   assert.equal(compressor.ratio.value, 6);

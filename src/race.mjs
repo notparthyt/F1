@@ -5,7 +5,7 @@
 // telemetry: a close follower loses up to towDragLoss of its drag and
 // dirtyAirLoss of its downforce, decaying over wakeLength metres behind the
 // leader and wakeWidth metres either side of its centreline.
-import { step, createCar, carMass, fitTires, newErsLap, tireTempGrip, tireWearGrip, TIRE_COMPOUNDS, FIXED_DT, clamp } from './physics.mjs?v=20261104-3';
+import { step, createCar, carMass, fitTires, newErsLap, tireTempGrip, tireWearGrip, TIRE_COMPOUNDS, FIXED_DT, clamp } from './physics.mjs?v=20261105-1';
 import { createAutopilot, createCircuitAutopilot } from './autopilot.mjs';
 
 export const RACE_DEFAULTS = Object.freeze({
@@ -394,7 +394,8 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
       const { from, phase, mergeAt, mergeLength } = e.pit, s = signed(q), line = track.lineOffset(q);
       if (phase === 'in' && s > pit.exit) return line + from;
       const merged = mergeAt === undefined ? 0 : blend(s, mergeAt, mergeAt + mergeLength), into = blend(s, pit.entry, pit.limitStart - 10);
-      return (line + from) * (1 - into) + (pitSide * (pit.lane + swing(s)) * (1 - merged) + line * merged) * into;
+      const lane = pit.tunnel ? pit.laneOffsetAt(s) + pitSide * swing(s) : pitSide * (pit.lane + swing(s));
+      return (line + from) * (1 - into) + (lane * (1 - merged) + line * merged) * into;
     };
     return s => {
       const { from, phase, mergeAt, mergeLength } = e.pit;
@@ -465,7 +466,9 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
     if (p?.phase === 'out') {
       const progress = pitFrame(progressOf(car));
       // Over once merged (AI), or back on the circuit or past the exit (driving).
-      const back = e.manual && pitOff(car) > -pit.inner && progress > pit.limitEnd;
+      const back = e.manual && (pit.tunnel
+        ? progress > pit.tunnel.end && Math.abs(offsetOf(car) - track.lineOffset(progress)) < track.roadWidth / 2
+        : pitOff(car) > -pit.inner && progress > pit.limitEnd);
       if (p.mergeAt !== undefined ? progress >= p.mergeAt + p.mergeLength || progress < pit.entry : back || progress >= pit.exit || progress < pit.entry) { e.pit = null; e.lane = e.offset = 0; }
     }
   }
@@ -598,11 +601,14 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
       const p = progressOf(car), s = pitFrame(p, e.pit.phase === 'in');
       // Rejoin from the back straight only when no car on the circuit is
       // alongside or closing from behind; otherwise stop at the end of the lane.
-      if (e.pit.phase === 'out' && e.pit.mergeAt === undefined && s > pit.mergeStart
+      const mergeStart = pit.tunnel ? Math.max(pit.mergeStart, pit.tunnel.end) : pit.mergeStart;
+      if (e.pit.phase === 'out' && e.pit.mergeAt === undefined && s > mergeStart
         && !traffic(e, (gap, v) => gap < o.alongside && -gap < o.alongside + Math.max(0, v - speed) * o.mergeTime)) {
         // (On a circuit the rejoin is at least mergeSlope m long per metre
         // across to the racing line, which may be on the far side of the road.)
-        e.pit.mergeAt = s; e.pit.mergeLength = Math.max(40, 1.8 * speed, circuit ? o.mergeSlope * Math.abs(pitSide * pit.lane - track.lineOffset(p)) : 0);
+        const laneOffset = pit.tunnel ? pit.laneOffsetAt(s) : pitSide * pit.lane;
+        e.pit.mergeAt = s; e.pit.mergeLength = Math.max(pit.tunnel ? pit.mergeLength : 40, 1.8 * speed,
+          circuit ? o.mergeSlope * Math.abs(laneOffset - track.lineOffset(p)) : 0);
       }
       const path = pitPath(e);
       e.offset = e.lane = circuit ? path(p) - track.lineOffset(p) : path(Math.max(0, s));
@@ -845,9 +851,11 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
 
   function stepAll(input, surfaceAt, barrierAt) {
     for (const e of entries) {
+      if (o.networked && !e.player) continue;
       if (e.retired) { e.car.wake = { drag: 1, downforce: 1, strength: 0 }; continue; }
       let w = 0;
-      for (const lead of entries) if (lead !== e && !lead.retired) w = Math.max(w, wakeStrength(lead.car, e.car, o));
+      for (const lead of entries) if (lead !== e && !lead.retired && !(o.networked && !lead.player))
+        w = Math.max(w, wakeStrength(lead.car, e.car, o));
       e.car.wake = { drag: 1 - o.towDragLoss * w, downforce: 1 - o.dirtyAirLoss * w, strength: w };
     }
     // Before lights out (plus its reaction time) an AI car or the player's
@@ -855,7 +863,7 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
     const hold = { throttle: 0, brake: 1, steer: 0 };
     // Strategy: a car the AI drives (the player's only on autopilot) boxes
     // when it decides to as it nears the line.
-    for (const e of entries) if (pit && !e.retired) {
+    for (const e of entries) if (pit && !e.retired && !(o.networked && !e.player)) {
       const p = progressOf(e.car);
       const near = circuit ? (s => s > pit.entry - 150 && s < pit.entry - 5)(signed(p)) : p > length - 100 || p < pit.entry - 5;
       if (pit && !e.pit && !e.recovery && !(e.player && input) && time >= lightsOut && near && wantsStop(e))
@@ -863,6 +871,7 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
     }
     for (const e of entries) e.manual = !!(e.player && input);
     const commands = entries.map((e, i) => {
+      if (o.networked && !e.player) return (e.command = hold);
       let command = e.pit?.phase === 'service' || e.retired || e.parked ? hold : e.player && input ? input
         : time < lightsOut + (start ? e.reactionTime : 0) ? hold : recoveryCommand(e, barrierAt) ?? aiCommand(i);
       // Pit limiter: no drive above the speed limit in the pit lane.
@@ -883,17 +892,26 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
       }
       return (e.command = command);
     });
-    entries.forEach((e, i) => { if (!e.retired) step(e.car, commands[i], FIXED_DT, surfaceAt, barrierAt); });
-    for (let i = 0; i < entries.length; i++)
+    entries.forEach((e, i) => {
+      if (!e.retired && !(o.networked && !e.player)) {
+        step(e.car, commands[i], FIXED_DT, surfaceAt, barrierAt);
+      }
+    });
+    const underpass = !o.networked && pit?.tunnel
+      ? entries.map(e => !!(e.pit || e.pitVisit) && pit.isOnTunnelAt(e.car.x, e.car.y, progressOf(e.car)))
+      : null;
+    for (let i = 0; !o.networked && i < entries.length; i++)
       for (let j = i + 1; j < entries.length; j++)
-        if (!entries[i].retired && !entries[j].retired && !entries[i].parked && !entries[j].parked)
-          resolveCarContact(entries[i].car, entries[j].car, o);
+        if (!entries[i].retired && !entries[j].retired && !entries[i].parked && !entries[j].parked) {
+          if (!underpass || underpass[i] === underpass[j]) resolveCarContact(entries[i].car, entries[j].car, o);
+        }
     time += FIXED_DT;
     const previousSafetyCarProgress = safetyCarProgress;
     const previousCovered = entries.map(e => e.covered);
     const trackLimitCompletions = [];
     if (safetyCarActive() && safetyCarProgress !== null) safetyCarProgress += o.safetyCarSpeed * FIXED_DT;
     for (const e of entries) {
+      if (o.networked && !e.player) continue;
       if (e.retired) continue;
       const p = progressOf(e.car);
       let d = p - e.last; if (d < -length / 2) d += length; else if (d > length / 2) d -= length;
@@ -954,7 +972,7 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
       const m = Math.floor(e.covered / 10);
       if (m > (e.milestone ?? -Infinity)) { e.milestone = m; e.milestoneTime = time; if (!passTimes.has(m)) passTimes.set(m, time); }
     }
-    for (let i = pendingCollisionReviews.length - 1; i >= 0; i--) {
+    for (let i = pendingCollisionReviews.length - 1; !o.networked && i >= 0; i--) {
       const review = pendingCollisionReviews[i];
       if (review.entry.covered <= review.other.covered) pendingCollisionReviews.splice(i, 1);
       else if (time >= review.until) {
@@ -962,7 +980,7 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
         pendingCollisionReviews.splice(i, 1);
       }
     }
-    for (const { entry, start, gained } of trackLimitCompletions) {
+    for (const { entry, start, gained } of o.networked ? [] : trackLimitCompletions) {
       const passed = entries.some((other, index) => other !== entry
         && start.positions[index] > start.covered && other.covered < entry.covered);
       if (gained >= o.trackLimitAdvantageDistance && passed) {

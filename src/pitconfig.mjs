@@ -22,8 +22,19 @@ export const CIRCUIT_PIT_SIDES = Object.freeze({
   miami: -1,
 });
 
-// Yas Marina's pit exit passes through a covered underpass. The exit-side
-// interval is measured back from the generated pit-lane merge point.
+export const CIRCUIT_PIT_CONFIGS = Object.freeze({
+  'yas-marina': Object.freeze({ entryAt: 240, laneOffset: 4, toMerge: 120, mergeLength: 40 }),
+});
+
+export const CIRCUIT_PIT_LAYOUTS = Object.freeze({
+  'yas-marina': Object.freeze({
+    lane: Object.freeze({ exitAt: 639, limitLength: 600, toMerge: 40, mergeLength: 100 }),
+    tunnel: Object.freeze({ beforeExit: 310, endBeforeExit: 100, ramp: 50 }),
+  }),
+});
+
+// The Yas Marina underpass crosses from the right-side pit lane to the left.
+// The far-side exit and merge are placed at the Turn 3 approach.
 export const CIRCUIT_PIT_TUNNELS = Object.freeze({
-  'yas-marina': Object.freeze({ beforeExit: 160, endBeforeExit: 12, depth: 6.5, ramp: 24 }),
+  'yas-marina': Object.freeze({ beforeExit: 150, endBeforeExit: 40, depth: 6.5, ramp: 24 }),
 });
