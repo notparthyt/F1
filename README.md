@@ -31,16 +31,16 @@ come from racing-line data or documented map traces.
 - **Wet-weather racing:** choose Intermediate or Full Wet tyres in the pit
   request cycle. Wet compounds gain grip as the surface gets wetter, have
   compound-colored sidewalls and visible tread grooves, and throw speed- and
-  wetness-scaled spray behind moving cars. Screen-space visor droplets are
+  wetness-scaled world-space spray behind moving cars. Screen-space visor droplets are
   limited to Visor and T-Cam views; rain and damp conditions change their
   density. Circuit altitude changes air density (and therefore aero load),
   while wet, elevated sections of hilly circuits add localized low cloud and
   reduced visibility.
 - **3D cameras:** cockpit, chase, T-Cam, overview, and a car-following 360
   Look that opens overhead and stays outside the car, terrain, and track
-  barriers. Visor and T-Cam views shake with impacts and track elevation,
-  without moving the camera mounts or animating the driver's head in Visor
-  view. Chase and free cameras follow track elevation. A separate
+  barriers. Visor and T-Cam cameras shake only after a crash; visor view also
+  follows the driver's head animation. Chase and free cameras follow track
+  elevation. A separate
   trackside TV camera can record the race to WebM.
 - **Circuit details:** Singapore Marina Bay, Buddh International Circuit, and
   Nürburgring GP-Strecke join the 21-circuit roster, with track-specific
@@ -81,11 +81,21 @@ come from racing-line data or documented map traces.
   animated driver is used in all three presets.
 - **Race control:** penalty and safety-car notices, a text-only team engineer,
   position-redress checks, pit-lane speed assistance, and AI caution near a
-  recent severe collision. Heavy impacts damage a tire and reduce its grip;
-  high-speed wheel-to-wheel contacts can lift and pitch a car, and off-centre
-  rear clips can induce a yawing spin with temporarily reduced traction. The
-  wheels stay attached to the car, and a critically damaged car can no longer
-  continue.
+  recent severe collision. Minor incidents trigger a Virtual Safety Car;
+  larger incidents can deploy the full safety car. Single-player fields draw
+  randomized low, average, and high AI performance profiles and vary starting
+  tyres and pit windows. Heavy impacts damage a tire and reduce its grip;
+  off-centre rear clips can induce a yawing spin with temporarily reduced
+  traction. Wheels stay attached to the car, and a critically damaged car can
+  no longer continue.
+
+## Lighting and shader source
+
+The scene's sun, moon, ambient lighting, fog, and environment intensity are
+configured in [index.html](./index.html). Track and scenery materials are in
+[src/world3d.mjs](./src/world3d.mjs). The screen-space rain shader is in
+[src/rain-lens.mjs](./src/rain-lens.mjs), and the world-space spray shader is
+in [src/car-spray.mjs](./src/car-spray.mjs).
 
 ## Run locally
 

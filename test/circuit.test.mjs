@@ -113,6 +113,7 @@ test('no traced corner is tighter than minRadius, so every racing line stays wid
 test('the circuit autopilot laps Monza on the road at a plausible pace', () => {
   const track = createCircuitTrack(CIRCUITS.monza), sim = createTimeTrial(track), timer = createLapTimer(track, { lineProgress: 0 });
   assert.deepEqual(sim.yellowFlag, { active: false, remaining: 0 });
+  assert.deepEqual(sim.vsc, { active: false, remaining: 0, speed: 0 });
   assert.deepEqual(sim.safetyCar, { active: false, progress: null, speed: 0 });
   let maxOffset = 0, top = 0;
   for (let i = 0; i < 60 * 130 && !timer.state.lastLap; i++) {

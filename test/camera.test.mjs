@@ -32,16 +32,19 @@ test('360 camera remains above the ground surface', () => {
   assert.ok(camera.y >= (camera.x > 5 ? 1 : 0) + 0.25);
 });
 
-test('onboard camera shake is rotational, elevation-aware, and responds to impacts', () => {
+test('onboard camera stays steady except for rotational crash shake', () => {
   const car = createCar();
   car.telemetry.speed = 55;
-  const level = cameraShakeRotation(car, 1, 'tcam');
-  const uphill = cameraShakeRotation(car, 1, 'tcam', 0.2, 0);
-  assert.notDeepEqual(uphill, level);
+  car.body.pitch = 0.2;
+  const steady = cameraShakeRotation(car, 1, 'tcam');
+  assert.deepEqual(steady, { pitch: 0, yaw: 0, roll: 0 });
+  assert.deepEqual(cameraShakeRotation(car, 1, 'tcam', 0.2, -0.3), steady);
 
-  const visorBaseline = cameraShakeRotation(car, 1, 'visor');
+  const visorBaseline = cameraShakeRotation(car, 0.01, 'visor');
   car.impact = { speed: 40, time: car.time };
-  const impact = cameraShakeRotation(car, 1, 'visor');
+  const impact = cameraShakeRotation(car, 0.01, 'visor');
   assert.ok(Math.abs(impact.pitch) > Math.abs(visorBaseline.pitch));
   assert.ok(Object.values(impact).every(Number.isFinite));
+  car.time = 1;
+  assert.deepEqual(cameraShakeRotation(car, 1, 'visor'), steady);
 });

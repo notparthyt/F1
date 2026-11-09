@@ -25,7 +25,9 @@ const server = defineServer({
     }, async (ctx) => {
       const roomId = findLobbyRoom(ctx.body.code);
       if (!roomId) {
-        return ctx.error("NOT_FOUND", { message: "Lobby not found or no longer available." });
+        return ctx.error("NOT_FOUND", {
+          message: "Lobby code expired or was not found. Ask the host to create a new lobby code.",
+        });
       }
       try {
         return await matchMaker.joinById(roomId, {
@@ -35,6 +37,9 @@ const server = defineServer({
       } catch (error) {
         if (error instanceof Error) {
           console.warn("Lobby join was rejected:", error.message);
+          if (error.message === "This player is already in the lobby.") {
+            return ctx.error("BAD_REQUEST", { message: error.message });
+          }
         }
         return ctx.error("BAD_REQUEST", {
           message: "Could not join that lobby. Check the code and try again.",

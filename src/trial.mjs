@@ -30,6 +30,7 @@ export function createTimeTrial(track, { tyre = 'medium', runUp = 150, car: carS
     start: { enabled: false, phase: 'race', lit: 0, lightsOut: 0, sinceLightsOut: Infinity },
     finish: { laps: 0, flag: false, flagTime: null, done: false },
     yellowFlag: { active: false, remaining: 0 },
+    vsc: { active: false, remaining: 0, speed: 0 },
     safetyCar: { active: false, progress: null, speed: 0 },
     placePlayerAt(x, y, heading) {
       if (![x, y, heading].every(Number.isFinite)) throw new TypeError('Player position and heading must be finite');

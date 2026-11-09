@@ -7,6 +7,7 @@ test('rain lens renders a screen-space pass only when rain is present', () => {
   const effect = createRainLensEffect(THREE);
   const renderTargets = [], renders = [];
   const renderer = {
+    getRenderTarget() { return null; },
     setRenderTarget(target) { renderTargets.push(target); },
     render(scene, camera) { renders.push([scene, camera]); },
   };

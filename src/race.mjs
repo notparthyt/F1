@@ -5,7 +5,7 @@
 // telemetry: a close follower loses up to towDragLoss of its drag and
 // dirtyAirLoss of its downforce, decaying over wakeLength metres behind the
 // leader and wakeWidth metres either side of its centreline.
-import { step, createCar, carMass, fitTires, newErsLap, tireTempGrip, tireWearGrip, applyCollisionDamage, isCarCriticallyDamaged, airDensityAtAltitude, wheelContact, localContactLongitudinal, TIRE_COMPOUNDS, FIXED_DT, clamp } from './physics.mjs?v=20261108-1';
+import { step, createCar, carMass, fitTires, newErsLap, tireTempGrip, tireWearGrip, applyCollisionDamage, isCarCriticallyDamaged, airDensityAtAltitude, localContactLongitudinal, TIRE_COMPOUNDS, FIXED_DT, clamp } from './physics.mjs?v=20261108-1';
 import { createAutopilot, createCircuitAutopilot } from './autopilot.mjs';
 
 export const RACE_DEFAULTS = Object.freeze({
@@ -36,6 +36,7 @@ export const RACE_DEFAULTS = Object.freeze({
   formSpread: 0.015, mistakeChance: 0.3, mistakeLoss: 0.8, mistakeTime: 1.5, wearSpread: 0.3,
   recoveryDelay: 2, recoveryTimeout: 20, recoveryMinDistance: 3, recoveryDistance: 20, recoveryAlign: 0.35, recoverySpeed: 2, recoveryAttempts: 2,
   yellowFlagDuration: 45, yellowFlagContactSpeed: 25, crashRetireSpeed: 25,
+  vscDuration: 18, vscIncidentSpeed: 12, vscSpeed: 70,
   safetyCarSpeed: 28, safetyCarStartGap: 80, safetyCarFollowGap: 45, safetyCarTrainGap: 18, safetyCarLookAhead: 160, safetyCarOvertakePenalty: 5,
   safetyCarCatchTime: 4, safetyCarMinSpeed: 5, safetyCarMaxSpeed: 40,
   safetyCarPitServiceFactor: 0.65,
@@ -153,7 +154,6 @@ export function resolveCarContact(a, b, o = RACE_DEFAULTS) {
   if (Math.hypot(a.x - b.x, a.y - b.y) > 8) return 0;
   const hit = overlap(a, b);
   if (!hit) return 0;
-  const wheelHit = wheelContact(a, b);
   const { nx, ny, depth } = hit; // n points from b towards a
   const ma = carMass(a), mb = carMass(b), Ia = a.config.yawInertia, Ib = b.config.yawInertia;
   const share = mb / (ma + mb);
@@ -200,18 +200,6 @@ export function resolveCarContact(a, b, o = RACE_DEFAULTS) {
   a.contact = { speed: -vn, time: a.time }; b.contact = { speed: -vn, time: b.time };
   applyCollisionDamage(a, -vn, hit.x, hit.y);
   applyCollisionDamage(b, -vn, hit.x, hit.y);
-  if (-vn >= 12) {
-    if (wheelHit.distance <= 1.05) {
-      const frontA = wheelHit.first.index < 2, frontB = wheelHit.second.index < 2;
-      const climber = frontA !== frontB ? (frontA ? a : b)
-        : (a.vx * Math.cos(a.heading) + a.vy * Math.sin(a.heading)
-          >= b.vx * Math.cos(b.heading) + b.vy * Math.sin(b.heading) ? a : b);
-      climber.verticalVelocity = Math.max(climber.verticalVelocity, clamp((-vn - 8) * 0.17, 1.4, 5));
-      climber.crashPitchRate = Math.max(climber.crashPitchRate, clamp((-vn - 8) * 0.055, 0.4, 1.7));
-      const climbSide = climber === a ? wheelHit.first.y - a.y : wheelHit.second.y - b.y;
-      climber.crashRollRate += Math.sign(climbSide || 1) * clamp((-vn - 8) * 0.04, 0.3, 1.2);
-    }
-  }
   return -vn;
 }
 
@@ -260,12 +248,11 @@ export const inDrsZone = (track, z, p) => { const L = track.length, a = d => ((d
 // when their tread wear passes pitWear (or the player requests a stop).
 // fuel: in a race with a distance every car carries the fuel for it (unless
 // its car spec sets fuelLoad); the burn-off makes the cars lighter lap by lap.
-export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = {}, playerGridSlot = null, start = false, laps = 0, compoundRule = false, fuel = true, tireWear = true, drs = true, aiPitStrategy = true } = {}) {
+export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = {}, playerGridSlot = null, start = false, laps = 0, compoundRule = false, fuel = true, tireWear = true, drs = true, aiPitStrategy = true, aiVariability = false } = {}) {
   const o = { ...RACE_DEFAULTS, ...options };
-  const rand = random(start?.seed ?? (Math.random() * 2 ** 32));
-  // Separate stream for AI form, mistakes and wear (fixed when unseeded, so
-  // races without a seeded start stay reproducible).
-  const vary = random((start?.seed ?? 12345) + 1);
+  const raceSeed = start?.seed ?? Math.floor(Math.random() * 2 ** 32);
+  const rand = random(raceSeed);
+  const vary = random(aiVariability ? raceSeed + 1 : (start?.seed ?? 12345) + 1);
   const lightsOn = start ? 5 * o.lightInterval : 0;
   const lightsOut = start ? lightsOn + o.holdMin + rand() * (o.holdMax - o.holdMin) : 0;
   // A real circuit (circuit.mjs) has its start/finish line at s = 0, lanes
@@ -291,11 +278,33 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
   // Fuel for the distance: per stadium lap, or per kilometre of a circuit.
   const fuelLap = circuit ? o.fuelPerKm * length / 1000 : o.fuelPerLap;
   const playerSlot = Number.isInteger(playerGridSlot) ? clamp(playerGridSlot, 0, grid.length) : grid.length;
+  const aiSkillLevels = grid.map((_, i) => aiVariability ? [0.92, 1, 1.08][i % 3] : 1);
+  if (aiVariability) for (let i = aiSkillLevels.length - 1; i > 0; i--) {
+    const j = Math.floor(vary() * (i + 1));
+    [aiSkillLevels[i], aiSkillLevels[j]] = [aiSkillLevels[j], aiSkillLevels[i]];
+  }
+  const aiTyrePlans = [['soft', 'medium', 'hard'], ['medium', 'hard', 'soft'], ['hard', 'soft', 'medium']];
   const createDrive = spec => circuit
     ? createCircuitAutopilot(track, { latGrip: 0.74 * spec.cornerSpeed / 43, brakeGrip: 0.62 * spec.brakeDecel / 26 })
     : createAutopilot({ halfStraight, radius }, { cornerSpeed: spec.cornerSpeed, brakeDecel: spec.brakeDecel });
   const entries = [{ name: 'You', player: true, cornerSpeed: 43, brakeDecel: 26, tyres: ['medium', 'hard'], ...player }, ...grid].map((spec, i) => {
-    const car = createCar({ ...spec.car, altitudeMetres: track.altitudeMetres ?? 0 }), tyres = spec.tyres ?? ['medium', 'hard'];
+    const ai = i > 0 && !o.networked;
+    const skill = ai && aiVariability ? aiSkillLevels[i - 1] + (vary() - 0.5) * 0.02 : 1;
+    const handling = ai ? skill + (aiVariability ? (vary() - 0.5) * 0.015 : 0) : 1;
+    const grip = ai ? skill + (aiVariability ? (vary() - 0.5) * 0.015 : 0) : 1;
+    const acceleration = ai ? skill + (aiVariability ? (vary() - 0.5) * 0.015 : 0) : 1;
+    const raceSpec = ai && aiVariability
+      ? { ...spec, cornerSpeed: spec.cornerSpeed * handling, brakeDecel: spec.brakeDecel * handling }
+      : spec;
+    const tyres = ai && aiVariability ? aiTyrePlans[Math.floor(vary() * aiTyrePlans.length)] : spec.tyres ?? ['medium', 'hard'];
+    const car = createCar({ ...spec.car, altitudeMetres: track.altitudeMetres ?? 0 });
+    if (ai && aiVariability) {
+      car.config.tireMu *= grip;
+      car.config.corneringStiffness *= handling;
+      car.config.rearCorneringStiffness *= handling;
+      car.config.maxBrakeForce *= handling;
+      car.config.torqueCurve = car.config.torqueCurve.map(([rpm, torque]) => [rpm, torque * acceleration]);
+    }
     car.collisionDamageEnabled = !!spec.player;
     if (!spec.player) car.config.tireWearEnergy /= 1 + o.wearSpread * (2 * vary() - 1);
     if (!tireWear) { car.config.tireWearEnergy = Infinity; car.config.tireWearGripLoss = 0; car.config.tireCliffGripLoss = 0; }
@@ -310,8 +319,9 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
     const p = progressOf(car);
     // Circuit AI pace: the plan's grip margins scale with the spec's corner
     // speed and braking relative to the player's (43 m/s, 26 m/s²).
-    const drive = createDrive(spec);
-    return { ...spec, index: i, car, lane: 0, offset: circuit ? lane - track.lineOffset(p) : lane, last: p, covered: signed(p - startLine), grid: signed(p - startLine),
+    const drive = createDrive(raceSpec);
+    return { ...raceSpec, performance: aiVariability && ai ? { handling, grip, acceleration } : null,
+      index: i, car, lane: 0, offset: circuit ? lane - track.lineOffset(p) : lane, last: p, covered: signed(p - startLine), grid: signed(p - startLine),
       reactionTime: o.reactionMin + rand() * (o.reactionMax - o.reactionMin), reaction: null, jumpStart: false, penalty: 0, finish: null, safetyCarDsq: false,
       trackLimitStart: null, trackLimitViolations: 0, contactIncidentActive: false,
       // Pit stops: own box, compounds used, completed stops, the stop in
@@ -322,11 +332,24 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
       // AI variation: lap the form was drawn for, form, pending mistake (covered m), mistake end (s).
       formLap: null, form: 1, mistakeAt: null, mistakeUntil: -Infinity };
   });
-  // Planned stop lap under the compound rule: 35-65% race distance.
-  for (const e of entries) e.stopLap = rule ? clamp(Math.round(laps * (0.35 + 0.3 * rand())), 1, laps - 1) : null;
+  // AI strategies vary their starting compound, stop window and (on longer
+  // races) whether to make a second stop.
+  for (const e of entries) {
+    if (!rule) { e.plannedStopLaps = []; e.stopLap = null; continue; }
+    const ai = aiVariability && !e.player && !o.networked;
+    const count = ai && laps >= 8 && vary() < 0.3 ? 2 : 1;
+    const first = ai && count === 2
+      ? clamp(Math.round(laps * (0.2 + 0.18 * vary())), 1, laps - 2)
+      : clamp(Math.round(laps * (0.3 + 0.4 * (ai ? vary() : rand()))), 1, laps - 1);
+    e.plannedStopLaps = count === 2
+      ? [first, clamp(Math.round(laps * (0.62 + 0.18 * vary())), first + 1, laps - 1)]
+      : [first];
+    e.stopLap = e.plannedStopLaps[0];
+  }
   const passTimes = new Map(); // first time any car reached each 10 m milestone
   let accumulator = 0, time = 0, flagTime = null, environmentGrip = 1;
   let yellowFlagUntil = 0, yellowFlag = null, safetyCarProgress = null;
+  let vscUntil = 0, vscIncident = null;
   const pendingSafetyCarPasses = [], pendingCollisionReviews = [];
   const addPenalty = (entry, seconds, reason) => {
     if (!o.penaltiesEnabled) return;
@@ -338,16 +361,26 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
     }
   };
   const safetyCarActive = () => time < yellowFlagUntil;
+  const vscActive = () => time < vscUntil && !safetyCarActive();
   const deploySafetyCar = (e, reason) => {
     if (!safetyCarActive() || safetyCarProgress === null) {
+      vscUntil = 0;
+      vscIncident = null;
       const leaderProgress = Math.max(...entries.filter(entry => !entry.retired).map(entry => entry.covered));
       safetyCarProgress = leaderProgress + o.safetyCarStartGap;
     }
     yellowFlagUntil = Math.max(yellowFlagUntil, time + o.yellowFlagDuration);
     yellowFlag = { reason, x: e.car.x, y: e.car.y, progress: e.covered, time };
   };
+  const deployVsc = (e, reason) => {
+    if (safetyCarActive() || vscActive()) return;
+    vscUntil = time + o.vscDuration;
+    vscIncident = { reason, x: e.car.x, y: e.car.y, progress: e.covered, time };
+  };
   const safetyCarSpeedLimit = e => {
-    if (!safetyCarActive() || e.pit || safetyCarProgress === null) return Infinity;
+    if (e.pit) return Infinity;
+    if (vscActive()) return o.vscSpeed;
+    if (!safetyCarActive() || safetyCarProgress === null) return Infinity;
     const gap = safetyCarProgress - e.covered;
     const gapLimit = o.safetyCarSpeed + (gap - o.safetyCarFollowGap) / o.safetyCarCatchTime;
     const carAheadLimit = entries.reduce((limit, other) => {
@@ -389,7 +422,7 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
   const crossing = (before, after, point) => Math.floor((after - point) / length) > Math.floor((before - point) / length)
     ? (after - (Math.floor((after - point) / length) * length + point)) / (after - before) : null;
   const solo = entries.length === 1 && drs;
-  const drsEnabled = () => drs && !safetyCarActive() && (solo || flagTime === null && time >= lightsOut);
+  const drsEnabled = () => drs && !safetyCarActive() && !vscActive() && (solo || flagTime === null && time >= lightsOut);
   const aiDrsEnabled = () => drsEnabled()
     && (solo || Math.max(...entries.map(e => e.covered)) >= o.drsEnableLaps * length);
   const drsAllowed = e => drsEnabled() && !e.finish && !e.pit && !e.retired
@@ -462,7 +495,9 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
     // A planned stop waits a lap rather than queue behind a car just ahead
     // that is boxing too, unless this is the last lap it can be made.
     const queue = entries.some(x => x !== e && x.pit?.phase === 'in' && ahead_(x.covered - e.covered) < o.queueDistance);
-    if (e.stopLap !== null && lap >= e.stopLap && new Set(e.compounds).size < 2 && (!queue || remaining <= 1)) return true;
+    const plannedStopsRemain = e.plannedStopLaps?.length > e.stops.length;
+    if (e.stopLap !== null && lap >= e.stopLap
+      && (new Set(e.compounds).size < 2 || plannedStopsRemain) && (!queue || remaining <= 1)) return true;
     return remaining >= 3 && Math.max(...e.car.tireWear) > o.pitWear;
   }
   // Pit lane rules and service after each step: limiter speeding penalty,
@@ -488,6 +523,7 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
         fitTires(car, p.compound); e.compounds.push(p.compound); e.pitRequest = null;
         e.servedPenalty += p.penaltyTime;
         e.stops.push({ lap: p.lap, compound: p.compound, service: p.serviceDuration, stationary: time - p.begin, penalty: p.penaltyTime });
+        e.stopLap = e.plannedStopLaps?.[e.stops.length] ?? null;
         p.phase = 'out';
       }
       return;
@@ -522,8 +558,8 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
   // the car is slow (e.g. stuck behind a stopped car).
   function aiCommand(i, dt = FIXED_DT) {
     const e = entries[i], car = e.car, speed = car.telemetry.speed;
-    const underSafetyCar = safetyCarActive();
-    if (underSafetyCar) { e.dive = null; e.tow = null; }
+    const underSafetyCar = safetyCarActive(), underNeutralization = underSafetyCar || vscActive();
+    if (underNeutralization) { e.dive = null; e.tow = null; }
     const passLane = circuit ? o.passLane : Math.max(o.passLane, 4.5);
     // Dirty air: corner speed scaled by the expected loss of normal load (the
     // downforce share of it is taken as ~45% at this circuit's corner speeds),
@@ -1004,11 +1040,16 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
         pendingCollisionReviews.push({ entry: e, other: collisionPartner, until: time + 3,
           seconds: contact >= o.intentionalContactSpeed ? o.intentionalContactPenalty : o.contactPenalty });
       e.contactIncidentActive = majorContact;
-      if (contact >= o.yellowFlagContactSpeed && time - (e.lastIncidentTime ?? -Infinity) >= 1.5) {
+      const crashSpeed = Math.max(impact, contact);
+      if (crashSpeed >= o.yellowFlagContactSpeed && time - (e.lastIncidentTime ?? -Infinity) >= 1.5) {
         e.lastIncidentTime = time;
         deploySafetyCar(e, 'crash');
+      } else if (crashSpeed >= o.vscIncidentSpeed
+        && crashSpeed < o.yellowFlagContactSpeed
+        && time - (e.lastIncidentTime ?? -Infinity) >= 1.5) {
+        e.lastIncidentTime = time;
+        deployVsc(e, 'minor incident');
       }
-      const crashSpeed = Math.max(impact, contact);
       if (!e.player && crashSpeed >= o.crashRetireSpeed) retire(e, 'crash');
       if (!e.player && e.stuck > o.retireAfter) retire(e, 'stuck');
       if (start && !e.jumpStart && time < lightsOut && e.covered - e.grid > o.jumpDistance) { e.jumpStart = true; addPenalty(e, o.jumpPenalty, 'jump start'); }
@@ -1077,6 +1118,7 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
     },
     get drsEnabled() { return drsEnabled(); }, inPitLane: car => inPitLane(car),
     get yellowFlag() { return { active: safetyCarActive(), remaining: Math.max(0, yellowFlagUntil - time), ...yellowFlag }; },
+    get vsc() { return { active: vscActive(), remaining: Math.max(0, vscUntil - time), speed: o.vscSpeed, ...vscIncident }; },
     get safetyCar() { return { active: safetyCarActive(), progress: safetyCarProgress, speed: o.safetyCarSpeed }; },
     get pendingSafetyCarPass() {
       const pass = pendingSafetyCarPasses.find(item => item.entry.player && item.decision === null);

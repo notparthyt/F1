@@ -126,6 +126,7 @@ describe("multiplayer lobby", () => {
     const room = await colyseus.createRoom<LobbyRoom>("race_lobby", {
       settings: { ...settings, qualifying: false },
     });
+
     const host = await colyseus.connectTo(room, { identity: "identity-weather-host", name: "Host" });
     await colyseus.connectTo(room, { identity: "identity-weather-guest", name: "Guest" });
     host.send("lobby:start");
@@ -191,6 +192,50 @@ describe("multiplayer lobby", () => {
     assert.equal(driver.disqualified, true, "Competitive races require two tire compounds.");
 
     await host.leave();
+  });
+
+  it("replicates a virtual safety car for a minor incident and upgrades it to a safety car", async () => {
+    const room = await colyseus.createRoom<LobbyRoom>("race_lobby", {
+      settings: { ...settings, qualifying: false },
+    });
+    const host = await colyseus.connectTo(room, { identity: "identity-vsc-host", name: "Host" });
+    await colyseus.connectTo(room, { identity: "identity-vsc-guest", name: "Guest" });
+    host.send("lobby:start");
+    await waitFor(() => room.state.phase === "boarding", "The race grid was not prepared.");
+    await forceDriversIntoCars(room, host);
+    advanceCountdown(room);
+
+    const internals = room as unknown as {
+      drivers: Map<string, {
+        covered: number;
+        pitPhase: string | null;
+        car: { telemetry: { speed: number } };
+      }>;
+      deployVirtualSafetyCar(): void;
+      deploySafetyCar(): void;
+      applySafetyCarRules(
+        driver: { covered: number; pitPhase: string | null; car: { telemetry: { speed: number } } },
+        input: { throttle: number; brake: number; steer: number; drs: boolean },
+      ): { throttle: number; brake: number; steer: number; drs: boolean };
+    };
+    const driver = internals.drivers.get(host.sessionId);
+    assert.ok(driver);
+    driver.car.telemetry.speed = 80;
+    internals.deployVirtualSafetyCar();
+
+    assert.equal(room.state.yellowFlag, true);
+    assert.ok(room.state.yellowFlagRemaining > 0);
+    assert.equal(room.state.safetyCarProgress, -1);
+    assert.equal(room.state.safetyCarSpeed, 70);
+    const restricted = internals.applySafetyCarRules(driver, { throttle: 1, brake: 0, steer: 0, drs: true });
+    assert.equal(restricted.drs, false);
+    assert.ok(restricted.brake > 0);
+
+    internals.deploySafetyCar();
+    assert.equal(room.state.yellowFlag, true);
+    assert.equal(room.state.safetyCarSpeed, 28);
+    assert.ok(room.state.safetyCarProgress > driver.covered);
+    await room.disconnect();
   });
 
   it("suffixes duplicate names and transfers host when the host leaves", async () => {

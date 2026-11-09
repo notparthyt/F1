@@ -294,6 +294,10 @@ export class LobbyRoom extends Room<{ state: LobbyState }> {
   private yellowFlagUntil = 0;
   private safetyCarProgress: number | null = null;
   private readonly safetyCarSpeed = 28;
+  private virtualSafetyCar = false;
+  private lastVirtualSafetyCarAt = -Infinity;
+  private readonly virtualSafetyCarDuration = RACE_DEFAULTS.vscDuration;
+  private readonly virtualSafetyCarSpeed = RACE_DEFAULTS.vscSpeed;
 
   async onCreate(options: LobbyOptions): Promise<void> {
     const settings = normalizeLobbySettings(options.settings ?? {
@@ -451,6 +455,8 @@ export class LobbyRoom extends Room<{ state: LobbyState }> {
     this.weather = createWeather({ options: weatherOptionsForTrack(circuit) });
     this.yellowFlagUntil = 0;
     this.safetyCarProgress = null;
+    this.virtualSafetyCar = false;
+    this.lastVirtualSafetyCarAt = -Infinity;
     this.state.yellowFlag = false;
     this.state.yellowFlagRemaining = 0;
     this.state.safetyCarProgress = -1;
@@ -673,6 +679,7 @@ export class LobbyRoom extends Room<{ state: LobbyState }> {
     if (this.yellowFlagUntil > 0 && this.raceElapsed >= this.yellowFlagUntil) {
       this.yellowFlagUntil = 0;
       this.safetyCarProgress = null;
+      this.virtualSafetyCar = false;
       for (const driver of this.drivers.values()) {
         if (!driver.pendingSafetyCarPass) continue;
         driver.pendingSafetyCarPass = null;
@@ -724,6 +731,12 @@ export class LobbyRoom extends Room<{ state: LobbyState }> {
             : this.weather.surfaceGrip(this.raceTrack!.surfaceAt(x, y), driver.car.compound),
           this.raceTrack.barrierAt);
         this.advancePitStop(driver, FIXED_DT);
+        const impact = driver.car.impact;
+        if (this.state.phase === "racing" && impact
+          && driver.car.time - impact.time <= FIXED_DT * 1.1) {
+          if (impact.speed >= RACE_DEFAULTS.yellowFlagContactSpeed) this.deploySafetyCar();
+          else if (impact.speed >= RACE_DEFAULTS.vscIncidentSpeed) this.deployVirtualSafetyCar();
+        }
         if (this.state.phase === "racing" && this.safetyCarProgress !== null) {
           this.safetyCarProgress += this.safetyCarSpeed * FIXED_DT;
         }
@@ -747,6 +760,19 @@ export class LobbyRoom extends Room<{ state: LobbyState }> {
 
   private applySafetyCarRules(driver: RaceDriver, input: DriverInput): DriverInput {
     if (driver.pitPhase) return { ...input, drs: false };
+    if (this.raceElapsed >= this.yellowFlagUntil) return input;
+    if (this.virtualSafetyCar) {
+      const speed = driver.car.telemetry.speed;
+      if (speed > this.virtualSafetyCarSpeed + 0.3) {
+        return {
+          ...input,
+          throttle: 0,
+          brake: Math.max(input.brake, clamp((speed - this.virtualSafetyCarSpeed) / 5, 0.12, 1)),
+          drs: false,
+        };
+      }
+      return { ...input, drs: false };
+    }
     if (this.safetyCarProgress === null) return input;
     const pending = driver.pendingSafetyCarPass;
     const other = pending ? this.drivers.get(pending.otherSessionId) : undefined;
@@ -828,6 +854,18 @@ export class LobbyRoom extends Room<{ state: LobbyState }> {
     if (!leader) return;
     this.yellowFlagUntil = Math.max(this.yellowFlagUntil, this.raceElapsed + 45);
     this.safetyCarProgress ??= leader.covered + 80;
+    this.virtualSafetyCar = false;
+    this.publishRaceControl();
+  }
+
+  private deployVirtualSafetyCar(): void {
+    if (!this.raceTrack || this.state.phase !== "racing"
+      || this.raceElapsed < this.yellowFlagUntil
+      || this.raceElapsed - this.lastVirtualSafetyCarAt < this.virtualSafetyCarDuration) return;
+    this.yellowFlagUntil = this.raceElapsed + this.virtualSafetyCarDuration;
+    this.virtualSafetyCar = true;
+    this.safetyCarProgress = null;
+    this.lastVirtualSafetyCarAt = this.raceElapsed;
     this.publishRaceControl();
   }
 
@@ -848,11 +886,11 @@ export class LobbyRoom extends Room<{ state: LobbyState }> {
   }
 
   private publishRaceControl(): void {
-    const active = this.safetyCarProgress !== null && this.raceElapsed < this.yellowFlagUntil;
+    const active = this.raceElapsed < this.yellowFlagUntil;
     this.state.yellowFlag = active;
     this.state.yellowFlagRemaining = active ? this.yellowFlagUntil - this.raceElapsed : 0;
-    this.state.safetyCarProgress = active ? this.safetyCarProgress! : -1;
-    this.state.safetyCarSpeed = this.safetyCarSpeed;
+    this.state.safetyCarProgress = active && !this.virtualSafetyCar ? this.safetyCarProgress! : -1;
+    this.state.safetyCarSpeed = active && this.virtualSafetyCar ? this.virtualSafetyCarSpeed : this.safetyCarSpeed;
   }
 
   private driverCommand(driver: RaceDriver): DriverInput {
@@ -1027,7 +1065,8 @@ export class LobbyRoom extends Room<{ state: LobbyState }> {
         const a = drivers[first];
         const b = drivers[second];
         const speed = resolveCarContact(a.car, b.car);
-        if (speed >= 25) this.deploySafetyCar();
+        if (speed >= RACE_DEFAULTS.yellowFlagContactSpeed) this.deploySafetyCar();
+        else if (speed >= RACE_DEFAULTS.vscIncidentSpeed) this.deployVirtualSafetyCar();
         if (speed < 18 || this.state.phase !== "racing") continue;
         if (this.state.settings.penalties) {
           const key = `${a.sessionId}:${b.sessionId}`;

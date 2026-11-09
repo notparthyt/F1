@@ -38,9 +38,13 @@ In another terminal, serve the game over HTTP and open it in a browser:
 py -m http.server 5188 --bind 127.0.0.1
 ```
 
-The local game connects to `ws://localhost:2567` by default. To use another
-server, set `window.CURSOR_RACING_MULTIPLAYER_URL` before the game's module
-script runs, or append `?multiplayerServer=wss%3A%2F%2Fyour-host` to the URL.
+The local game connects to `ws://localhost:2567` by default. A deployed game
+must be configured with the public multiplayer server URL; localhost is only
+reachable from the same computer. Set `window.CURSOR_RACING_MULTIPLAYER_URL`
+before the game's module script runs, or append
+`?multiplayerServer=wss%3A%2F%2Fyour-host` to the URL. HTTPS sites require a
+`wss://` server URL. Lobby creation and joining report a connection error if
+the server does not respond within 12 seconds.
 Configure `CLIENT_ORIGINS` with the exact origins allowed to use the server's
 HTTP matchmaking endpoints. Lobby codes and bans are held in memory and
 disappear when a room closes or the server restarts.

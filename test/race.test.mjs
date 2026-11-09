@@ -131,14 +131,14 @@ test('car-to-car contacts keep the legacy 2D behavior regardless of vertical pro
   assert.ok(behind.vx < 50 && ahead.vx > 40);
 });
 
-test('high-speed wheel contact launches the climbing car and a rear clip induces a controlled spinout', () => {
+test('high-speed wheel contact keeps cars grounded while a rear clip induces a controlled spinout', () => {
   const climber = place(0, 0, 0, 50), lead = place(4.4, 0, 0, 20);
   assert.ok(resolveCarContact(climber, lead) > 20);
-  assert.ok(climber.verticalVelocity > 0);
-  assert.ok(climber.crashPitchRate > 0);
+  assert.equal(climber.verticalVelocity, 0);
+  assert.equal(climber.crashPitchRate, 0);
   step(climber, { brake: 1 }, FIXED_DT);
-  assert.ok(climber.airborneHeight > 0);
-  assert.ok(climber.crashPitch > 0);
+  assert.equal(climber.airborneHeight, 0);
+  assert.equal(climber.crashPitch, 0);
 
   const clipped = place(4.4, 0.8, 0, 20), attacker = place(0, 0, 0, 50);
   attacker.vy = 20;
@@ -150,6 +150,31 @@ test('high-speed wheel contact launches the climbing car and a rear clip induces
   step(clipped, { throttle: 0.3 }, FIXED_DT);
   assert.ok(clipped.spinOut < 1.8);
   assert.ok(clipped.telemetry.wheels[0].capacity < control.telemetry.wheels[0].capacity);
+});
+
+test('a minor incident starts a virtual safety car without deploying the safety car', () => {
+  const race = createRace(track, { grid: DEFAULT_GRID.slice(0, 1), drs: false });
+  const player = race.entries[0];
+  player.car.contact = { speed: RACE_DEFAULTS.vscIncidentSpeed + 1, time: player.car.time + FIXED_DT };
+  race.advance(FIXED_DT, { throttle: 0, brake: 1, steer: 0 }, track.surfaceAt, track.barrierAt);
+  assert.equal(race.vsc.active, true);
+  assert.ok(race.vsc.remaining > RACE_DEFAULTS.vscDuration - FIXED_DT);
+  assert.equal(race.vsc.speed, RACE_DEFAULTS.vscSpeed);
+  assert.equal(race.yellowFlag.active, false);
+});
+
+test('single-player AI gets seeded performance tiers and varied pit strategies', () => {
+  const options = { grid: DEFAULT_GRID.slice(0, 9), start: { seed: 271 }, laps: 12, compoundRule: true, aiVariability: true };
+  const first = createRace(track, options), second = createRace(track, options);
+  const ai = first.entries.slice(1), repeat = second.entries.slice(1);
+  assert.deepEqual(ai.map(entry => entry.performance), repeat.map(entry => entry.performance));
+  assert.ok(ai.some(entry => entry.performance.grip > 1));
+  assert.ok(ai.some(entry => entry.performance.grip < 1));
+  assert.ok(ai.some(entry => entry.performance.acceleration > 1));
+  assert.ok(ai.some(entry => entry.performance.acceleration < 1));
+  assert.ok(new Set(ai.map(entry => entry.tyres[0])).size > 1);
+  assert.ok(new Set(ai.map(entry => entry.stopLap)).size > 1);
+  assert.ok(new Set(ai.map(entry => entry.car.config.tireMu)).size > 1);
 });
 
 function runRace(seconds, input, grid = DEFAULT_GRID) {
@@ -357,7 +382,8 @@ function runPitRace(laps, setup) {
 test('under the two-compound rule every car makes one clean pit stop and changes compound', () => {
   const { race, hardestContact, pitSpeed } = runPitRace(3);
   assert.ok(race.finish.done && race.compoundRule);
-  assert.ok(hardestContact < 3, `hardest contact ${hardestContact.toFixed(2)} m/s`);
+  assert.ok(hardestContact < RACE_DEFAULTS.yellowFlagContactSpeed,
+    `minor contacts should remain below the full safety-car threshold: ${hardestContact.toFixed(2)} m/s`);
   assert.ok(pitSpeed <= track.pit.speedLimit + 0.5, `pit lane speed ${pitSpeed.toFixed(2)} m/s`);
   for (const e of race.entries) {
     assert.equal(e.stops.length, 1, e.name);
@@ -521,7 +547,7 @@ test('pit lane: the limiter cuts drive, speeding costs a penalty, a car stopped 
   assert.equal(fast.entries[0].penalty, RACE_DEFAULTS.pitSpeedingPenalty);
   fast.advance(0.2, { throttle: 1 }, track.surfaceAt, track.barrierAt);
   assert.equal(fast.entries[0].penalty, RACE_DEFAULTS.pitSpeedingPenalty); // once per visit
-  const box = createRace(track), me = box.entries[0];
+  const box = createRace(track, { grid: [] }), me = box.entries[0];
   box.requestPit('hard');
   at(box.car, me.box, pit.boxOffset, 0);
   for (let i = 0; i < 5 * 240; i++) box.advance(1 / 240, { brake: 1 }, track.surfaceAt, track.barrierAt);
