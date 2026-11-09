@@ -3,6 +3,7 @@
 // Local frame: +x forward, +y up, +z right (physics y-left maps to -z).
 // Proportions are illustrative, not a CAD model of any real car.
 import * as THREE from '../vendor/three.module.js';
+import { TIRE_COMPOUNDS } from './physics.mjs';
 
 const hasDOM = typeof document !== 'undefined';
 
@@ -213,7 +214,7 @@ export function buildF1Car(config, livery) {
   add(new THREE.BoxGeometry(0.03, 0.06, 0.1), M.light).position.set(R - 0.64, 0.33, 0);
 
   // Wheels, uprights and wishbones.
-  const wheels = [];
+  const wheels = [], tireMarkings = [];
   const positions = [[F, -T], [F, T], [R, -T], [R, T]]; // FL, FR, RL, RR (left = -z)
   positions.forEach(([x, z], i) => {
     const front = i < 2, side = Math.sign(z), W = (front ? 0.305 : 0.395) / 2;
@@ -223,6 +224,19 @@ export function buildF1Car(config, livery) {
       [rad, W * 0.72], [rad - 0.006, W * 0.88], [rad - 0.02, W * 0.97], [rad - 0.05, W], [0.226, W * 0.82]];
     add(new THREE.LatheGeometry(profile.map(([r, y]) => new THREE.Vector2(r, y)), 64).rotateX(Math.PI / 2), M.rubber, spin);
     for (const f of [-1, 1]) add(new THREE.RingGeometry(0.268, 0.282, 64).translate(0, 0, f * W * 0.99), M.soft, spin);
+    const sidewall = new THREE.Mesh(new THREE.TorusGeometry(rad - 0.055, 0.012, 5, 48),
+      new THREE.MeshStandardMaterial({ color: 0xff3b30, roughness: 0.75 }));
+    sidewall.position.z = side * W * 0.92;
+    spin.add(sidewall);
+    const grooves = [-0.42, 0, 0.42].map(offset => {
+      const groove = new THREE.Mesh(new THREE.TorusGeometry(rad - 0.012, 0.005, 4, 48),
+        new THREE.MeshStandardMaterial({ color: 0x17191b, roughness: 0.9 }));
+      groove.position.z = offset * W;
+      groove.visible = false;
+      spin.add(groove);
+      return groove;
+    });
+    tireMarkings.push({ sidewall, grooves });
     add(new THREE.CylinderGeometry(0.228, 0.228, W * 1.65, 48, 1, true).rotateX(Math.PI / 2), M.rim, spin);
     const cover = add(new THREE.CircleGeometry(0.226, 48), M.cover, spin);
     cover.position.z = side * W * 0.8; if (side < 0) cover.rotation.y = Math.PI;
@@ -250,5 +264,16 @@ export function buildF1Car(config, livery) {
   car.add(body);
   const driver = [helmet, visor];
   const setDriverVisible = visible => driver.forEach(part => { part.visible = visible; });
-  return { group: car, body, wheels, driver, setDriverVisible, drsFlap, eye: [-0.17, 0.8] };
+  const setTireCompound = compound => {
+    if (!TIRE_COMPOUNDS[compound]) throw new RangeError(`Unknown tire compound: ${compound}`);
+    const color = compound === 'wet' ? 0x258bff : compound === 'intermediate' ? 0x38d66b
+      : compound === 'soft' ? 0xff3b30 : compound === 'medium' ? 0xffd60a : 0xf2f2f2;
+    for (const marking of tireMarkings) {
+      marking.sidewall.material.color.setHex(color);
+      marking.grooves.forEach(groove => { groove.visible = compound === 'wet' || compound === 'intermediate'; });
+    }
+    return compound;
+  };
+  setTireCompound('medium');
+  return { group: car, body, wheels, driver, setDriverVisible, setTireCompound, drsFlap, eye: [-0.17, 0.8] };
 }

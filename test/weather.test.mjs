@@ -39,3 +39,15 @@ test('a received weather snapshot replaces locally generated conditions', () => 
   assert.ok(Math.abs(weather.surfaceGrip(1) - 0.84) < 1e-12);
   assert.throws(() => weather.setState({ raining: true, intensity: 2, wetness: 0 }), TypeError);
 });
+
+test('wet compounds gain grip as the track wets while dry-weather grip falls', () => {
+  const weather = createWeather({ random: () => 1, options: { initialRainChance: 0 } });
+  weather.setState({ raining: true, intensity: 1, wetness: 1 });
+  const slick = weather.surfaceGrip(1, 'medium');
+  const intermediate = weather.surfaceGrip(1, 'intermediate');
+  const fullWet = weather.surfaceGrip(1, 'wet');
+  assert.ok(fullWet > intermediate);
+  assert.ok(intermediate > slick);
+  assert.ok(slick < 1);
+  assert.throws(() => weather.surfaceGrip(1, 'unknown'), RangeError);
+});

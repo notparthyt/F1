@@ -24,6 +24,14 @@ export const CIRCUIT_ELEVATION_PROFILES = Object.freeze({
   buddh: [[0,0],[.11,4],[.18,14],[.35,-4],[.55,6],[.72,-1],[.85,-8],[.95,-2]],
 });
 
+export const CIRCUIT_ALTITUDES = Object.freeze({
+  bahrain: 7, shanghai: 4, catalunya: 109, monaco: 7, montreal: 13,
+  'red-bull-ring': 678, silverstone: 153, hungaroring: 264, spa: 361,
+  monza: 162, cota: 161, mexico: 2285, interlagos: 760,
+  'yas-marina': 3, buddh: 220, nurburgring: 300, imola: 37,
+  zandvoort: 6, jeddah: 15, miami: 2, singapore: 15,
+});
+
 export const NIGHT_CIRCUITS = new Set(['bahrain', 'jeddah', 'yas-marina', 'singapore']);
 
 export const CIRCUIT_TRACK_STYLE = Object.freeze({

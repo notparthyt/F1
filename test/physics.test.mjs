@@ -1,7 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createCar, step, wheelLoads, aeroMap, tireForce, relaxSlipAngle, engineTorque, shift, updateBody, tireTempGrip, updateTireTemp, tireWearGrip, updateTireWear, fitTires, carMass, newErsLap, TIRE_COMPOUNDS, Simulation, FIXED_DT }
+import { airDensityAtAltitude, createCar, applyCollisionDamage, isCarCriticallyDamaged, step, wheelLoads, aeroMap, tireForce, relaxSlipAngle, engineTorque, shift, updateBody, tireTempGrip, updateTireTemp, tireWearGrip, updateTireWear, fitTires, carMass, newErsLap, TIRE_COMPOUNDS, Simulation, FIXED_DT }
   from '../src/physics.mjs';
+
+test('high-altitude circuits reduce air density for downforce and drag', () => {
+  assert.equal(airDensityAtAltitude(0), 1.225);
+  assert.ok(airDensityAtAltitude(2285) < airDensityAtAltitude(700));
+  assert.ok(airDensityAtAltitude(2285) > 0.9);
+  assert.equal(createCar({ altitudeMetres: 2285 }).config.airDensity, airDensityAtAltitude(2285));
+  assert.throws(() => airDensityAtAltitude(-1), RangeError);
+});
 
 const run = (car, seconds, input, surface) => {
   for (let i = 0; i < Math.round(seconds / FIXED_DT); i++) step(car, input, FIXED_DT, surface);
@@ -34,6 +42,21 @@ const drivePower = c => peakPower(c) + (c.ers ? c.ersPower : 0);
 test('rest is stable, including applied brakes and steering', () => {
   const c = run(createCar(), 10, { brake: 1, steer: 1 });
   near(c.x, 0); near(c.y, 0); near(c.yawRate, 0);
+});
+
+test('collision damage stays attached to the struck tire and becomes mechanically critical', () => {
+  const car = createCar();
+  const frontX = car.config.wheelbase * (1 - car.config.frontWeight);
+  const result = applyCollisionDamage(car, 50, frontX, car.config.track / 2);
+  assert.equal(result.wheel, 0);
+  assert.ok(car.tireDamage[0] > 0);
+  assert.deepEqual(car.tireDamage.slice(1), [0, 0, 0]);
+  assert.equal(isCarCriticallyDamaged(car), false);
+
+  car.time = 1;
+  applyCollisionDamage(car, 80, frontX, car.config.track / 2);
+  assert.equal(car.tireDamage[0], 1);
+  assert.equal(isCarCriticallyDamaged(car), true);
 });
 
 test('straight acceleration is symmetric and limited by the engine curve', () => {
@@ -722,7 +745,9 @@ test('softer compounds stop shorter and wear faster; fitTires fits a fresh set a
   assert.equal(soft.compound, 'hard');
   assert.deepEqual(soft.tireWear, [0, 0, 0, 0]);
   for (const t of soft.tireTemp) assert.deepEqual(t, { surface: 100, carcass: 100 });
-  assert.throws(() => fitTires(soft, 'wet'), RangeError);
+  assert.throws(() => fitTires(soft, 'unknown'), RangeError);
+  fitTires(soft, 'wet');
+  assert.equal(soft.compound, 'wet');
   assert.equal(createCar().compound, 'medium');
 });
 

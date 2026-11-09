@@ -1,3 +1,5 @@
+import { TIRE_COMPOUNDS } from './physics.mjs';
+
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
 export const WEATHER_DEFAULTS = Object.freeze({
@@ -64,8 +66,11 @@ export function createWeather({ random = Math.random, options = {} } = {}) {
       }
       return snapshot();
     },
-    surfaceGrip(baseGrip) {
-      return baseGrip * (1 - config.maxGripLoss * wetness);
+    surfaceGrip(baseGrip, compound = 'medium') {
+      if (!Number.isFinite(baseGrip) || !Number.isFinite(wetness)) throw new TypeError('Surface grip must be finite');
+      if (!Object.hasOwn(TIRE_COMPOUNDS, compound)) throw new RangeError(`Unknown tire compound: ${compound}`);
+      const wetGrip = TIRE_COMPOUNDS[compound].wetGrip ?? 0;
+      return baseGrip * (1 - config.maxGripLoss * wetness) * (1 + wetGrip * wetness);
     },
   };
 }

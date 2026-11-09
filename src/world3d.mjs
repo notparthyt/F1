@@ -629,10 +629,15 @@ export function buildCircuitWorld(track, { boxColors = [], night = false, urban 
   addSky(world, skyR, new THREE.Vector3(cx, 0, -cy));
   updateWorldDaylight(world, night ? 0.04 : 0.94);
   const size = 2 * extent + 1200;
-  const grass = texture(256, (g, s) => {
-    noise(g, s, '#3f6b2e', 0.25, 9000);
-    for (let i = 0; i < s; i += 64) { g.fillStyle = 'rgba(255,255,255,0.035)'; g.fillRect(0, i, s, 32); }
-  }, size / 8, size / 8);
+  const grass = texture(512, (g, s) => {
+    noise(g, s, '#3d6a2c', 0.3, 30000);
+    for (let i = 0; i < 90; i++) {
+      g.fillStyle = `rgba(${150 + Math.random() * 40},${150 + Math.random() * 30},70,${0.03 + Math.random() * 0.05})`;
+      g.beginPath(); g.ellipse(Math.random() * s, Math.random() * s, 8 + Math.random() * 36, 5 + Math.random() * 22, Math.random() * 3, 0, Math.PI * 2); g.fill();
+    }
+    for (let i = 0; i < s; i += 128) { g.fillStyle = 'rgba(255,255,255,0.05)'; g.fillRect(0, i, s, 64); g.fillStyle = 'rgba(0,20,0,0.04)'; g.fillRect(0, i + 64, s, 64); }
+    for (let i = 0; i < 2500; i++) { g.fillStyle = `rgba(255,255,255,${Math.random() * 0.1})`; g.fillRect(Math.random() * s, Math.random() * s, 1, 3 + Math.random() * 4); }
+  }, size / 12, size / 12);
   // Drape the infield and verges to the same continuous elevation curve used
   // by the road. Use a spatial segment index so each terrain vertex projects
   // to a nearby centreline segment instead of snapping to a sparse sample.
@@ -662,6 +667,12 @@ export function buildCircuitWorld(track, { boxColors = [], night = false, urban 
       if (distanceSquared < bestD2) { bestD2 = distanceSquared; progress = S[k] + (S[k + 1] - S[k]) * fraction; }
     }
     return { progress, distance: Math.sqrt(bestD2) };
+  };
+  // Height of the ground mesh at (x, y): the same drape the terrain vertices use, so anything
+  // planted on it (trees) sits on the surface at every distance from the road.
+  const terrainHeightAt = (x, y) => {
+    const { progress, distance } = terrainProjection(x, y), fade = 1 - THREE.MathUtils.smoothstep(distance, wallAt + 20, 190);
+    return (Number.isFinite(distance) ? track.heightAt(progress) * fade : 0) - 0.055;
   };
   const pitTunnel = track.pit?.tunnel ? track.pit : null;
   // Only the two open ramps (cut-and-cover trench mouths) are cut out of the ground and its
@@ -1031,18 +1042,9 @@ export function buildCircuitWorld(track, { boxColors = [], night = false, urban 
         lintel.rotation.y = heading; lintel.castShadow = lintel.receiveShadow = true; world.add(lintel);
       }
     }
-    // Pit-lane boundary: white lines along both edges of the corridor, from the speed-limit
-    // line to the end of the pit lane, plus a catch fence behind the outer edge (the garage
-    // side). On a circuit with an underpass the fence stops at the open ramps, where the
-    // trench walls take over, and picks up again once the lane is back on the surface.
-    const boundaryPath = pitRouteStrip(pit.limitStart, pit.exit, pit.boundaryOffsetAt)
-      .map(p => ({ ...p, h: track.pitHeightAt(p.progress) }));
-    const pitBoundary = std({ color: 0xf2f2ee, roughness: 0.65 });
-    const lineSpans = pit.tunnel ? [[pit.limitStart, pit.tunnel.start], [pit.tunnel.start, pit.tunnel.end], [pit.tunnel.end, pit.exit]] : [[pit.limitStart, pit.exit]];
-    for (const [a0, b0] of lineSpans) {
-      const spanPath = boundaryPath.filter(p => p.progress >= a0 - 1e-6 && p.progress <= b0 + 1e-6);
-      if (spanPath.length > 1) for (const edge of [innerFromLane, outerFromLane]) world.add(ribbon(spanPath, edge - 0.12, edge + 0.12, 0.012, pitBoundary, 10));
-    }
+    // Catch fence behind the outer (garage-side) edge of the pit lane, from the speed-limit line
+    // to the end of the pit lane. On a circuit with an underpass it stops at the open ramps, where the
+    // trench walls take over, and resumes once the lane is back on the surface.
     {
       const fenceBottom = p => track.pitHeightAt(p.progress) - track.heightAt(p.progress) + 0.04;
       const fenceOffsetOf = s => -Math.sign(pit.corridorAt(s)) * (outerFromLane + 0.9);
@@ -1226,7 +1228,7 @@ export function buildCircuitWorld(track, { boxColors = [], night = false, urban 
     for (const { species, spots: cellSpots } of treeCells.values()) {
       const mesh = new THREE.InstancedMesh(treeGeometries[species], treeMat, cellSpots.length);
       cellSpots.forEach(([x, y, sc, rot, v], i) => {
-        const h = track.heightAt(track.progress(x, y));
+        const h = terrainHeightAt(x, y) - 0.06; // trunk base sunk slightly into the turf
         dummy.position.set(x, h, -y); dummy.rotation.set(0, rot, 0); dummy.scale.set(sc, sc * (0.85 + v * 0.3), sc);
         dummy.updateMatrix(); mesh.setMatrixAt(i, dummy.matrix);
         const tint = 0.8 + rng() * 0.35; mesh.setColorAt(i, new THREE.Color(tint * (0.95 + rng() * 0.15), tint, tint * (0.85 + rng() * 0.15)));
@@ -1240,6 +1242,37 @@ export function buildCircuitWorld(track, { boxColors = [], night = false, urban 
       world.add(mesh);
     }
   }
+  // ---- Realism pass: rubbered-in racing groove, tyre marbles beside it, and grandstands ----
+  {
+    // A darker, rubbered ribbon along the racing line (where cars lay rubber down all weekend).
+    const groove = pts.map((p, k) => {
+      const off = track.samples.line[k % n];
+      return { ...p, x: p.x - p.nx * off, y: p.y - p.ny * off };
+    });
+    const grooveTex = texture(128, (g, w) => {
+      g.clearRect(0, 0, w, w);
+      const grad = g.createLinearGradient(0, 0, w, 0);
+      grad.addColorStop(0, 'rgba(0,0,0,0)'); grad.addColorStop(0.3, 'rgba(8,8,10,0.34)'); grad.addColorStop(0.5, 'rgba(8,8,10,0.46)');
+      grad.addColorStop(0.7, 'rgba(8,8,10,0.34)'); grad.addColorStop(1, 'rgba(0,0,0,0)');
+      g.fillStyle = grad; g.fillRect(0, 0, w, w);
+      for (let i = 0; i < 700; i++) { g.fillStyle = `rgba(0,0,0,${Math.random() * 0.2})`; g.fillRect(Math.random() * w, Math.random() * w, 2, 2); }
+    }, 1, 1);
+    const grooveMat = new THREE.MeshStandardMaterial({ map: grooveTex, transparent: true, depthWrite: false, roughness: 1, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+    const grooveMesh = ribbon(groove, -2.1, 2.1, 0.0025, grooveMat, 18);
+    grooveMesh.renderOrder = 1; world.add(grooveMesh);
+    world.userData.grooveMaterial = grooveMat;
+    // Marbles: loose rubber pushed just off the line, on both sides of the road.
+    const marbleTex = texture(256, (g, w) => {
+      g.clearRect(0, 0, w, w);
+      for (let i = 0; i < 2600; i++) { const a = Math.random(); g.fillStyle = `rgba(20,20,22,${0.15 + a * 0.4})`; g.beginPath(); g.arc(Math.random() * w, Math.random() * w, 0.6 + Math.random() * 1.6, 0, Math.PI * 2); g.fill(); }
+    }, 1, 1);
+    const marbleMat = new THREE.MeshStandardMaterial({ map: marbleTex, transparent: true, depthWrite: false, roughness: 1, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 });
+    for (const side of [-1, 1]) {
+      const m = ribbon(pts, side * (half - 3.2), side * (half - 0.5), 0.003, marbleMat, 8); m.renderOrder = 2; world.add(m);
+    }
+
+  }
+
   Object.assign(world.userData, { center: [cx, cy], extent });
   return world;
 }

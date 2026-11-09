@@ -1,5 +1,5 @@
 import { Client, CloseCode, Room } from "colyseus";
-import { createCar, fitTires, FIXED_DT, newErsLap, step, TIRE_COMPOUNDS } from "../../../src/physics.mjs";
+import { airDensityAtAltitude, createCar, fitTires, FIXED_DT, isCarCriticallyDamaged, newErsLap, step, TIRE_COMPOUNDS } from "../../../src/physics.mjs";
 import { captureHandlingBaseline, applyHandlingMode as applyCarHandlingMode } from "../../../src/handling.mjs";
 import { RACE_DEFAULTS, resolveCarContact, wakeStrength } from "../../../src/race.mjs";
 import { ON_FOOT_EMOTES, onFootSpawn } from "../../../src/onfoot.mjs";
@@ -10,6 +10,7 @@ import { CIRCUIT_PIT_CONFIGS, CIRCUIT_PIT_LAYOUTS, CIRCUIT_PIT_SIDES, CIRCUIT_PI
 import { createAutopilot, createCircuitAutopilot } from "../../../src/autopilot.mjs";
 import { createWeather } from "../../../src/weather.mjs";
 import {
+  CIRCUIT_ALTITUDES,
   CIRCUIT_ELEVATION_PROFILES,
   CIRCUIT_TRACK_STYLE,
   NIGHT_CIRCUITS,
@@ -117,6 +118,7 @@ type RaceDriver = {
 };
 type ServerTrack = {
   kind: "circuit" | "stadium";
+  altitudeMetres: number;
   halfStraight?: number;
   length: number;
   roadWidth: number;
@@ -127,6 +129,7 @@ type ServerTrack = {
   progress(x: number, y: number): number;
   locate(x: number, y: number): { progress: number; offset: number };
   point(s: number, offset?: number): [number, number];
+  heightAt?(s: number): number;
   heading(s: number): number;
   surfaceAt(x: number, y: number): number;
   barrierAt(x: number, y: number): { depth: number; nx: number; ny: number } | null;
@@ -155,11 +158,13 @@ function createServerTrack(circuit: string): ServerTrack {
         ...layout?.lane,
       },
       elevationProfile: CIRCUIT_ELEVATION_PROFILES[key as keyof typeof CIRCUIT_ELEVATION_PROFILES],
+      altitudeMetres: CIRCUIT_ALTITUDES[key as keyof typeof CIRCUIT_ALTITUDES] ?? 0,
       night: NIGHT_CIRCUITS.has(circuit),
     });
     const circuitPoint = track.point;
     return Object.assign(track, {
       kind: "circuit" as const,
+      altitudeMetres: track.altitudeMetres,
       point: (s: number, offset = 0): [number, number] => {
         const [x, y] = circuitPoint(s, offset);
         return [x, y];
@@ -193,6 +198,7 @@ function createServerTrack(circuit: string): ServerTrack {
   };
   return Object.assign(stadium, {
     kind: "stadium" as const,
+    altitudeMetres: 0,
     point,
     heading,
     locate: (x: number, y: number) => ({ progress: stadium.progress(x, y), offset: stadium.offset(x, y) }),
@@ -454,7 +460,7 @@ export class LobbyRoom extends Room<{ state: LobbyState }> {
     this.state.racePlayers.clear();
     let gridIndex = 0;
     for (const [sessionId, lobbyPlayer] of this.state.players) {
-      const car = createCar();
+      const car = createCar({ altitudeMetres: this.raceTrack.altitudeMetres });
       const slot = gridIndex++;
       Object.assign(car, gridPosition(this.raceTrack, slot));
       car.fuel = this.state.settings.qualifying ? null : this.raceFuelLoad();
@@ -702,6 +708,12 @@ export class LobbyRoom extends Room<{ state: LobbyState }> {
       }
       for (const driver of this.drivers.values()) {
         if (driver.retired || driver.onFoot) continue;
+        if (this.raceTrack.kind === "circuit" && this.raceTrack.heightAt) {
+          const progress = this.raceTrack.progress(driver.car.x, driver.car.y);
+          driver.car.config.airDensity = airDensityAtAltitude(
+            Math.max(0, this.raceTrack.altitudeMetres + this.raceTrack.heightAt(progress)),
+          );
+        }
         let input = this.state.phase === "qualifying"
           ? driver.input
           : this.state.phase === "racing" ? this.driverCommand(driver) : { throttle: 0, brake: 1, steer: 0 };
@@ -709,7 +721,7 @@ export class LobbyRoom extends Room<{ state: LobbyState }> {
         step(driver.car, input, FIXED_DT,
           (x: number, y: number) => this.state.phase === "qualifying"
             ? this.raceTrack!.surfaceAt(x, y)
-            : this.weather.surfaceGrip(this.raceTrack!.surfaceAt(x, y)),
+            : this.weather.surfaceGrip(this.raceTrack!.surfaceAt(x, y), driver.car.compound),
           this.raceTrack.barrierAt);
         this.advancePitStop(driver, FIXED_DT);
         if (this.state.phase === "racing" && this.safetyCarProgress !== null) {
@@ -717,7 +729,14 @@ export class LobbyRoom extends Room<{ state: LobbyState }> {
         }
       }
     }
-    if (this.state.phase === "racing") this.resolveContacts();
+    if (this.state.phase === "racing") {
+      this.resolveContacts();
+      for (const driver of this.drivers.values()) {
+        if (driver.retired || !isCarCriticallyDamaged(driver.car)) continue;
+        driver.retired = true;
+        driver.input = { throttle: 0, brake: 1, steer: 0, drs: false, ers: false, ersMode: "off" };
+      }
+    }
     for (const driver of this.drivers.values()) {
       if (!driver.retired && !driver.finished) this.updateProgress(driver);
     }
@@ -1053,6 +1072,7 @@ export class LobbyRoom extends Room<{ state: LobbyState }> {
     player.vx = driver.car.vx;
     player.vy = driver.car.vy;
     player.yawRate = driver.car.yawRate;
+    player.airborneHeight = driver.car.airborneHeight;
     player.gear = driver.car.gear;
     player.steer = driver.car.steer;
     player.speed = driver.car.telemetry.speed;
@@ -1077,7 +1097,6 @@ export class LobbyRoom extends Room<{ state: LobbyState }> {
     player.retired = driver.retired;
     player.disqualified = driver.disqualified;
     player.engineRpm = driver.car.telemetry.powertrain?.rpm ?? 0;
-    player.engineShifting = driver.car.telemetry.powertrain?.shifting ?? false;
     player.engineLimiter = driver.car.telemetry.powertrain?.limiter ?? false;
     player.ax = driver.car.ax;
     player.ay = driver.car.ay;
@@ -1086,6 +1105,11 @@ export class LobbyRoom extends Room<{ state: LobbyState }> {
     player.tireWear1 = driver.car.tireWear[1] ?? 0;
     player.tireWear2 = driver.car.tireWear[2] ?? 0;
     player.tireWear3 = driver.car.tireWear[3] ?? 0;
+    player.chassisDamage = driver.car.chassisDamage;
+    player.tireDamage0 = driver.car.tireDamage[0] ?? 0;
+    player.tireDamage1 = driver.car.tireDamage[1] ?? 0;
+    player.tireDamage2 = driver.car.tireDamage[2] ?? 0;
+    player.tireDamage3 = driver.car.tireDamage[3] ?? 0;
     player.tireSurfaceTemp0 = driver.car.tireTemp[0]?.surface ?? 0;
     player.tireSurfaceTemp1 = driver.car.tireTemp[1]?.surface ?? 0;
     player.tireSurfaceTemp2 = driver.car.tireTemp[2]?.surface ?? 0;
@@ -1111,7 +1135,7 @@ export class LobbyRoom extends Room<{ state: LobbyState }> {
       ordered.forEach((driver, index) => {
         if (driver.retired) return;
         driver.gridSlot = index;
-        driver.car = createCar();
+        driver.car = createCar({ altitudeMetres: this.raceTrack.altitudeMetres });
         driver.car.fuel = this.raceFuelLoad();
         driver.handlingBaseline = captureHandlingBaseline([{ car: driver.car }])[0];
         applyCarHandlingMode([{ car: driver.car }], driver.handlingMode, [driver.handlingBaseline]);

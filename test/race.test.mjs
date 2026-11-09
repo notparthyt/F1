@@ -131,6 +131,27 @@ test('car-to-car contacts keep the legacy 2D behavior regardless of vertical pro
   assert.ok(behind.vx < 50 && ahead.vx > 40);
 });
 
+test('high-speed wheel contact launches the climbing car and a rear clip induces a controlled spinout', () => {
+  const climber = place(0, 0, 0, 50), lead = place(4.4, 0, 0, 20);
+  assert.ok(resolveCarContact(climber, lead) > 20);
+  assert.ok(climber.verticalVelocity > 0);
+  assert.ok(climber.crashPitchRate > 0);
+  step(climber, { brake: 1 }, FIXED_DT);
+  assert.ok(climber.airborneHeight > 0);
+  assert.ok(climber.crashPitch > 0);
+
+  const clipped = place(4.4, 0.8, 0, 20), attacker = place(0, 0, 0, 50);
+  attacker.vy = 20;
+  assert.ok(resolveCarContact(attacker, clipped) > 20);
+  assert.ok(clipped.spinOut > 0);
+  assert.notEqual(clipped.yawRate, 0);
+  const control = place(4.4, 0.8, 0, 20);
+  step(control, { throttle: 0.3 }, FIXED_DT);
+  step(clipped, { throttle: 0.3 }, FIXED_DT);
+  assert.ok(clipped.spinOut < 1.8);
+  assert.ok(clipped.telemetry.wheels[0].capacity < control.telemetry.wheels[0].capacity);
+});
+
 function runRace(seconds, input, grid = DEFAULT_GRID) {
   const race = createRace(track, { grid });
   let maxOffset = 0, hardestContact = 0;
@@ -478,7 +499,7 @@ test('safety-car passes involving a pitting car do not create a player choice or
 test('the player can request a stop and a compound; the autopilot boxes and fits it', () => {
   const race = createRace(track);
   race.requestPit('soft');
-  race.requestPit('intermediate'); // unknown compounds are ignored
+  race.requestPit('unknown'); // unknown compounds are ignored
   assert.equal(race.entries[0].pitRequest, 'soft');
   const me = race.entries[0];
   for (let i = 0; i < 140 * 240 && (me.stops.length === 0 || me.pit); i++)

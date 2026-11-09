@@ -5,7 +5,7 @@
 // telemetry: a close follower loses up to towDragLoss of its drag and
 // dirtyAirLoss of its downforce, decaying over wakeLength metres behind the
 // leader and wakeWidth metres either side of its centreline.
-import { step, createCar, carMass, fitTires, newErsLap, tireTempGrip, tireWearGrip, TIRE_COMPOUNDS, FIXED_DT, clamp } from './physics.mjs?v=20261105-1';
+import { step, createCar, carMass, fitTires, newErsLap, tireTempGrip, tireWearGrip, applyCollisionDamage, isCarCriticallyDamaged, airDensityAtAltitude, wheelContact, localContactLongitudinal, TIRE_COMPOUNDS, FIXED_DT, clamp } from './physics.mjs?v=20261108-1';
 import { createAutopilot, createCircuitAutopilot } from './autopilot.mjs';
 
 export const RACE_DEFAULTS = Object.freeze({
@@ -153,6 +153,7 @@ export function resolveCarContact(a, b, o = RACE_DEFAULTS) {
   if (Math.hypot(a.x - b.x, a.y - b.y) > 8) return 0;
   const hit = overlap(a, b);
   if (!hit) return 0;
+  const wheelHit = wheelContact(a, b);
   const { nx, ny, depth } = hit; // n points from b towards a
   const ma = carMass(a), mb = carMass(b), Ia = a.config.yawInertia, Ib = b.config.yawInertia;
   const share = mb / (ma + mb);
@@ -172,7 +173,45 @@ export function resolveCarContact(a, b, o = RACE_DEFAULTS) {
   const jx = jn * nx + jt * tx, jy = jn * ny + jt * ty;
   a.vx += jx / ma; a.vy += jy / ma; a.yawRate += (rax * jy - ray * jx) / Ia;
   b.vx -= jx / mb; b.vy -= jy / mb; b.yawRate -= (rbx * jy - rby * jx) / Ib;
+  if (-vn >= 12) {
+    const aRear = localContactLongitudinal(a, hit.x, hit.y) < -1.15;
+    const bRear = localContactLongitudinal(b, hit.x, hit.y) < -1.15;
+    const aFront = localContactLongitudinal(a, hit.x, hit.y) > 1.15;
+    const bFront = localContactLongitudinal(b, hit.x, hit.y) > 1.15;
+    const target = aRear && bFront ? a : bRear && aFront ? b : null;
+    if (target) {
+      const dx = hit.x - target.x, dy = hit.y - target.y;
+      const lateralOffset = -dx * Math.sin(target.heading) + dy * Math.cos(target.heading);
+      if (Math.abs(lateralOffset) > 0.28) {
+        const remainingVx = (a.vx - a.yawRate * ray) - (b.vx - b.yawRate * rby);
+        const remainingVy = (a.vy + a.yawRate * rax) - (b.vy + b.yawRate * rbx);
+        const remainingTangent = remainingVx * tx + remainingVy * ty;
+        const extraLimit = Math.max(0, 1.25 * o.carFriction * jn - Math.abs(jt));
+        const extra = clamp(-remainingTangent / kt, -extraLimit, extraLimit);
+        const extraX = extra * tx, extraY = extra * ty;
+        a.vx += extraX / ma; a.vy += extraY / ma;
+        a.yawRate += (rax * extraY - ray * extraX) / Ia;
+        b.vx -= extraX / mb; b.vy -= extraY / mb;
+        b.yawRate -= (rbx * extraY - rby * extraX) / Ib;
+        if (extra !== 0) target.spinOut = Math.max(target.spinOut, clamp(0.65 + (-vn - 12) * 0.035, 0.65, 1.8));
+      }
+    }
+  }
   a.contact = { speed: -vn, time: a.time }; b.contact = { speed: -vn, time: b.time };
+  applyCollisionDamage(a, -vn, hit.x, hit.y);
+  applyCollisionDamage(b, -vn, hit.x, hit.y);
+  if (-vn >= 12) {
+    if (wheelHit.distance <= 1.05) {
+      const frontA = wheelHit.first.index < 2, frontB = wheelHit.second.index < 2;
+      const climber = frontA !== frontB ? (frontA ? a : b)
+        : (a.vx * Math.cos(a.heading) + a.vy * Math.sin(a.heading)
+          >= b.vx * Math.cos(b.heading) + b.vy * Math.sin(b.heading) ? a : b);
+      climber.verticalVelocity = Math.max(climber.verticalVelocity, clamp((-vn - 8) * 0.17, 1.4, 5));
+      climber.crashPitchRate = Math.max(climber.crashPitchRate, clamp((-vn - 8) * 0.055, 0.4, 1.7));
+      const climbSide = climber === a ? wheelHit.first.y - a.y : wheelHit.second.y - b.y;
+      climber.crashRollRate += Math.sign(climbSide || 1) * clamp((-vn - 8) * 0.04, 0.3, 1.2);
+    }
+  }
   return -vn;
 }
 
@@ -256,7 +295,8 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
     ? createCircuitAutopilot(track, { latGrip: 0.74 * spec.cornerSpeed / 43, brakeGrip: 0.62 * spec.brakeDecel / 26 })
     : createAutopilot({ halfStraight, radius }, { cornerSpeed: spec.cornerSpeed, brakeDecel: spec.brakeDecel });
   const entries = [{ name: 'You', player: true, cornerSpeed: 43, brakeDecel: 26, tyres: ['medium', 'hard'], ...player }, ...grid].map((spec, i) => {
-    const car = createCar(spec.car), tyres = spec.tyres ?? ['medium', 'hard'];
+    const car = createCar({ ...spec.car, altitudeMetres: track.altitudeMetres ?? 0 }), tyres = spec.tyres ?? ['medium', 'hard'];
+    car.collisionDamageEnabled = !!spec.player;
     if (!spec.player) car.config.tireWearEnergy /= 1 + o.wearSpread * (2 * vary() - 1);
     if (!tireWear) { car.config.tireWearEnergy = Infinity; car.config.tireWearGripLoss = 0; car.config.tireCliffGripLoss = 0; }
     fitTires(car, tyres[0]);
@@ -894,7 +934,11 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
     });
     entries.forEach((e, i) => {
       if (!e.retired && !(o.networked && !e.player)) {
-        step(e.car, commands[i], FIXED_DT, surfaceAt, barrierAt);
+        if (circuit && track.heightAt) {
+          e.car.config.airDensity = airDensityAtAltitude(Math.max(0, (track.altitudeMetres ?? 0) + track.heightAt(progressOf(e.car))));
+        }
+        step(e.car, commands[i], FIXED_DT,
+          (x, y) => surfaceAt(x, y, e.car.compound), barrierAt);
       }
     });
     const underpass = !o.networked && pit?.tunnel
@@ -905,6 +949,7 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
         if (!entries[i].retired && !entries[j].retired && !entries[i].parked && !entries[j].parked) {
           if (!underpass || underpass[i] === underpass[j]) resolveCarContact(entries[i].car, entries[j].car, o);
         }
+    for (const e of entries) if (!e.retired && isCarCriticallyDamaged(e.car)) retire(e, 'collision damage');
     time += FIXED_DT;
     const previousSafetyCarProgress = safetyCarProgress;
     const previousCovered = entries.map(e => e.covered);

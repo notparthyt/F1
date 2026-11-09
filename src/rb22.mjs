@@ -3,6 +3,7 @@
 // drsFlap, steeringWheel, eye, mirrors }. The standard car; each car is repainted in its own colours
 // with our sponsors in place of the Red Bull livery.
 import * as THREE from '../vendor/three.module.js';
+import { TIRE_COMPOUNDS } from './physics.mjs';
 import { GLTFLoader } from '../vendor/GLTFLoader.js';
 import { DRACOLoader } from '../vendor/DRACOLoader.js';
 import { MeshoptDecoder } from '../vendor/meshopt_decoder.module.js';
@@ -584,12 +585,29 @@ export function buildRB22Car(template, config, { paint = 0x0e1626, accent = 0x39
   // Wheels: the whole corner (tyre, rim, disc) spins about its hub, on the wheel's own
   // axle: the front wheels are modelled with camber, and spun about the car's lateral
   // axis instead they wobble.
+  const tireMarkings = [];
   const wheels = CORNERS.map((name, i) => {
     const node = root.getObjectByName(name), hub = box(node).getCenter(new THREE.Vector3());
+    const bounds = box(node).getSize(new THREE.Vector3());
     const pivot = new THREE.Group(); pivot.position.copy(hub); car.add(pivot);
     const axle = new THREE.Group(); axle.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), axleOf(node)); pivot.add(axle);
     const spin = new THREE.Group(); axle.add(spin); car.updateMatrixWorld(true);
     spin.attach(node);
+    const radius = Math.max(bounds.x, bounds.y) * 0.48;
+    const width = Math.max(0.12, bounds.z);
+    const sidewall = new THREE.Mesh(new THREE.TorusGeometry(radius * 0.8, 0.01, 5, 48),
+      new THREE.MeshStandardMaterial({ color: 0xff3b30, roughness: 0.75 }));
+    sidewall.position.z = width * 0.48;
+    spin.add(sidewall);
+    const grooves = [-0.3, 0, 0.3].map(offset => {
+      const groove = new THREE.Mesh(new THREE.TorusGeometry(radius * 0.98, 0.0045, 4, 48),
+        new THREE.MeshStandardMaterial({ color: 0x17191b, roughness: 0.9 }));
+      groove.position.z = offset * width;
+      groove.visible = false;
+      spin.add(groove);
+      return groove;
+    });
+    tireMarkings.push({ sidewall, grooves });
     return { pivot, spin, front: i < 2 };
   });
 
@@ -852,6 +870,17 @@ export function buildRB22Car(template, config, { paint = 0x0e1626, accent = 0x39
   }
   visor.name = 'driver-visor-camera';
   updateArms();
-  return { group: car, body, wheels, driver, setDriverVisible, setDriverSuit, setCustomLivery, setDriverName, driverNeck, driverHead, visor, driverElbows, driverHands, driverRest, updateHead, updateArms, drsFlap, setRearFlap, setOriginalLivery, frontWingFlap, steeringWheel,
+  const setTireCompound = compound => {
+    if (!TIRE_COMPOUNDS[compound]) throw new RangeError(`Unknown tire compound: ${compound}`);
+    const color = compound === 'wet' ? 0x258bff : compound === 'intermediate' ? 0x38d66b
+      : compound === 'soft' ? 0xff3b30 : compound === 'medium' ? 0xffd60a : 0xf2f2f2;
+    for (const marking of tireMarkings) {
+      marking.sidewall.material.color.setHex(color);
+      marking.grooves.forEach(groove => { groove.visible = compound === 'wet' || compound === 'intermediate'; });
+    }
+    return compound;
+  };
+  setTireCompound('medium');
+  return { group: car, body, wheels, driver, setDriverVisible, setTireCompound, setDriverSuit, setCustomLivery, setDriverName, driverNeck, driverHead, visor, driverElbows, driverHands, driverRest, updateHead, updateArms, drsFlap, setRearFlap, setOriginalLivery, frontWingFlap, steeringWheel,
     rearLights, yellowLights, eye: [eye.x, eye.y, eye.z], mirrors: MIRRORS.map(name => root.getObjectByName(name)).filter(Boolean) };
 }

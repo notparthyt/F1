@@ -81,23 +81,32 @@ export const DEFAULT_CAR = Object.freeze({
   // (the balance moves forward). Where it may open is up to race.mjs.
   drsDragLoss: 0.12, drsDownforceLoss: 0.1, drsRate: 4, drsBrake: 0.05,
 });
+export function airDensityAtAltitude(altitudeMetres) {
+  if (!Number.isFinite(altitudeMetres) || altitudeMetres < 0) throw new RangeError('Altitude must be a nonnegative finite number');
+  return DEFAULT_CAR.airDensity * Math.max(0, 1 - 2.25577e-5 * altitudeMetres) ** 4.25588;
+}
 // Dry compounds (illustrative): peak-grip multiplier and wear-rate multiplier
 // relative to the medium. Softer rubber grips more and wears faster.
 export const TIRE_COMPOUNDS = Object.freeze({
   soft: Object.freeze({ grip: 1.015, wear: 2 }),
   medium: Object.freeze({ grip: 1, wear: 1 }),
   hard: Object.freeze({ grip: 0.985, wear: 0.55 }),
+  intermediate: Object.freeze({ grip: 0.96, wetGrip: 0.34, wear: 1.2 }),
+  wet: Object.freeze({ grip: 0.9, wetGrip: 0.7, wear: 1.8 }),
 });
 export const FIXED_DT = 1 / 240;
 export const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
 const RPM = 60 / (2 * Math.PI);
 
 export function createCar(overrides = {}) {
-  const config = { ...DEFAULT_CAR, ...overrides };
+  const altitudeMetres = overrides.altitudeMetres ?? 0;
+  const config = { ...DEFAULT_CAR, ...overrides, airDensity: overrides.airDensity ?? airDensityAtAltitude(altitudeMetres) };
   return {
     config,
     x: 0, y: 0, heading: 0, vx: 0, vy: 0, yawRate: 0,
     steer: 0, ax: 0, ay: 0, time: 0, distance: 0,
+    airborneHeight: 0, verticalVelocity: 0, crashRoll: 0, crashRollRate: 0,
+    crashPitch: 0, crashPitchRate: 0, spinOut: 0,
     wheelOmega: [0, 0, 0, 0],
     slipAngle: [0, 0, 0, 0],
     gear: 1, shiftTimer: 0, impact: null,
@@ -111,12 +120,89 @@ export function createCar(overrides = {}) {
     tireTemp: [0, 1, 2, 3].map(() => ({ surface: config.tireStartTemp, carcass: config.tireStartTemp })),
     // FL, FR, RL, RR tread wear fraction (0 new, 1 worn out).
     tireWear: [0, 1, 2, 3].map(() => config.tireStartWear),
+    tireDamage: [0, 0, 0, 0],
+    chassisDamage: 0,
+    lastDamageTime: -Infinity,
+    collisionDamageEnabled: true,
     compound: compoundOf(config.tireCompound),
     fuel: config.fuelLoad,
     // Energy store charge and this lap's MGU-K deployment and harvest (J).
     ers: config.ers ? { charge: config.ersCapacity * config.ersStartCharge, deployed: 0, harvested: 0 } : null,
     telemetry: { speed: 0, downforce: 0, drag: 0, wheels: [], powertrain: null },
   };
+}
+
+export function applyCollisionDamage(car, speed, x = car.x, y = car.y) {
+  if (car.collisionDamageEnabled === false || !Number.isFinite(speed) || speed < 15 || ![x, y].every(Number.isFinite)
+    || car.time - car.lastDamageTime < 0.35) return null;
+
+  const c = car.config, cos = Math.cos(car.heading), sin = Math.sin(car.heading);
+  const frontX = c.wheelbase * (1 - c.frontWeight), rearX = -c.wheelbase * c.frontWeight;
+  const corners = [[frontX, c.track / 2], [frontX, -c.track / 2], [rearX, c.track / 2], [rearX, -c.track / 2]];
+  let wheel = 0, nearest = Infinity;
+  corners.forEach(([localX, localY], index) => {
+    const wheelX = car.x + localX * cos - localY * sin;
+    const wheelY = car.y + localX * sin + localY * cos;
+    const distance = (wheelX - x) ** 2 + (wheelY - y) ** 2;
+    if (distance < nearest) { nearest = distance; wheel = index; }
+  });
+
+  car.lastDamageTime = car.time;
+  car.tireDamage[wheel] = clamp(car.tireDamage[wheel] + Math.max(0, speed - 30) / 40, 0, 1);
+  car.chassisDamage = Math.max(car.chassisDamage, clamp((speed - 35) / 50, 0, 1));
+  return { wheel, critical: isCarCriticallyDamaged(car) };
+}
+
+function wheelCenters(car) {
+  const c = car.config, cos = Math.cos(car.heading), sin = Math.sin(car.heading);
+  const frontX = c.wheelbase * (1 - c.frontWeight), rearX = -c.wheelbase * c.frontWeight;
+  return [[frontX, c.track / 2], [frontX, -c.track / 2], [rearX, c.track / 2], [rearX, -c.track / 2]]
+    .map(([x, y], index) => ({
+      index,
+      x: car.x + x * cos - y * sin,
+      y: car.y + x * sin + y * cos,
+    }));
+}
+
+export function wheelContact(a, b) {
+  let closest = null;
+  for (const first of wheelCenters(a)) for (const second of wheelCenters(b)) {
+    const distance = Math.hypot(first.x - second.x, first.y - second.y);
+    if (!closest || distance < closest.distance) closest = { first, second, distance };
+  }
+  return closest;
+}
+
+export function localContactLongitudinal(car, x, y) {
+  const dx = x - car.x, dy = y - car.y;
+  return dx * Math.cos(car.heading) + dy * Math.sin(car.heading);
+}
+
+function advanceCrashMotion(car, dt) {
+  car.spinOut = Math.max(0, car.spinOut - dt);
+  car.crashRollRate += -car.crashRoll * 9 * dt;
+  car.crashPitchRate += -car.crashPitch * 9 * dt;
+  const angularDamping = Math.exp(-2.4 * dt);
+  car.crashRollRate *= angularDamping;
+  car.crashPitchRate *= angularDamping;
+  car.crashRoll = clamp(car.crashRoll + car.crashRollRate * dt, -0.8, 0.8);
+  car.crashPitch = clamp(car.crashPitch + car.crashPitchRate * dt, -0.7, 0.7);
+  if (car.airborneHeight <= 0 && car.verticalVelocity <= 0) {
+    car.airborneHeight = 0;
+    car.verticalVelocity = 0;
+    return;
+  }
+  car.verticalVelocity -= 9.81 * dt;
+  car.airborneHeight += car.verticalVelocity * dt;
+  if (car.airborneHeight <= 0) {
+    const landingSpeed = -car.verticalVelocity;
+    car.airborneHeight = 0;
+    car.verticalVelocity = landingSpeed > 1.4 ? landingSpeed * 0.18 : 0;
+  }
+}
+
+export function isCarCriticallyDamaged(car) {
+  return car.chassisDamage >= 0.85 || car.tireDamage.some(damage => damage >= 1);
 }
 
 // Start a new lap for the ERS per-lap deployment and harvest limits.
@@ -327,7 +413,13 @@ export function resolveBarrier(car, barrierAt) {
   car.vx += jx / m;
   car.vy += jy / m;
   car.yawRate += (rx * jy - ry * jx) / c.yawInertia;
-  car.impact = { speed: closing, time: car.time, x: car.x + rx, y: car.y + ry };
+  car.impact = {
+    speed: closing,
+    time: car.time,
+    x: car.x + rx * cos - ry * sin,
+    y: car.y + rx * sin + ry * cos,
+  };
+  applyCollisionDamage(car, closing, car.impact.x, car.impact.y);
   return closing;
 }
 
@@ -468,7 +560,9 @@ export function step(car, input = {}, dt = FIXED_DT, surfaceAt = () => 1, barrie
     const compound = TIRE_COMPOUNDS[car.compound ?? c.tireCompound];
     const kinematicSlip = steadySlipAngle(wheelV, wheelU);
     car.slipAngle[i] = relaxSlipAngle(car.slipAngle[i], kinematicSlip, Math.hypot(wheelU, wheelV), c, dt);
-    const tire = tireForce(demand, wheelV, wheelU, loads[i], grip * compound.grip * tempGrip * wearGrip, c, dt, car.slipAngle[i],
+    const damageGrip = 1 - 0.5 * car.tireDamage[i];
+    const crashGrip = (car.spinOut > 0 ? 0.32 : 1) * (car.airborneHeight > 0.08 ? 0.12 : 1);
+    const tire = tireForce(demand, wheelV, wheelU, loads[i], grip * compound.grip * tempGrip * wearGrip * damageGrip * crashGrip, c, dt, car.slipAngle[i],
       (front ? c.corneringStiffness : c.rearCorneringStiffness)
         * Math.pow(Math.max(loads[i], 1) / (c.mass * 9.81 * (front ? c.frontWeight : 1 - c.frontWeight) / 2), c.stiffnessLoadExponent));
     tire.kinematicSlipAngle = kinematicSlip;
@@ -521,6 +615,7 @@ export function step(car, input = {}, dt = FIXED_DT, surfaceAt = () => 1, barrie
   car.x += car.vx * dt;
   car.y += car.vy * dt;
   if (barrierAt) resolveBarrier(car, barrierAt);
+  advanceCrashMotion(car, dt);
   car.time += dt;
   car.distance += Math.hypot(car.vx, car.vy) * dt;
   car.telemetry = { speed: Math.hypot(car.vx, car.vy), downforce, drag, wheels, aero, frontShare, drs: car.drs,
@@ -549,7 +644,9 @@ export function stepArcade(car, input = {}, dt = FIXED_DT, surfaceAt = () => 1, 
     speed = 0;
   }
   const direction = car.gear < 0 ? -1 : 1;
-  const grip = clamp(surfaceAt(car.x, car.y), 0.25, 1.5);
+  const damageGrip = 1 - 0.5 * car.tireDamage.reduce((sum, damage) => sum + damage, 0) / 4;
+  const crashGrip = (car.spinOut > 0 ? 0.32 : 1) * (car.airborneHeight > 0.08 ? 0.12 : 1);
+  const grip = clamp(surfaceAt(car.x, car.y), 0.25, 1.5) * damageGrip * crashGrip;
   const rollingDrag = Math.sign(speed) * (0.12 + speed * speed * 0.0015);
   let acceleration = throttle * 20 * direction - rollingDrag;
   if (brake && Math.abs(speed) > 0.01) acceleration -= Math.sign(speed) * brake * 28 * grip;
@@ -571,6 +668,7 @@ export function stepArcade(car, input = {}, dt = FIXED_DT, surfaceAt = () => 1, 
   car.y += car.vy * dt;
   car.drs = input.drs === true && brake <= car.config.drsBrake ? 1 : 0;
   if (barrierAt) resolveBarrier(car, barrierAt);
+  advanceCrashMotion(car, dt);
   car.time += dt;
   car.distance += Math.hypot(car.vx, car.vy) * dt;
   car.wheelOmega.fill(nextSpeed / car.config.wheelRadius);

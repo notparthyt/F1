@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from '../vendor/three.module.js';
-import { clampLook360Distance, constrainLook360Camera, LOOK360_MIN_DISTANCE } from '../src/camera.mjs';
+import { cameraShakeRotation, clampLook360Distance, constrainLook360Camera, LOOK360_MIN_DISTANCE } from '../src/camera.mjs';
+import { createCar } from '../src/physics.mjs';
 
 test('360 camera zoom cannot enter the car body', () => {
   assert.equal(clampLook360Distance(0), LOOK360_MIN_DISTANCE);
@@ -29,4 +30,18 @@ test('360 camera remains above the ground surface', () => {
   const camera = constrainLook360Camera(target, desired, () => null, x => x > 5 ? 1 : 0);
   assert.ok(camera.x <= 5 && camera.x > 4.9);
   assert.ok(camera.y >= (camera.x > 5 ? 1 : 0) + 0.25);
+});
+
+test('onboard camera shake is rotational, elevation-aware, and responds to impacts', () => {
+  const car = createCar();
+  car.telemetry.speed = 55;
+  const level = cameraShakeRotation(car, 1, 'tcam');
+  const uphill = cameraShakeRotation(car, 1, 'tcam', 0.2, 0);
+  assert.notDeepEqual(uphill, level);
+
+  const visorBaseline = cameraShakeRotation(car, 1, 'visor');
+  car.impact = { speed: 40, time: car.time };
+  const impact = cameraShakeRotation(car, 1, 'visor');
+  assert.ok(Math.abs(impact.pitch) > Math.abs(visorBaseline.pitch));
+  assert.ok(Object.values(impact).every(Number.isFinite));
 });

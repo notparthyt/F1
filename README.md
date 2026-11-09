@@ -28,9 +28,19 @@ come from racing-line data or documented map traces.
   standings, pit stops, tyre compounds, fuel, ERS, DRS, changing weather, and
   safety-car periods. Q1, Q2, and Q3 set the race grid; each player session
   starts on fresh Soft tyres, and tyre wear begins with the main race.
+- **Wet-weather racing:** choose Intermediate or Full Wet tyres in the pit
+  request cycle. Wet compounds gain grip as the surface gets wetter, have
+  compound-colored sidewalls and visible tread grooves, and throw speed- and
+  wetness-scaled spray behind moving cars. Screen-space visor droplets are
+  limited to Visor and T-Cam views; rain and damp conditions change their
+  density. Circuit altitude changes air density (and therefore aero load),
+  while wet, elevated sections of hilly circuits add localized low cloud and
+  reduced visibility.
 - **3D cameras:** cockpit, chase, T-Cam, overview, and a car-following 360
   Look that opens overhead and stays outside the car, terrain, and track
-  barriers. Chase and free cameras follow track elevation. A separate
+  barriers. Visor and T-Cam views shake with impacts and track elevation,
+  without moving the camera mounts or animating the driver's head in Visor
+  view. Chase and free cameras follow track elevation. A separate
   trackside TV camera can record the race to WebM.
 - **Circuit details:** Singapore Marina Bay, Buddh International Circuit, and
   Nürburgring GP-Strecke join the 21-circuit roster, with track-specific
@@ -71,7 +81,11 @@ come from racing-line data or documented map traces.
   animated driver is used in all three presets.
 - **Race control:** penalty and safety-car notices, a text-only team engineer,
   position-redress checks, pit-lane speed assistance, and AI caution near a
-  recent severe collision.
+  recent severe collision. Heavy impacts damage a tire and reduce its grip;
+  high-speed wheel-to-wheel contacts can lift and pitch a car, and off-centre
+  rear clips can induce a yawing spin with temporarily reduced traction. The
+  wheels stay attached to the car, and a critically damaged car can no longer
+  continue.
 
 ## Run locally
 

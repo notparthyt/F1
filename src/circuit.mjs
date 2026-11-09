@@ -172,7 +172,7 @@ function circuitPitLane({ half, point, offset, progress, signed, curvatureAt, li
 
 export function createCircuitTrack({ name = 'Circuit', points, length: officialLength, roadWidth = 13, wallOffset = roadWidth / 2 + 12,
   step = 2, smoothing = 40, kerbCurvature = 1 / 600, kerbReach = 30, lineMargin = 1.6, minRadius = 15, pitLane = true, timingLine = 0, drs = null,
-  elevationProfile = [], pitSide = null, pitTunnel = null, runoffWidth = 6.8, grassWidth = 30,
+  elevationProfile = [], altitudeMetres = 0, pitSide = null, pitTunnel = null, runoffWidth = 6.8, grassWidth = 30,
   runoffSurface = 'runoff', runoffSections = [], sausageKerbs = [], paintedKerbs = [],
   scraperKerbs = false, racingLineColors = null, urban = false, night = false, boundary = false, pitConfig = {} }) {
   const pairs = points.length && typeof points[0] === 'number' ? Array.from({ length: points.length / 2 }, (_, i) => [points[2 * i], points[2 * i + 1]]) : points;
@@ -372,7 +372,7 @@ export function createCircuitTrack({ name = 'Circuit', points, length: officialL
     return 'grass';
   };
   return {
-    kind: 'circuit', name, length, roadWidth, wallOffset, step, locate, offset, surface, progress, point, pit,
+    kind: 'circuit', name, length, roadWidth, wallOffset, step, locate, offset, surface, progress, point, pit, altitudeMetres,
     runoffWidth, grassWidth, runoffSurface, runoffAt, runoffSections, scraperKerbs, racingLineColors, urban, night, boundary,
     // DRS zones [open, close] (lap progress, m), or null: drs gives them as
     // fractions of the lap from the real timing line, which lies timingLine m
