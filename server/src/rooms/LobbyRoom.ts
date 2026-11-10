@@ -22,14 +22,16 @@ import { registerLobby, unregisterLobby } from "./lobbyCodes.js";
 
 const MAX_PLAYERS = 22;
 const MAX_NAME_LENGTH = 24;
+const MAX_LIVERY_LENGTH = 512_000;
 const DRIVER_SUIT_COUNT = 9;
 const PIT_BOX_PROGRESS_TOLERANCE = 4.5;
 const ROOM_TICK_MS = 1000 / 30;
+const RECONNECTION_GRACE_SECONDS = 20;
 const QUALIFYING_SECONDS = 60;
 const INPUT_STALE_MS = 500;
 const STALE_INPUT_BRAKE = 0.18;
 const ALLOWED_CIRCUITS = new Set([
-  "", "singapore", "buddh", "nurburgring", "bahrain", "shanghai", "catalunya",
+  "singapore", "buddh", "nurburgring", "bahrain", "shanghai", "catalunya",
   "monaco", "montreal", "red-bull-ring", "silverstone", "hungaroring", "spa",
   "monza", "cota", "mexico", "interlagos", "yas-marina", "imola", "zandvoort",
   "jeddah", "miami",
@@ -72,6 +74,10 @@ type ServerPit = {
   laneOffsetAt?: (s: number) => number;
   isOnRouteAt?: (x: number, y: number, s: number) => boolean;
 };
+function pitBoxForSlot(pit: ServerPit, gridSlot: number): number {
+  const lastSlot = Math.max(0, Math.floor((pit.limitEnd - pit.limitStart) / pit.boxSpacing));
+  return pit.boxStart + pit.boxSpacing * clamp(gridSlot, 0, lastSlot);
+}
 type PitDrive = (
   car: ServerCar,
   options: { offset: number | ((s: number) => number); maxSpeed: number; grip: number },
@@ -301,14 +307,14 @@ export class LobbyRoom extends Room<{ state: LobbyState }> {
 
   async onCreate(options: LobbyOptions): Promise<void> {
     const settings = normalizeLobbySettings(options.settings ?? {
-      circuit: "",
+      circuit: "singapore",
       laps: 10,
       mode: "casual",
       qualifying: true,
       retirements: true,
       penalties: true,
     });
-    this.state.code = registerLobby(this.roomId);
+    this.state.code = registerLobby(this.roomId, settings.circuit);
     this.state.hostSessionId = "";
     this.state.status = "lobby";
     this.state.phase = "lobby";
@@ -324,6 +330,7 @@ export class LobbyRoom extends Room<{ state: LobbyState }> {
     this.onMessage("race:pit-request", (client, message: unknown) => this.receivePitRequest(client, message));
     this.onMessage("race:safety-car-choice", (client, message: unknown) => this.receiveSafetyCarChoice(client, message));
     this.onMessage("race:avatar", (client, message: unknown) => this.receiveAvatarState(client, message));
+    this.onMessage("race:livery", (client, message: unknown) => this.receiveLivery(client, message));
   }
 
   onAuth(_client: Client, options: LobbyOptions): PlayerAuth {
@@ -350,6 +357,24 @@ export class LobbyRoom extends Room<{ state: LobbyState }> {
 
     if (player.isHost) {
       this.state.hostSessionId = client.sessionId;
+    }
+  }
+
+  async onDrop(client: Client, code: CloseCode): Promise<void> {
+    const driver = this.drivers.get(client.sessionId);
+    if (driver) {
+      driver.input = { throttle: 0, brake: STALE_INPUT_BRAKE, steer: 0 };
+      driver.lastInputAt = 0;
+    }
+
+    try {
+      await this.allowReconnection(client, RECONNECTION_GRACE_SECONDS);
+      if (driver) driver.lastInputAt = Date.now();
+    } catch (error) {
+      console.warn(
+        `Player ${client.sessionId} could not reconnect after an unexpected disconnect (${code}):`,
+        error,
+      );
     }
   }
 
@@ -487,12 +512,7 @@ export class LobbyRoom extends Room<{ state: LobbyState }> {
         pitServiceRemaining: 0,
         pitDrive: this.raceTrack.kind === "circuit"
           ? createCircuitAutopilot(this.raceTrack, { ersPlan: false })
-          : ((drive) => (car, options) => drive(car, {
-            ...options,
-            offset: typeof options.offset === "function"
-              ? options.offset(this.raceTrack!.progress(car.x, car.y))
-              : options.offset,
-          }))(createAutopilot({ halfStraight: this.raceTrack.halfStraight ?? 220, radius: 90 })),
+          : createAutopilot({ halfStraight: this.raceTrack.halfStraight ?? 220, radius: 90 }),
         compoundsUsed: new Set([car.compound]),
         sequence: -1,
         lastInputAt: 0,
@@ -568,8 +588,7 @@ export class LobbyRoom extends Room<{ state: LobbyState }> {
     if (driver.pitPhase === "service") return;
     driver.pitRequest = compound as keyof typeof TIRE_COMPOUNDS | null;
     if (driver.pitRequest) {
-      const boxIndex = Math.max(0, driver.gridSlot ?? 0) % 2;
-      driver.pitBox = this.raceTrack.pit.boxStart + this.raceTrack.pit.boxSpacing * boxIndex;
+      driver.pitBox = pitBoxForSlot(this.raceTrack.pit, driver.gridSlot);
     }
 
     if (driver.pitPhase === "in" && !driver.pitRequest) {
@@ -701,8 +720,8 @@ export class LobbyRoom extends Room<{ state: LobbyState }> {
     if (!this.raceTrack) return;
     const previousProgress = new Map(Array.from(this.drivers, ([sessionId, driver]) => [sessionId, driver.covered]));
     const steps = Math.round(ROOM_TICK_MS / 1000 / FIXED_DT);
+    const activeDrivers = Array.from(this.drivers.values()).filter(driver => !driver.retired && !driver.onFoot);
     for (let index = 0; index < steps; index++) {
-      const activeDrivers = Array.from(this.drivers.values()).filter(driver => !driver.retired && !driver.onFoot);
       for (const driver of activeDrivers) {
         let strength = 0;
         for (const lead of activeDrivers) {
@@ -713,8 +732,7 @@ export class LobbyRoom extends Room<{ state: LobbyState }> {
           downforce: 1 - RACE_DEFAULTS.dirtyAirLoss * strength,
         };
       }
-      for (const driver of this.drivers.values()) {
-        if (driver.retired || driver.onFoot) continue;
+      for (const driver of activeDrivers) {
         if (this.raceTrack.kind === "circuit" && this.raceTrack.heightAt) {
           const progress = this.raceTrack.progress(driver.car.x, driver.car.y);
           driver.car.config.airDensity = airDensityAtAltitude(
@@ -732,10 +750,12 @@ export class LobbyRoom extends Room<{ state: LobbyState }> {
           this.raceTrack.barrierAt);
         this.advancePitStop(driver, FIXED_DT);
         const impact = driver.car.impact;
-        if (this.state.phase === "racing" && impact
-          && driver.car.time - impact.time <= FIXED_DT * 1.1) {
-          if (impact.speed >= RACE_DEFAULTS.yellowFlagContactSpeed) this.deploySafetyCar();
-          else if (impact.speed >= RACE_DEFAULTS.vscIncidentSpeed) this.deployVirtualSafetyCar();
+        if (impact && driver.car.time - impact.time <= FIXED_DT * 1.1) {
+          this.publishCollision(driver.sessionId, "impact", impact.speed, impact.time);
+          if (this.state.phase === "racing") {
+            if (impact.speed >= RACE_DEFAULTS.yellowFlagContactSpeed) this.deploySafetyCar();
+            else if (impact.speed >= RACE_DEFAULTS.vscIncidentSpeed) this.deployVirtualSafetyCar();
+          }
         }
         if (this.state.phase === "racing" && this.safetyCarProgress !== null) {
           this.safetyCarProgress += this.safetyCarSpeed * FIXED_DT;
@@ -919,8 +939,7 @@ export class LobbyRoom extends Room<{ state: LobbyState }> {
       driver.pitPhase = "in";
       driver.pitFrom = track.offset(driver.car.x, driver.car.y)
         - (track.lineOffset?.(progress) ?? 0);
-      const boxIndex = Math.max(0, driver.gridSlot ?? 0) % 2;
-      driver.pitBox = pit.boxStart + pit.boxSpacing * boxIndex;
+      driver.pitBox = pitBoxForSlot(pit, driver.gridSlot);
     }
     if (!driver.pitPhase) return driver.input;
 
@@ -947,9 +966,8 @@ export class LobbyRoom extends Room<{ state: LobbyState }> {
           + (lane * (1 - merged) + line * merged) * into;
       };
     } else {
-      const straight = 2 * (track.halfStraight ?? 220);
       path = s => {
-        if (driver.pitPhase === "in" && s > straight) return driver.pitFrom;
+        if (driver.pitPhase === "in" && s > pit.exit) return driver.pitFrom;
         const into = smooth(s, pit.entry, pit.limitStart - 10);
         const merged = pit.mergeStart === undefined ? 0
           : smooth(s, pit.mergeStart, pit.mergeStart + (pit.mergeLength ?? 0));
@@ -1022,6 +1040,25 @@ export class LobbyRoom extends Room<{ state: LobbyState }> {
     }
   }
 
+    private receiveLivery(client: Client, message: unknown): void {
+      if (!this.drivers.has(client.sessionId)
+        || !["boarding", "qualifying", "countdown", "racing"].includes(this.state.phase)
+        || !isRecord(message)) return;
+      const { customLivery, originalLivery, driverName } = message;
+      if (typeof customLivery !== "string"
+        || customLivery.length > MAX_LIVERY_LENGTH
+        || (customLivery !== "" && !/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(customLivery))
+        || typeof originalLivery !== "boolean"
+        || typeof driverName !== "string"
+        || driverName.length > MAX_NAME_LENGTH) return;
+      this.broadcast("race:livery", {
+        sessionId: client.sessionId,
+        customLivery,
+        originalLivery,
+        driverName,
+      }, { except: client });
+    }
+
     private updateProgress(driver: RaceDriver): void {
     if (!this.raceTrack) return;
     const current = this.raceTrack.progress(driver.car.x, driver.car.y);
@@ -1065,6 +1102,10 @@ export class LobbyRoom extends Room<{ state: LobbyState }> {
         const a = drivers[first];
         const b = drivers[second];
         const speed = resolveCarContact(a.car, b.car);
+        if (speed > 0) {
+          this.publishCollision(a.sessionId, "contact", speed, a.car.time);
+          this.publishCollision(b.sessionId, "contact", speed, b.car.time);
+        }
         if (speed >= RACE_DEFAULTS.yellowFlagContactSpeed) this.deploySafetyCar();
         else if (speed >= RACE_DEFAULTS.vscIncidentSpeed) this.deployVirtualSafetyCar();
         if (speed < 18 || this.state.phase !== "racing") continue;
@@ -1083,6 +1124,11 @@ export class LobbyRoom extends Room<{ state: LobbyState }> {
         }
       }
     }
+  }
+
+  private publishCollision(sessionId: string, type: "impact" | "contact", speed: number, time: number): void {
+    this.clients.find(client => client.sessionId === sessionId)
+      ?.send("race:collision", { type, speed, time });
   }
 
   private updateStandings(): void {
@@ -1161,6 +1207,9 @@ export class LobbyRoom extends Room<{ state: LobbyState }> {
     player.tireSlipPower1 = driver.car.telemetry.wheels[1]?.slipPower ?? 0;
     player.tireSlipPower2 = driver.car.telemetry.wheels[2]?.slipPower ?? 0;
     player.tireSlipPower3 = driver.car.telemetry.wheels[3]?.slipPower ?? 0;
+    for (let wheel = 0; wheel < 4; wheel++) {
+      player.tireUtilization[wheel] = driver.car.telemetry.wheels[wheel]?.utilization ?? 0;
+    }
     player.ersDeployedLap = driver.car.telemetry.powertrain?.ers?.deployed ?? 0;
     player.ersHarvestedLap = driver.car.telemetry.powertrain?.ers?.harvested ?? 0;
     player.fuel = driver.car.fuel ?? 0;

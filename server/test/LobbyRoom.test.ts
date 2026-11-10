@@ -3,7 +3,7 @@ import { ColyseusTestServer, boot } from "@colyseus/testing";
 import appConfig from "../src/app.config.js";
 import { normalizeLobbySettings, type LobbyRoom } from "../src/rooms/LobbyRoom.js";
 import { LobbyState } from "../src/rooms/LobbyState.js";
-import { DEFAULT_CAR } from "../../src/physics.mjs";
+import { DEFAULT_CAR, isCarCriticallyDamaged } from "../../src/physics.mjs";
 import { ARCADE_FACTORS } from "../../src/handling.mjs";
 import { CIRCUITS } from "../../src/circuits.mjs";
 import { createCircuitTrack } from "../../src/circuit.mjs";
@@ -322,9 +322,101 @@ describe("multiplayer lobby", () => {
     await host.leave();
   });
 
-  it("places the stadium grid at the start line in staggered, correctly ordered slots", async () => {
+  it("keeps a disconnected race host in the lobby while the client reconnects", async () => {
     const room = await colyseus.createRoom<LobbyRoom>("race_lobby", {
-      settings: { ...settings, circuit: "", qualifying: false },
+      settings: { ...settings, qualifying: false },
+    });
+    const host = await colyseus.connectTo(room, { identity: "identity-reconnect-host", name: "Host" });
+    const guest = await colyseus.connectTo(room, { identity: "identity-reconnect-guest", name: "Guest" });
+    host.reconnection.minUptime = 0;
+    host.send("lobby:start");
+    await waitFor(() => room.state.phase === "boarding", "The race grid was not prepared.");
+    await forceDriversIntoCars(room, host);
+    advanceCountdown(room);
+
+    const hostDriver = (room as unknown as {
+      drivers: Map<string, { retired: boolean }>;
+    }).drivers.get(host.sessionId);
+    assert.ok(hostDriver);
+    assert.equal(room.state.phase, "racing");
+
+    let reconnected = false;
+    host.onReconnect(() => { reconnected = true; });
+    void host.leave(false);
+    await waitFor(() => reconnected, "The dropped host did not reconnect.");
+
+    assert.equal(room.state.players.has(host.sessionId), true);
+    assert.equal(room.state.hostSessionId, host.sessionId);
+    assert.equal(hostDriver.retired, false);
+    assert.equal(room.state.phase, "racing");
+    await new Promise(resolve => setTimeout(resolve, 20));
+    host.send("race:input", { sequence: 1, throttle: 1, brake: 0, steer: 0, handlingMode: "arcade" });
+    await waitFor(
+      () => (room.state.racePlayers.get(host.sessionId)?.speed ?? 0) > 0,
+      "The reconnected host could not drive.",
+    );
+    await host.leave();
+    await guest.leave();
+  });
+
+  it("sends collision events to multiplayer drivers for camera shake", async () => {
+    const room = await colyseus.createRoom<LobbyRoom>("race_lobby", {
+      settings: { ...settings, qualifying: false },
+    });
+    const host = await colyseus.connectTo(room, { identity: "identity-camera-shake-host", name: "Host" });
+    const guest = await colyseus.connectTo(room, { identity: "identity-camera-shake-guest", name: "Guest" });
+    host.send("lobby:start");
+    await waitFor(() => room.state.phase === "boarding", "The race grid was not prepared.");
+
+    const messages: unknown[] = [];
+    host.onMessage("race:collision", message => messages.push(message));
+    const internals = room as unknown as {
+      publishCollision(sessionId: string, type: "impact" | "contact", speed: number, time: number): void;
+    };
+    internals.publishCollision(host.sessionId, "impact", 32, 4.5);
+    internals.publishCollision(host.sessionId, "contact", 18, 4.5);
+    await waitFor(() => messages.length === 2, "Collision events were not sent to the driver.");
+
+    assert.deepEqual(messages, [
+      { type: "impact", speed: 32, time: 4.5 },
+      { type: "contact", speed: 18, time: 4.5 },
+    ]);
+    await host.leave();
+    await guest.leave();
+  });
+
+  it("relays a validated custom livery to the other lobby drivers", async () => {
+    const room = await colyseus.createRoom<LobbyRoom>("race_lobby", {
+      settings: { ...settings, qualifying: false },
+    });
+    const host = await colyseus.connectTo(room, { identity: "identity-livery-host", name: "Host" });
+    const guest = await colyseus.connectTo(room, { identity: "identity-livery-guest", name: "Guest" });
+    let received: unknown;
+    guest.onMessage("race:livery", message => { received = message; });
+    host.send("lobby:start");
+    await waitFor(() => room.state.phase === "boarding", "The race grid was not prepared.");
+
+    const customLivery = `data:image/jpeg;base64,${"Y2Fy".repeat(2048)}`;
+    host.send("race:livery", {
+      customLivery,
+      originalLivery: false,
+      driverName: "Host",
+    });
+    await waitFor(() => !!received, "The custom livery was not relayed to the guest.");
+    assert.deepEqual(received, {
+      sessionId: host.sessionId,
+      customLivery,
+      originalLivery: false,
+      driverName: "Host",
+    });
+
+    await guest.leave();
+    await host.leave();
+  });
+
+  it("places the Singapore grid at the start line in staggered, correctly ordered slots", async () => {
+    const room = await colyseus.createRoom<LobbyRoom>("race_lobby", {
+      settings: { ...settings, circuit: "singapore", qualifying: false },
     });
     const host = await colyseus.connectTo(room, { identity: "identity-grid-host", name: "Host" });
     const guest = await colyseus.connectTo(room, { identity: "identity-grid-guest", name: "Guest" });
@@ -334,17 +426,103 @@ describe("multiplayer lobby", () => {
 
     const internals = room as unknown as {
       drivers: Map<string, { car: { x: number; y: number; heading: number } }>;
+      raceTrack: { length: number; point(s: number, offset?: number): [number, number]; heading(s: number): number };
     };
     const [pole, second] = Array.from(internals.drivers.values());
-    assert.deepEqual([pole.car.x, pole.car.y, pole.car.heading], [0, -90, 0]);
-    assert.ok(Math.abs(second.car.x + 10) < 1e-9);
-    assert.ok(Math.abs(second.car.y + 87.4) < 1e-9);
-    assert.ok(Math.abs(second.car.heading) < 1e-9);
+    const [poleX, poleY] = internals.raceTrack.point(internals.raceTrack.length - 0.8, 0);
+    const [secondX, secondY] = internals.raceTrack.point(internals.raceTrack.length - 10.8, -2.6);
+    assert.deepEqual([pole.car.x, pole.car.y, pole.car.heading],
+      [poleX, poleY, internals.raceTrack.heading(internals.raceTrack.length - 0.8)]);
+    assert.ok(Math.abs(second.car.x - secondX) < 1e-9);
+    assert.ok(Math.abs(second.car.y - secondY) < 1e-9);
+    assert.ok(Math.abs(second.car.heading - internals.raceTrack.heading(internals.raceTrack.length - 10.8)) < 1e-9);
     assert.equal(room.state.racePlayers.get(host.sessionId)?.position, 1);
     assert.equal(room.state.racePlayers.get(guest.sessionId)?.position, 2);
 
     await guest.leave();
     await host.leave();
+  });
+
+  it("completes simultaneous multiplayer tyre requests without crashes", async () => {
+    const room = await colyseus.createRoom<LobbyRoom>("race_lobby", {
+      settings: { ...settings, circuit: "bahrain", qualifying: false },
+    });
+    const host = await colyseus.connectTo(room, { identity: "identity-pitbox-host", name: "Host" });
+    const guest = await colyseus.connectTo(room, { identity: "identity-pitbox-guest", name: "Guest" });
+    const third = await colyseus.connectTo(room, { identity: "identity-pitbox-third", name: "Third" });
+    host.send("lobby:start");
+    await waitFor(() => room.state.phase === "boarding", "The Bahrain race grid was not prepared.");
+    await forceDriversIntoCars(room, host);
+    advanceCountdown(room);
+
+    const internals = room as unknown as {
+      drivers: Map<string, {
+        pitBox: number;
+        pitRequest: string | null;
+        pitPhase: string | null;
+        autoPit: boolean;
+        lastInputAt: number;
+        retired: boolean;
+        car: ReturnType<typeof createCar>;
+      }>;
+      raceTrack: {
+        pit: { entry: number; boxStart: number; boxSpacing: number };
+        progress(x: number, y: number): number;
+        point(s: number, offset?: number): [number, number];
+        heading(s: number): number;
+      } | null;
+      tickRace(): void;
+    };
+    const drivers = [host, guest, third].map(client => internals.drivers.get(client.sessionId));
+    assert.ok(drivers.every((driver): driver is { pitBox: number; pitRequest: string | null } => !!driver));
+    [host, guest, third].forEach(client => client.send("race:pit-request", { compound: "soft" }));
+    await waitFor(() => drivers.every(driver => driver.pitRequest !== null),
+      "All circuit pit requests should be accepted.");
+
+    const boxes = drivers.map(driver => driver.pitBox);
+    assert.equal(new Set(boxes).size, boxes.length, "each driver should be assigned a separate pit box");
+    const track = internals.raceTrack;
+    assert.ok(track);
+    assert.deepEqual(boxes, [0, 1, 2].map(slot => track.pit.boxStart + slot * track.pit.boxSpacing));
+
+    drivers.forEach((driver, index) => {
+      const progress = track.pit.entry - 20 + index * 8;
+      const offset = (index - 1) * 2.6;
+      [driver.car.x, driver.car.y] = track.point(progress, offset);
+      driver.car.heading = track.heading(progress);
+      driver.car.vx = 10;
+      driver.car.vy = 0;
+      driver.car.telemetry.speed = 10;
+      driver.car.wheelOmega.fill(10 / driver.car.config.wheelRadius);
+    });
+
+    const serviced = new Set<typeof drivers[number]>();
+    for (let tick = 0; tick < 2400 && !drivers.every(driver => driver.car.compound === "soft"); tick++) {
+      for (const driver of drivers) driver.lastInputAt = Date.now();
+      internals.tickRace();
+      for (const driver of drivers) {
+        if (driver.pitPhase === "service") serviced.add(driver);
+      }
+    }
+    assert.equal(serviced.size, drivers.length,
+      `every circuit driver should reach its assigned pit box: ${JSON.stringify(drivers.map(driver => ({
+        phase: driver.pitPhase,
+        request: driver.pitRequest,
+        box: driver.pitBox,
+        progress: internals.raceTrack!.progress(driver.car.x, driver.car.y),
+        impact: driver.car.impact,
+        damage: driver.car.chassisDamage,
+        x: driver.car.x,
+        y: driver.car.y,
+        speed: driver.car.telemetry.speed,
+      })))}`);
+    assert.ok(drivers.every(driver => driver.car.compound === "soft" && driver.pitRequest === null),
+      "each circuit pit stop should complete its tyre change");
+    assert.ok(drivers.every(driver => !driver.retired && !isCarCriticallyDamaged(driver.car)),
+      "requesting pit stops should not cause the cars to crash or retire");
+    assert.ok(drivers.every(driver => [driver.car.x, driver.car.y, driver.car.vx, driver.car.vy]
+      .every(Number.isFinite)), "pit requests should not corrupt either client's car state");
+    await room.disconnect();
   });
 
   it("coasts through brief input stalls instead of abruptly locking the brakes", async () => {
@@ -405,6 +583,7 @@ describe("multiplayer lobby", () => {
         onFoot: boolean;
       }>;
       raceTrack: {
+        length: number;
         pit: {
           entry: number;
           boxOffset: number;
@@ -417,13 +596,21 @@ describe("multiplayer lobby", () => {
         progress(x: number, y: number): number;
       };
       driverCommand(driver: unknown): unknown;
+      publishDriver(driver: unknown, player: unknown): void;
       tickRace(): void;
     };
     const driver = internals.drivers.get(host.sessionId);
     const guestDriver = internals.drivers.get(guest.sessionId);
     const player = room.state.racePlayers.get(host.sessionId);
-    assert.ok(driver && guestDriver && player);
+    const guestPlayer = room.state.racePlayers.get(guest.sessionId);
+    assert.ok(driver && guestDriver && player && guestPlayer);
+    const guestViewOfHost = guest.state.racePlayers.get(host.sessionId);
+    assert.ok(guestViewOfHost);
     assert.ok((driver.car.fuel ?? 0) > 1, "Race starts should load fuel for the configured distance.");
+    const expectedFuel = settings.laps * 0.32 * internals.raceTrack.length / 1000 * 1.03 + 1;
+    assert.ok(Math.abs((driver.car.fuel ?? 0) - expectedFuel) < 1e-9,
+      "multiplayer fuel should be based on lap kilometres, not metres");
+    assert.ok((driver.car.fuel ?? 0) < 30, "a 12-lap Singapore race should not load thousands of kilograms");
     host.send("race:input", {
       sequence: 1,
       throttle: 1,
@@ -436,6 +623,7 @@ describe("multiplayer lobby", () => {
       handlingMode: "arcade",
     });
     await waitFor(() => player.drs > 0.5, "The server did not apply DRS input.");
+    await waitFor(() => guestViewOfHost.drs > 0.5, "The server did not replicate DRS state to the other client.");
     driver.car.vx = 30;
     driver.car.vy = 0;
     driver.car.telemetry.speed = 30;
@@ -452,6 +640,12 @@ describe("multiplayer lobby", () => {
       handlingMode: "arcade",
     });
     await waitFor(() => player.ersDeploy > 0, "The server did not deploy ERS.");
+    driver.car.telemetry.wheels[0].utilization = 0.25;
+    driver.car.telemetry.wheels[1].utilization = 0.75;
+    internals.publishDriver(driver, player);
+    await waitFor(() => guestViewOfHost.tireUtilization[0] === 0.25
+      && guestViewOfHost.tireUtilization[1] === 0.75,
+    "Per-wheel tire utilization should replicate to other clients.");
 
     guest.send("race:input", {
       sequence: 1,
@@ -521,7 +715,12 @@ describe("multiplayer lobby", () => {
       "the other client should keep advancing through the complete pit-service timer");
     assert.equal(room.state.phase, "racing", "pit service should not interrupt the shared race");
 
-    driver.pitPhase = null;
+    for (let tick = 0; tick < 2400 && driver.pitPhase !== null; tick++) {
+      driver.lastInputAt = Date.now();
+      guestDriver.lastInputAt = Date.now();
+      internals.tickRace();
+    }
+    assert.equal(driver.pitPhase, null, "the stadium auto-pit should merge back onto the track and return control");
     await new Promise(resolve => setTimeout(resolve, 12));
     host.send("race:input", {
       sequence: 3,
@@ -618,9 +817,9 @@ describe("multiplayer lobby", () => {
     await host.leave();
   });
 
-  it("re-grids qualifying results fastest-first using the same staggered slots", async () => {
+  it("re-grids Singapore qualifying results fastest-first using the same staggered slots", async () => {
     const room = await colyseus.createRoom<LobbyRoom>("race_lobby", {
-      settings: { ...settings, circuit: "" },
+      settings: { ...settings, circuit: "singapore" },
     });
     const host = await colyseus.connectTo(room, { identity: "identity-regrid-host", name: "Host" });
     const guest = await colyseus.connectTo(room, { identity: "identity-regrid-guest", name: "Guest" });
@@ -632,6 +831,7 @@ describe("multiplayer lobby", () => {
 
     const internals = room as unknown as {
       drivers: Map<string, { gridSlot: number; car: { x: number; y: number; heading: number }; bestLapTime: number }>;
+      raceTrack: { length: number; point(s: number, offset?: number): [number, number]; heading(s: number): number };
       beginCountdown(qualifyingComplete: boolean): void;
     };
     const [hostDriver, guestDriver] = Array.from(internals.drivers.values());
@@ -639,9 +839,12 @@ describe("multiplayer lobby", () => {
     guestDriver.bestLapTime = 88;
     internals.beginCountdown(true);
 
-    assert.deepEqual([guestDriver.car.x, guestDriver.car.y, guestDriver.car.heading], [0, -90, 0]);
-    assert.ok(Math.abs(hostDriver.car.x + 10) < 1e-9);
-    assert.ok(Math.abs(hostDriver.car.y + 87.4) < 1e-9);
+    const [poleX, poleY] = internals.raceTrack.point(internals.raceTrack.length - 0.8, 0);
+    const [secondX, secondY] = internals.raceTrack.point(internals.raceTrack.length - 10.8, -2.6);
+    assert.deepEqual([guestDriver.car.x, guestDriver.car.y, guestDriver.car.heading],
+      [poleX, poleY, internals.raceTrack.heading(internals.raceTrack.length - 0.8)]);
+    assert.ok(Math.abs(hostDriver.car.x - secondX) < 1e-9);
+    assert.ok(Math.abs(hostDriver.car.y - secondY) < 1e-9);
     assert.equal(room.state.racePlayers.get(guest.sessionId)?.position, 1);
     assert.equal(room.state.racePlayers.get(host.sessionId)?.position, 2);
     assert.equal(guestDriver.gridSlot, 0);
@@ -714,11 +917,16 @@ describe("multiplayer lobby", () => {
 
   it("rejects invalid circuit and lap settings", async () => {
     assert.throws(() => normalizeLobbySettings({ ...settings, circuit: "unknown" }), /circuit/i);
+    assert.throws(() => normalizeLobbySettings({ ...settings, circuit: "" }), /circuit/i);
     assert.throws(() => normalizeLobbySettings({ ...settings, laps: 0 }), /laps/i);
   });
 
   it("reserves a seat by six-digit invite code", async () => {
     const room = await colyseus.createRoom<LobbyRoom>("race_lobby", { settings });
+    const infoResponse = await colyseus.http.post("/api/lobbies/info", {
+      body: { code: room.state.code },
+    });
+    assert.deepEqual(infoResponse.data, { circuit: settings.circuit });
     const reservationResponse = await colyseus.http.post("/api/lobbies/join", {
       body: {
         code: room.state.code,

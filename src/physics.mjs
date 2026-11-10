@@ -109,7 +109,7 @@ export function createCar(overrides = {}) {
     crashPitch: 0, crashPitchRate: 0, spinOut: 0,
     wheelOmega: [0, 0, 0, 0],
     slipAngle: [0, 0, 0, 0],
-    gear: 1, shiftTimer: 0, impact: null,
+    gear: 1, shiftTimer: 0, impact: null, contact: null,
     // Aero multipliers from running in another car's wake (set by race.mjs).
     wake: { drag: 1, downforce: 1 },
     // DRS flap position (0 closed, 1 open).
@@ -222,6 +222,7 @@ function compoundOf(name) {
 export function fitTires(car, compound = car.compound) {
   car.compound = compoundOf(compound);
   car.tireWear.fill(0);
+  car.tireDamage.fill(0);
   for (const t of car.tireTemp) t.surface = t.carcass = car.config.tireStartTemp;
 }
 
@@ -233,14 +234,18 @@ export function tireTempGrip(c, temp) {
 
 // Wear grip multiplier: linear loss plus a quadratic cliff past tireCliffWear.
 export function tireWearGrip(c, wear) {
-  const w = clamp(wear, 0, 1), cliff = Math.max(0, w - c.tireCliffWear) / (1 - c.tireCliffWear);
+  const w = Number.isFinite(wear) ? clamp(wear, 0, 1) : 1;
+  const cliff = Math.max(0, w - c.tireCliffWear) / (1 - c.tireCliffWear);
   return 1 - c.tireWearGripLoss * w - c.tireCliffGripLoss * cliff * cliff;
 }
 
 // New wear fraction after sliding at slipPower (W) with the given surface temperature.
 export function updateTireWear(wear, c, slipPower, surfaceTemp, dt) {
+  const current = Number.isFinite(wear) ? clamp(wear, 0, 1) : 1;
+  if (!Number.isFinite(slipPower) || !Number.isFinite(surfaceTemp) || !Number.isFinite(dt) || dt <= 0
+    || !Number.isFinite(c.tireWearEnergy) || c.tireWearEnergy <= 0) return current;
   const heat = Math.exp(Math.max(0, surfaceTemp - c.tireOptimalTemp) / c.tireWearTempScale);
-  return Math.min(1, wear + slipPower * heat * dt / c.tireWearEnergy);
+  return clamp(current + slipPower * heat * dt / c.tireWearEnergy, 0, 1);
 }
 
 // Advance one tire's temperatures (semi-implicit, stable for any dt).

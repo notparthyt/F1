@@ -507,9 +507,23 @@ export function buildWorld({ halfStraight, radius, roadWidth, boxColors = [] }) 
   }, 20, 1);
   const fenceMat = new THREE.MeshStandardMaterial({ map: meshTex, alphaTest: 0.4, side: THREE.DoubleSide, metalness: 0.6, roughness: 0.5 });
   const postSpots = [];
+  const insideFenceRuns = [];
+  let insideFenceRun = [];
+  for (const point of pts) {
+    if (point.s > pit.entry && point.s < pit.exit) {
+      if (insideFenceRun.length > 1) insideFenceRuns.push(insideFenceRun);
+      insideFenceRun = [];
+      continue;
+    }
+    insideFenceRun.push(point);
+  }
+  if (insideFenceRun.length > 1) insideFenceRuns.push(insideFenceRun);
   for (const s of [-1, 1]) {
-    world.add(ribbon(pts, s * (half + 12), 0, 1.1, fenceMat, 0.16, 4.2));
-    pts.forEach((p, i) => { if (i % 4 === 0) postSpots.push([p.x + p.nx * s * (half + 12), p.y + p.ny * s * (half + 12)]); });
+    const fencePaths = s < 0 ? insideFenceRuns : [pts];
+    for (const path of fencePaths) {
+      world.add(ribbon(path, s * (half + 12), 0, 1.1, fenceMat, 0.16, 4.2));
+      path.forEach((p, i) => { if (i % 4 === 0) postSpots.push([p.x + p.nx * s * (half + 12), p.y + p.ny * s * (half + 12)]); });
+    }
   }
   const posts = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.06, 0.06, 4.2, 6), steel, postSpots.length);
   postSpots.forEach(([x, y], i) => posts.setMatrixAt(i, new THREE.Matrix4().makeTranslation(x, 2.1, -y)));

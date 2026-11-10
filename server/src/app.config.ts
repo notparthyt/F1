@@ -6,15 +6,33 @@ import {
   matchMaker,
   monitor,
 } from "colyseus";
+import { WebSocketTransport } from "@colyseus/ws-transport";
 import { z } from "zod";
 import { LobbyRoom } from "./rooms/LobbyRoom.js";
-import { findLobbyRoom } from "./rooms/lobbyCodes.js";
+import { findLobbyCircuit, findLobbyRoom } from "./rooms/lobbyCodes.js";
 
 const server = defineServer({
+  transport: new WebSocketTransport({
+    maxPayload: 1024 * 1024,
+  }),
   rooms: {
     race_lobby: defineRoom(LobbyRoom),
   },
   routes: createRouter({
+    lobby_info: createEndpoint("/api/lobbies/info", {
+      method: "POST",
+      body: z.object({
+        code: z.string().regex(/^\d{6}$/),
+      }),
+    }, async (ctx) => {
+      const circuit = findLobbyCircuit(ctx.body.code);
+      if (circuit === undefined) {
+        return ctx.error("NOT_FOUND", {
+          message: "Lobby code expired or was not found. Ask the host to create a new lobby code.",
+        });
+      }
+      return { circuit };
+    }),
     join_lobby: createEndpoint("/api/lobbies/join", {
       method: "POST",
       body: z.object({

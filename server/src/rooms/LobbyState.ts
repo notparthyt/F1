@@ -66,6 +66,7 @@ export const RacePlayer = schema({
   tireSlipPower1: t.number(),
   tireSlipPower2: t.number(),
   tireSlipPower3: t.number(),
+  tireUtilization: t.array("number"),
   ersDeployedLap: t.number(),
   ersHarvestedLap: t.number(),
   fuel: t.number(),

@@ -4,7 +4,7 @@
 // browser front end drives either. The car starts `runUp` metres before the
 // start/finish line on the racing line, so lap 1 begins with a flying start.
 // DRS can be manually used anywhere, as in practice and qualifying.
-import { Simulation, createCar, fitTires, newErsLap, tireTempGrip, tireWearGrip, TIRE_COMPOUNDS, FIXED_DT } from './physics.mjs';
+import { Simulation, createCar, fitTires, newErsLap, tireTempGrip, tireWearGrip, TIRE_COMPOUNDS, FIXED_DT } from './physics.mjs?v=20261109-3';
 import { createCircuitAutopilot } from './autopilot.mjs';
 import { findDrsZones, inDrsZone } from './race.mjs';
 

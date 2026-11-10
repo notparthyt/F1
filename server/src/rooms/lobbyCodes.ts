@@ -1,21 +1,25 @@
 import { randomInt } from "node:crypto";
 
-const lobbyIdsByCode = new Map<string, string>();
+const lobbiesByCode = new Map<string, { roomId: string; circuit: string }>();
 
-export function registerLobby(roomId: string): string {
+export function registerLobby(roomId: string, circuit: string): string {
   let code: string;
   do {
     code = randomInt(0, 1_000_000).toString().padStart(6, "0");
-  } while (lobbyIdsByCode.has(code));
+  } while (lobbiesByCode.has(code));
 
-  lobbyIdsByCode.set(code, roomId);
+  lobbiesByCode.set(code, { roomId, circuit });
   return code;
 }
 
 export function findLobbyRoom(code: string): string | undefined {
-  return lobbyIdsByCode.get(code);
+  return lobbiesByCode.get(code)?.roomId;
+}
+
+export function findLobbyCircuit(code: string): string | undefined {
+  return lobbiesByCode.get(code)?.circuit;
 }
 
 export function unregisterLobby(code: string): void {
-  lobbyIdsByCode.delete(code);
+  lobbiesByCode.delete(code);
 }

@@ -10,6 +10,7 @@
   },
   "scripts": {
     "start": "tsx watch src/index.ts",
+    "start:prod": "node build/server/src/index.js",
     "build": "npm run clean && tsc -p tsconfig.build.json",
     "clean": "rimraf build",
     "test": "mocha -r tsx test/**.test.ts --exit --timeout 15000"
@@ -30,6 +31,7 @@
   "dependencies": {
     "@colyseus/schema": "^5.0.14",
     "@colyseus/tools": "^0.18.1",
+    "@colyseus/ws-transport": "^0.18.4",
     "colyseus": "^0.18.2",
     "express": "^5.2.1",
     "zod": "^4.1.12"

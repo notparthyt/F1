@@ -38,9 +38,9 @@ come from racing-line data or documented map traces.
   reduced visibility.
 - **3D cameras:** cockpit, chase, T-Cam, overview, and a car-following 360
   Look that opens overhead and stays outside the car, terrain, and track
-  barriers. Visor and T-Cam cameras shake only after a crash; visor view also
-  follows the driver's head animation. Chase and free cameras follow track
-  elevation. A separate
+  barriers. Visor and T-Cam cameras shake after crashes, including collisions
+  reported by the multiplayer server; visor view also follows the driver's
+  head animation. Chase and free cameras follow track elevation. A separate
   trackside TV camera can record the race to WebM.
 - **Circuit details:** Singapore Marina Bay, Buddh International Circuit, and
   Nürburgring GP-Strecke join the 21-circuit roster, with track-specific
@@ -76,9 +76,8 @@ come from racing-line data or documented map traces.
   an option to remove a saved custom livery.
 - **Telemetry:** live speed, lap times, vehicle dynamics, and tyre information.
 - **Graphics:** Default, Mid Optimized, and Max Optimized performance presets
-  tune rendering quality. Max Optimized uses the validated optimized car model;
-  the maxed GLB has an incomplete mesh hierarchy and is not used. The optimized
-  animated driver is used in all three presets.
+  tune rendering quality. The optimized presets use the validated optimized
+  car model and animated driver.
 - **Race control:** penalty and safety-car notices, a text-only team engineer,
   position-redress checks, pit-lane speed assistance, and AI caution near a
   recent severe collision. Minor incidents trigger a Virtual Safety Car;
@@ -116,10 +115,10 @@ Run the test suite with Node.js:
 node --test test/*.test.mjs
 ```
 
-GitHub Pages publishes the project from the `main` branch root. The site is
+GitHub Pages publishes the frontend from the `main` branch root. The site is
 available at [notparthyt.github.io/F1](https://notparthyt.github.io/F1/).
-The existing Cloudflare Worker can also be deployed with `npx wrangler deploy`;
-the files excluded from that deployment are listed in `.assetsignore`.
+The multiplayer Colyseus server is a separate Node.js service. See the
+[server deployment instructions](./server/README.md#deploy-on-a-node-host).
 
 ## Getting started
 
@@ -135,7 +134,13 @@ the files excluded from that deployment are listed in `.assetsignore`.
    **M**, and emote with **E**. ERS, DRS, and pit requests are processed by the
    server; Auto-pit is enabled by default. Finished drivers can continue
    driving or get on foot while others finish; the podium appears when the
-   race is complete.
+   race is complete. Multiplayer lighting and weather stay synchronized, with
+   rain effects reduced for network performance.
+   The Singleplayer, Multiplayer, Create lobby, and Join lobby menu entries
+   clear gameplay URL parameters with a history update, without reloading the
+   page. Starting a singleplayer race restores its selected setup in the URL.
+   After lobby creation or join, the URL is restored with its track and lobby
+   code so the correct circuit is loaded on refresh.
    Once the host enters their car, they can force everyone into their cars with
    the one-use start button; this begins the countdown. Qualifying has no
    car-to-car collisions, and enabled penalties are enforced by the server.
@@ -147,8 +152,9 @@ the files excluded from that deployment are listed in `.assetsignore`.
 3. Drive with **W / ↑** to accelerate, **S / ↓** to brake and select reverse
    at a stop, and **A / D** or **← / →** to steer. Press **Esc** to pause;
    choose **Exit to main menu** in the pause menu to return.
-4. Use the HUD and standings to follow lap timing, position, tyres, fuel, and
-   penalties. Use **Reset car** in singleplayer to restart the session.
+4. Use the HUD and race leaderboard to follow lap timing, position, gaps,
+   tyres, fuel, and penalties. Use **Reset car** in singleplayer to restart the
+   session.
 
 Race starts use a track-specific starting compound and require a pit stop onto a second compound.
 Press **B** to cycle a requested tyre. With **Auto-pit** enabled, the assistant

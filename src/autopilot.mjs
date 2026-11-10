@@ -238,7 +238,10 @@ export function createAutopilot({ halfStraight, radius }, tuning = {}) {
     const into = s % (straight + arc);
     return into < straight ? straight - into : 0;
   }
-  return function drive(car, { offset = 0, maxSpeed = Infinity, grip = 1 } = {}) {
+  /** @param {{ offset?: number | ((s: number) => number), maxSpeed?: number, grip?: number }} options */
+  return function drive(car, options = {}) {
+    let { offset = 0 } = options;
+    const { maxSpeed = Infinity, grip = 1 } = options;
     const c = car.config, speed = car.telemetry.speed;
     const s = progress(car.x, car.y);
     const ld = Math.max(t.minLookahead, speed * t.lookahead);

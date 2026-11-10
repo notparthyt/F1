@@ -110,7 +110,12 @@ header{position:absolute;top:0;left:0;right:0;z-index:20}main{height:100vh}.tag,
 @media(max-width:680px){.multiplayer-panel .menu-form,.lobby-layout{grid-template-columns:1fr}.multiplayer-preview{grid-column:auto}.menu-footer{align-items:stretch;flex-direction:column}.menu-footer button{width:100%}.lobby-settings{grid-template-columns:1fr 1fr}}
 .menu-panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}.menu-panel h2{font-size:clamp(26px,4vw,38px);margin:0}.menu-back{background:transparent;border:0;color:#aab8c3}
 .menu-form{display:grid;grid-template-columns:1fr 1fr;gap:18px 22px}.menu-field{display:flex;flex-direction:column;gap:8px;color:#c5d0d9}.menu-field small{color:#8293a1}
-.menu-field select,.menu-field input[type="text"],.menu-field input[type="number"]{width:100%;padding:12px;background:#121e29;border:1px solid #ffffff24;border-radius:7px;color:#eef5fa}
+.menu-field select,.menu-field input[type="text"],.menu-field input[type="number"],.menu-field input[type="url"]{width:100%;padding:12px;background:#121e29;border:1px solid #ffffff24;border-radius:7px;color:#eef5fa}
+.server-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.server-actions button{padding:9px 12px}
+.server-editor{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:12px 18px;padding:14px;border:1px solid #ffffff20;border-radius:8px;background:#121e29}
+.server-editor[hidden]{display:none}
+#multiplayer-server-status{grid-column:1/-1;margin:0}
 .menu-switch{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:13px 15px;border:1px solid #ffffff1a;border-radius:8px;background:#111b25}
 .menu-switch input{width:20px;height:20px;accent-color:#6fffc3}
 .map-preview{display:grid;grid-template-columns:minmax(0,1fr) 180px;align-items:center;gap:14px;min-height:145px;padding:14px;border:1px solid #ffffff1a;border-radius:9px;background:#101a24}
@@ -123,7 +128,7 @@ header{position:absolute;top:0;left:0;right:0;z-index:20}main{height:100vh}.tag,
 #settings-screen{display:grid;grid-template-columns:155px 1fr;column-gap:24px}
 #settings-screen[hidden]{display:none}
 #settings-screen>.menu-panel-head,#settings-screen>.menu-footer{grid-column:1/-1}
-#settings-screen>.menu-tabs{grid-column:1;grid-row:2 / span 5;display:flex;flex-direction:column;align-items:stretch;border-bottom:0;border-right:1px solid #ffffff20;padding:0 16px 0 0;margin:0}
+#settings-screen>.menu-tabs{grid-column:1;grid-row:2 / span 6;display:flex;flex-direction:column;align-items:stretch;border-bottom:0;border-right:1px solid #ffffff20;padding:0 16px 0 0;margin:0}
 #settings-screen>.settings-pane{grid-column:2;grid-row:2}
 .settings-pane{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .keybind-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:10px 12px;border-bottom:1px solid #ffffff14}
@@ -171,13 +176,13 @@ header{position:absolute;top:0;left:0;right:0;z-index:20}main{height:100vh}.tag,
 #podium-actions button{border:1px solid #6fffc366;border-radius:6px;padding:8px 12px;background:#11251f;color:#d9fff0;font:inherit;font-weight:700;cursor:pointer}
 #podium-actions button:hover,#podium-actions button:focus-visible{background:#1b3d32;outline:2px solid #6fffc3;outline-offset:2px}
 @media(prefers-reduced-motion:reduce){.menu-content:not([hidden]),.menu-card{animation:none;transition:none}#podium-overlay{transition:none}}
-@media(max-width:650px){#menu-screen{padding:20px;grid-template-rows:auto 1fr auto}.menu-actions,.menu-form,.settings-pane{grid-template-columns:1fr}.menu-card{min-height:115px;padding:18px}.menu-panel{max-height:80vh}#settings-screen{grid-template-columns:1fr}#settings-screen>.menu-tabs{grid-column:1;grid-row:auto;flex-direction:row;border-right:0;border-bottom:1px solid #ffffff20;padding:0 0 12px;overflow:auto}#settings-screen>.settings-pane{grid-column:1;grid-row:auto}.map-preview{grid-template-columns:1fr}.menu-bottom{align-items:flex-end}.menu-footer{align-items:stretch;flex-direction:column}}
+@media(max-width:650px){#menu-screen{padding:20px;grid-template-rows:auto 1fr auto}.menu-actions,.menu-form,.settings-pane,.server-editor{grid-template-columns:1fr}.menu-card{min-height:115px;padding:18px}.menu-panel{max-height:80vh}#settings-screen{grid-template-columns:1fr}#settings-screen>.menu-tabs{grid-column:1;grid-row:auto;flex-direction:row;border-right:0;border-bottom:1px solid #ffffff20;padding:0 0 12px;overflow:auto}#settings-screen>.settings-pane{grid-column:1;grid-row:auto}.map-preview{grid-template-columns:1fr}.menu-bottom{align-items:flex-end}.menu-footer{align-items:stretch;flex-direction:column}}
 @media(max-width:650px){#race-control-panel{top:auto;bottom:250px;left:8px;width:min(230px,60vw);padding:10px}#race-notification{top:8px;font-size:12px;padding:9px 12px}}
 </style>
 <style>
 .track-tag{max-width:min(330px,calc(100vw - 24px));line-height:1.55}
 .track-tag strong{display:block;margin-top:3px;font-size:12px;letter-spacing:.04em}
-.scene-shortcuts{position:absolute;top:164px;left:8px;z-index:8;width:min(290px,calc(100vw - 24px));color:#e9f0f6}
+.scene-shortcuts{position:absolute;top:164px;right:8px;z-index:8;width:min(290px,calc(100vw - 24px));color:#e9f0f6}
 .scene-shortcuts summary{width:max-content;max-width:100%;padding:8px 12px;border:1px solid #ffffff2e;border-radius:7px;background:#0b121ad9;backdrop-filter:blur(10px);font-size:11px;font-weight:650;letter-spacing:.04em;cursor:pointer;list-style:none}
 .scene-shortcuts summary::-webkit-details-marker{display:none}
 .scene-shortcuts[open]{border:1px solid #ffffff2e;border-radius:8px;background:#0b121af0;backdrop-filter:blur(12px);box-shadow:0 8px 24px #0007}
@@ -187,7 +192,7 @@ header{position:absolute;top:0;left:0;right:0;z-index:20}main{height:100vh}.tag,
 .scene-shortcut-list kbd{white-space:nowrap;color:#e9f0f6;transition:background-color .12s,border-color .12s,color .12s,box-shadow .12s}
 .scene-shortcut-list kbd.key-pressed{border-color:#6fffc3;background:#174b3d;color:#fff;box-shadow:0 0 12px #6fffc366}
 @media(min-width:761px){#race-control-panel{left:306px;width:min(270px,calc(100vw - 620px))}}
-@media(max-width:760px){.scene-shortcuts{top:174px}.track-tag{max-width:calc(100vw - 24px)}.track-tag strong{font-size:10px}}
+@media(max-width:760px){.scene-shortcuts{top:174px;right:8px}.track-tag{max-width:calc(100vw - 24px)}.track-tag strong{font-size:10px}}
 </style>
 <style id="f1-hud-skin">
 /* Real-F1 broadcast HUD in an arcade-racer layout (position, lap, timer, minimap, floating speed). */
@@ -289,7 +294,7 @@ button:hover,button:focus-visible{border-color:var(--f1-red);outline:2px solid #
 .menu-panel{border-radius:2px 24px 2px 24px;border:1px solid var(--f1-line);border-top:4px solid var(--f1-red);background:#0a0d12f2;box-shadow:0 30px 90px #000c}
 .menu-panel h2{font-style:italic;font-weight:900;text-transform:uppercase;letter-spacing:.01em}
 .menu-field,.menu-switch{font-weight:600;letter-spacing:.02em}
-.menu-field select,.menu-field input[type="text"],.menu-field input[type="number"]{background:#12171f;border:1px solid var(--f1-line);border-bottom:2px solid #ffffff55;border-radius:2px 8px 2px 8px;color:var(--f1-text)}
+.menu-field select,.menu-field input[type="text"],.menu-field input[type="number"],.menu-field input[type="url"]{background:#12171f;border:1px solid var(--f1-line);border-bottom:2px solid #ffffff55;border-radius:2px 8px 2px 8px;color:var(--f1-text)}
 .menu-field select:focus,.menu-field input:focus{outline:none;border-bottom-color:var(--f1-red)}
 .menu-switch{background:#10151c;border-radius:2px 10px 2px 10px;border-color:var(--f1-line)}
 .menu-switch input{accent-color:var(--f1-red)}
@@ -360,7 +365,7 @@ main:not(.hud-off){--aside:306px}
 #f1-tower .tag strong{font-weight:700}
 #f1-tower #nearby-leaderboard{position:static!important;width:auto!important;padding:0!important;margin:0;border:0!important;border-radius:0 0 .3em .3em!important;background:transparent!important;backdrop-filter:none;box-shadow:none}
 #f1-tower #nearby-leaderboard[hidden]{display:none!important}
-#f1-tower #nearby-leaderboard .label{display:none}
+#f1-tower #nearby-leaderboard .label{display:block;margin:0;padding:.3em .7em;background:var(--navy);color:#9fb0dc;font-size:.72em;font-weight:800;letter-spacing:.16em}
 #f1-tower #nearby-standings{margin:0;font-size:1em}
 #f1-tower #nearby-standings li{display:grid;grid-template-columns:2.2em minmax(0,1fr) auto;gap:0;align-items:center;padding:0!important;height:2.15em;margin-top:2px;background:var(--navy);color:#fff;font-size:1em;font-weight:700;letter-spacing:.03em;text-transform:uppercase;border-radius:0}
 #f1-tower #nearby-standings li>*{padding:0 .6em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -495,6 +500,7 @@ main:not(.hud-off) #f1-center{width:min(30em,calc(100vw - 80em))}
       <button type="button" role="tab" data-settings-tab="gameplay" aria-selected="false">Gameplay</button>
       <button type="button" role="tab" data-settings-tab="keybinds" aria-selected="false">Keybinds</button>
       <button type="button" role="tab" data-settings-tab="profile" aria-selected="false">Profile</button>
+      <button type="button" role="tab" data-settings-tab="multiplayer" aria-selected="false">Multiplayer</button>
     </div>
     <section class="settings-pane" data-settings-pane="controls">
       <label class="menu-field">Handling<select id="setting-handling"><option value="arcade">Arcade</option><option value="sim">Sim</option></select></label>
@@ -529,6 +535,26 @@ main:not(.hud-off) #f1-center{width:min(30em,calc(100vw - 80em))}
     <section class="settings-pane" data-settings-pane="profile" hidden>
       <label class="menu-field">Driver name<input id="setting-driver-name" type="text" maxlength="24" value="notparthyt"></label>
       <button id="settings-reset" type="button">Reset to default settings</button>
+    </section>
+    <section class="settings-pane" data-settings-pane="multiplayer" hidden>
+      <label class="menu-field">Selected server<select id="multiplayer-server-select" aria-describedby="multiplayer-server-help"></select></label>
+      <div class="menu-field">Manage multiplayer servers
+        <div class="server-actions">
+          <button id="multiplayer-server-add" type="button">Add server</button>
+          <button id="multiplayer-server-edit" type="button">Edit selected</button>
+          <button id="multiplayer-server-delete" type="button">Delete selected</button>
+        </div>
+        <small id="multiplayer-server-help">Server selection and changes save immediately. New lobbies and matches use the selected server.</small>
+      </div>
+      <form id="multiplayer-server-editor" class="server-editor" hidden>
+        <label class="menu-field">Server name<input id="multiplayer-server-name" type="text" maxlength="40" autocomplete="off" required></label>
+        <label class="menu-field">WebSocket URL<input id="multiplayer-server-url" type="url" placeholder="wss://racing.example.com" autocomplete="url" required></label>
+        <div class="server-actions">
+          <button id="multiplayer-server-save" type="submit">Save server</button>
+          <button id="multiplayer-server-cancel" type="button">Cancel</button>
+        </div>
+      </form>
+      <p id="multiplayer-server-status" class="lobby-status" role="status" aria-live="polite"></p>
     </section>
     <div class="menu-footer"><span class="menu-notice" id="settings-notice"></span><button id="save-settings" class="menu-primary" type="button">Save changes &amp; exit</button></div>
   </section>
@@ -604,7 +630,7 @@ main:not(.hud-off) #f1-center{width:min(30em,calc(100vw - 80em))}
 </section>
 <header hidden><div><h1><span>Cursor
 </span> RACING</h1><div class="subtitle">F1 DYNAMICS SIMULATOR · 240 Hz PHYSICS</div></div><nav aria-label="Simulation controls"><button id="autopilot" aria-pressed="false">Auto-pit: off</button><button id="pause" aria-pressed="false">Pause</button><button id="camera-mode" aria-label="Camera mode" title="Click to cycle: Cockpit, Chase Cam, T-Cam">Camera: Chase Cam</button><button id="trackside" aria-pressed="false">Trackside TV: off</button><button id="view" aria-pressed="false">Overview</button><button id="sound" aria-pressed="true">Sound: on</button><button id="field" aria-pressed="true">Opponents: on</button><button id="reset">Reset car</button><button id="hud" aria-pressed="false">HUD: off</button><button id="units">Units: km/h</button><button id="fullscreen" aria-pressed="false">Full screen</button><a id="github" class="btn" href="https://github.com/notparthyt/F1" target="_blank" rel="noopener" title="notparthyt/F1 on GitHub">GitHub F1</a><select id="track-select" aria-label="Circuit"><option value="">Stadium test track · race</option></select></nav></header>
-<main class="hud-off"><section class="scene" aria-label="Driving viewport"><canvas id="track" role="img" aria-label="3D view of an open-wheel race car on a stadium-shaped test circuit"></canvas><div class="tag" aria-label="Current circuit"><strong id="track-name"></strong></div><section id="nearby-leaderboard" aria-label="Nearby cars" hidden><div class="label">Nearby cars · time gap</div><ol id="nearby-standings"></ol></section><div id="timing" aria-label="Lap timing"><div id="race-pos" aria-label="Race position"></div><div class="label" id="lap-label">Out lap</div><div id="lap-time">–:––.–––</div><div id="lap-delta"></div><div id="hud-speed" aria-label="Speed"><span id="speed-hud">0</span> <span class="unit">km/h</span></div><div id="ers-status" aria-label="ERS deployment status">ERS · Deploying 100%</div><div id="pit-info" aria-label="Tyres and pit stop"></div></div><div id="lights" role="img" aria-label="Start lights" hidden><span></span><span></span><span></span><span></span><span></span></div><div id="yellow-flag" role="status" aria-live="polite" hidden>SAFETY CAR · FOLLOW · NO OVERTAKING</div><div id="on-foot-overlay" aria-live="polite" hidden><div id="on-foot-reticle" aria-hidden="true"></div><div id="on-foot-prompt"></div><section id="on-foot-emote-menu" role="dialog" aria-modal="false" aria-labelledby="on-foot-emote-title" hidden><h2 id="on-foot-emote-title">Choose an emote</h2><div id="on-foot-emote-list"></div><p>Press 1–9 to play · E or Esc to close</p></section><section id="on-foot-wardrobe-menu" role="dialog" aria-modal="false" aria-labelledby="on-foot-wardrobe-title" hidden><h2 id="on-foot-wardrobe-title">Driver suit</h2><div id="on-foot-suit-list"></div><p>Press 1–9 to change suit · M or Esc to close</p></section></div><div id="exit-hint" role="status" hidden></div><div id="hud-left"><canvas id="minimap" role="img" aria-label="Track map with car positions"></canvas><div id="status" role="status">Ready · W or ↑ to accelerate</div></div><div id="compact-tires" aria-label="Tire health"><span class="ct-label">TYRES</span><div class="ct-grid"><div class="ct-wheel" id="ct-FL"><span>FL</span><div class="ct-bar"><div class="ct-fill"></div></div><span class="ct-pct">0%</span></div><div class="ct-wheel" id="ct-FR"><span>FR</span><div class="ct-bar"><div class="ct-fill"></div></div><span class="ct-pct">0%</span></div><div class="ct-wheel" id="ct-RL"><span>RL</span><div class="ct-bar"><div class="ct-fill"></div></div><span class="ct-pct">0%</span></div><div class="ct-wheel" id="ct-RR"><span>RR</span><div class="ct-bar"><div class="ct-fill"></div></div><span class="ct-pct">0%</span></div></div><div class="ct-compound"><span class="tyre" id="ct-compound-badge" style="border-color:#ff3b30;color:#ff3b30">S</span><span class="ct-compound-label">SOFT</span></div></div><div id="onboarding-hints"><span><kbd>H</kbd> Telemetry</span><span><kbd>B</kbd> Request Tyres</span><span><kbd>C</kbd> Camera</span><span><kbd>Esc</kbd> Pause</span></div></section><aside aria-label="Vehicle telemetry">
+<main class="hud-off"><section class="scene" aria-label="Driving viewport"><canvas id="track" role="img" aria-label="3D view of an open-wheel race car on a stadium-shaped test circuit"></canvas><div class="tag" aria-label="Current circuit"><strong id="track-name"></strong></div><section id="nearby-leaderboard" aria-label="Race leaderboard" hidden><div class="label">Race positions · gap</div><ol id="nearby-standings" aria-label="Race positions"></ol></section><div id="timing" aria-label="Lap timing"><div id="race-pos" aria-label="Race position"></div><div class="label" id="lap-label">Out lap</div><div id="lap-time">–:––.–––</div><div id="lap-delta"></div><div id="hud-speed" aria-label="Speed"><span id="speed-hud">0</span> <span class="unit">km/h</span></div><div id="ers-status" aria-label="ERS deployment status">ERS · Deploying 100%</div><div id="pit-info" aria-label="Tyres and pit stop"></div></div><div id="lights" role="img" aria-label="Start lights" hidden><span></span><span></span><span></span><span></span><span></span></div><div id="yellow-flag" role="status" aria-live="polite" hidden>SAFETY CAR · FOLLOW · NO OVERTAKING</div><div id="on-foot-overlay" aria-live="polite" hidden><div id="on-foot-reticle" aria-hidden="true"></div><div id="on-foot-prompt"></div><section id="on-foot-emote-menu" role="dialog" aria-modal="false" aria-labelledby="on-foot-emote-title" hidden><h2 id="on-foot-emote-title">Choose an emote</h2><div id="on-foot-emote-list"></div><p>Press 1–9 to play · E or Esc to close</p></section><section id="on-foot-wardrobe-menu" role="dialog" aria-modal="false" aria-labelledby="on-foot-wardrobe-title" hidden><h2 id="on-foot-wardrobe-title">Driver suit</h2><div id="on-foot-suit-list"></div><p>Press 1–9 to change suit · M or Esc to close</p></section></div><div id="exit-hint" role="status" hidden></div><div id="hud-left"><canvas id="minimap" role="img" aria-label="Track map with car positions"></canvas><div id="status" role="status">Ready · W or ↑ to accelerate</div></div><div id="compact-tires" aria-label="Tire health"><span class="ct-label">TYRES</span><div class="ct-grid"><div class="ct-wheel" id="ct-FL"><span>FL</span><div class="ct-bar"><div class="ct-fill"></div></div><span class="ct-pct">0%</span></div><div class="ct-wheel" id="ct-FR"><span>FR</span><div class="ct-bar"><div class="ct-fill"></div></div><span class="ct-pct">0%</span></div><div class="ct-wheel" id="ct-RL"><span>RL</span><div class="ct-bar"><div class="ct-fill"></div></div><span class="ct-pct">0%</span></div><div class="ct-wheel" id="ct-RR"><span>RR</span><div class="ct-bar"><div class="ct-fill"></div></div><span class="ct-pct">0%</span></div></div><div class="ct-compound"><span class="tyre" id="ct-compound-badge" style="border-color:#ff3b30;color:#ff3b30">S</span><span class="ct-compound-label">SOFT</span></div></div><div id="onboarding-hints"><span><kbd>H</kbd> Telemetry</span><span><kbd>B</kbd> Request Tyres</span><span><kbd>C</kbd> Camera</span><span><kbd>Esc</kbd> Pause</span></div></section><aside aria-label="Vehicle telemetry">
 <div id="pause-state" role="status"></div><div class="label">Ground speed · Gear <strong id="gear" aria-label="Selected gear">1</strong></div><div><span class="speed" id="speed">0</span> <span class="unit" id="speed-unit">km/h</span></div>
 <div class="section"><div class="stats"><div><div class="label">Last lap</div><div class="number" id="last-lap">–:––.–––</div></div><div><div class="label">Best lap</div><div class="number" id="best-lap">–:––.–––</div></div></div><div class="sectors" id="sectors"></div><p class="note">Sectors: purple = session best, yellow = slower. Track limits: a lap is deleted when all four tires are beyond the road edge.</p></div>
 <div class="section" id="race-section"><div class="label" id="race-label">Race order · interval to leader</div><ol id="standings" aria-label="Race order"></ol><p class="note">Twenty-one AI opponents run the same physics. Random rain wets the circuit, lowers available grip and slows the AI corner-speed plan. Following within ~30 m gives a tow (up to 35% less drag) but dirty air (up to 25% less downforce); cars collide as rigid footprints. Illustrative values.</p></div>
@@ -618,12 +644,12 @@ main:not(.hud-off) #f1-center{width:min(30em,calc(100vw - 80em))}
 <script type="module">
 import * as THREE from './vendor/three.module.js';
 import { RoomEnvironment } from './vendor/RoomEnvironment.js';
-import { DEFAULT_CAR, TIRE_COMPOUNDS, isCarCriticallyDamaged, shift } from './src/physics.mjs?v=20261108-1';
-import { createRace, DEFAULT_GRID } from './src/race.mjs?v=20261109-1';
+import { DEFAULT_CAR, TIRE_COMPOUNDS, isCarCriticallyDamaged, shift } from './src/physics.mjs?v=20261109-3';
+import { createRace, DEFAULT_GRID } from './src/race.mjs?v=20261109-3';
 import { buildF1Car } from './src/car3d.mjs';
 import { loadGLTFAsset, loadRB22Template, buildRB22Car, cloneSkinnedModel, STEERING_RATIO, DRIVER_SUIT_STYLES, createDriverSuitTexture } from './src/rb22.mjs?v=20261105';
-import { carModelForGraphics, driverModelForGraphics } from './src/modelassets.mjs';
-import { buildWorld, buildCircuitWorld, drawLogo, updateWorldDaylight, updateWorldWeather, updateWorldDetailLod, worldDetailsInRadius, worldObstacleAt, worldBarrierAt } from './src/world3d.mjs?v=20261108-1';
+import { carModelForGraphics, driverModelForGraphics } from './src/modelassets.mjs?v=20261109-6';
+import { buildWorld, buildCircuitWorld, drawLogo, updateWorldDaylight, updateWorldWeather, updateWorldDetailLod, worldDetailsInRadius, worldObstacleAt, worldBarrierAt } from './src/world3d.mjs?v=20261109-3';
 import { mergeGeometries } from './vendor/BufferGeometryUtils.js';
 import { makeMirror } from './src/mirror3d.mjs';
 import { createStadiumTrack } from './src/track.mjs';
@@ -640,18 +666,21 @@ const CIRCUIT_PIT_LAYOUT = Object.freeze({
   },
 });
 import { CIRCUIT_ALTITUDES, CIRCUIT_ELEVATION_PROFILES, CIRCUIT_TRACK_STYLE, NIGHT_CIRCUITS, startingTyreForTrack, weatherOptionsForTrack } from './src/trackdata.mjs';
-import { createTimeTrial } from './src/trial.mjs?v=20261109-1';
+import { createTimeTrial } from './src/trial.mjs?v=20261109-3';
 import { createLapTimer, formatLapTime } from './src/laptimer.mjs';
 import { applyArcadeSteeringAssist, createDriverInput, readGamepad } from './src/input.mjs';
 import { createSoundModel, createAudioEngine, LEGACY_SOUND_DEFAULTS } from './src/audio.mjs?v=20261108-1';
 import { createWeather } from './src/weather.mjs';
 import { daylightForRace } from './src/environment.mjs';
+import { leaderboardWindow } from './src/leaderboard.mjs';
+import { normalizeMultiplayerServer, normalizeMultiplayerServerStore } from './src/multiplayer-servers.mjs';
 import { cameraShakeRotation, clampLook360Distance, constrainLook360Camera } from './src/camera.mjs?v=20261109-1';
 import { createRainLensEffect } from './src/rain-lens.mjs?v=20261109-1';
 import { createCarSpray } from './src/car-spray.mjs?v=20261109-1';
 import { captureHandlingBaseline, applyHandlingMode as applyCarHandlingMode } from './src/handling.mjs';
 import { canExitVehicle, moveOnFootColliding, onFootEmoteAt, onFootSpawn, ON_FOOT_EMOTES, shouldAutoPauseOnBlur, shouldShowSeatedDriver } from './src/onfoot.mjs?v=20261105';
 const $ = id => document.getElementById(id);
+const safeFraction = value => Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 1;
 const forceGridButton = document.createElement('button');
 forceGridButton.id = 'force-grid-button';
 forceGridButton.type = 'button';
@@ -1968,9 +1997,25 @@ const carSprays = cars.map(({ model: carModel }) => {
 });
 function updateCarSprays(dt) {
   const wetness = weather.state.wetness;
-  for (const entry of sim.entries) {
+  let visibleEntries = sim.entries;
+  if (networkRaceActive) {
+    const local = sim.entries[0];
+    const remote = sim.entries.slice(1)
+      .filter(entry => camera.position.distanceToSquared(cars[skins[entry.index]].model.group.position) < 80 ** 2)
+      .sort((a, b) => camera.position.distanceToSquared(cars[skins[a.index]].model.group.position)
+        - camera.position.distanceToSquared(cars[skins[b.index]].model.group.position))
+      .slice(0, 2);
+    visibleEntries = local ? [local, ...remote] : remote;
+  }
+  const visibleSprays = new Set(visibleEntries.map(entry => skins[entry.index]));
+  for (const [index, effect] of carSprays.entries()) {
+    effect.points.visible = visibleSprays.has(index);
+    if (!effect.points.visible) effect.clear();
+  }
+  for (const entry of visibleEntries) {
     const effect = carSprays[skins[entry.index]];
     const carModel = cars[skins[entry.index]].model;
+    if (!effect) continue;
     effect.setViewport(renderer, camera);
     effect.update(dt, {
       object: carModel.group,
@@ -1988,35 +2033,46 @@ const podiumStage = new THREE.Group();
 podiumStage.position.set(podiumCenter[0], podiumGround, -podiumCenter[1]);
 podiumStage.visible = false;
 world.add(podiumStage);
+const podiumBase = new THREE.Mesh(
+  new THREE.BoxGeometry(18, 0.35, 8),
+  new THREE.MeshStandardMaterial({ color: 0x101a24, metalness: 0.18, roughness: 0.72 }),
+);
+podiumBase.position.set(0, 0.175, 0);
+podiumBase.receiveShadow = true;
+podiumStage.add(podiumBase);
 const podiumCameraTarget = new THREE.Vector3();
 const podiumCameraPosition = new THREE.Vector3();
-const podiumSlot = new Map([[1, [0, 1.8]], [2, [-6.4, 0.9]], [3, [6.4, 0.55]]]);
+const podiumSlot = new Map([[1, [0, 1.8]], [2, [-5.2, 0.9]], [3, [5.2, 0.55]]]);
 const podiumLogoCanvas = document.createElement('canvas');
 podiumLogoCanvas.width = 1024; podiumLogoCanvas.height = 256;
 drawLogo(podiumLogoCanvas.getContext('2d'), podiumLogoCanvas.width, podiumLogoCanvas.height);
 const podiumLogoTexture = new THREE.CanvasTexture(podiumLogoCanvas);
 podiumLogoTexture.colorSpace = THREE.SRGBColorSpace;
 const podiumLogoPanel = new THREE.Mesh(
-  new THREE.BoxGeometry(15, 3.4, 0.36),
+  new THREE.BoxGeometry(12, 2.8, 0.36),
   new THREE.MeshStandardMaterial({ color: 0x13263a, roughness: 0.62 }),
 );
-podiumLogoPanel.position.set(0, 6.7, 5.3);
+podiumLogoPanel.position.set(0, 6.2, 5.3);
 podiumLogoPanel.castShadow = podiumLogoPanel.receiveShadow = true;
 podiumStage.add(podiumLogoPanel);
 const podiumLogo = new THREE.Mesh(
-  new THREE.PlaneGeometry(14.4, 3.1),
+  new THREE.PlaneGeometry(11.5, 2.65),
   new THREE.MeshStandardMaterial({
     map: podiumLogoTexture, emissive: 0xffffff, emissiveMap: podiumLogoTexture,
     emissiveIntensity: 0.35, roughness: 0.7,
   }),
 );
 podiumLogo.rotation.y = Math.PI;
-podiumLogo.position.set(0, 6.7, 5.12);
+podiumLogo.position.set(0, 6.2, 5.12);
 podiumStage.add(podiumLogo);
 for (const [rank, [x, height]] of podiumSlot) {
   const block = new THREE.Mesh(
-    new THREE.BoxGeometry(5.8, height, 5),
-    new THREE.MeshStandardMaterial({ color: rank === 1 ? 0xb69a50 : 0x586776, metalness: 0.25, roughness: 0.65 }),
+    new THREE.BoxGeometry(4.8, height, 5),
+    new THREE.MeshStandardMaterial({
+      color: rank === 1 ? 0xb69a50 : rank === 2 ? 0xaab5c2 : 0xa66b4f,
+      metalness: 0.25,
+      roughness: 0.65,
+    }),
   );
   block.position.set(x, height / 2, 0);
   block.castShadow = block.receiveShadow = true;
@@ -2444,7 +2500,8 @@ function resize() {
   renderer.setPixelRatio(pixelRatio);
   renderer.setSize(width, height, false);
   renderer.getDrawingBufferSize(rainLensSize);
-  rainLens.setSize(rainLensSize.x, rainLensSize.y);
+  const rainLensScale = networkRaceActive ? 0.5 : 1;
+  rainLens.setSize(rainLensSize.x * rainLensScale, rainLensSize.y * rainLensScale);
   camera.aspect = width / height; camera.updateProjectionMatrix();
 }
 new ResizeObserver(resize).observe(canvas);
@@ -2535,14 +2592,14 @@ function placeScene(dt) {
   }
   if (podiumActive) {
     playerAvatar.visible = false;
-    camera.fov = 52; camera.near = 0.1; camera.up.set(0, 1, 0);
+    camera.fov = 48; camera.near = 0.1; camera.up.set(0, 1, 0);
     const elapsed = Math.max(0, (performance.now() - podiumStartedAt) / 1000);
     const angle = elapsed * 0.16 - Math.PI / 2;
-    podiumCameraTarget.set(podiumCenter[0], podiumGround + 3, -podiumCenter[1]);
+    podiumCameraTarget.set(podiumCenter[0], podiumGround + 3.2, -podiumCenter[1]);
     podiumCameraPosition.set(
-      podiumCenter[0] + Math.cos(angle) * 28,
-      podiumGround + 11 + Math.sin(elapsed * 0.32) * 1.2,
-      -podiumCenter[1] + Math.sin(angle) * 28,
+      podiumCenter[0] + Math.cos(angle) * 20,
+      podiumGround + 8.5 + Math.sin(elapsed * 0.32) * 0.8,
+      -podiumCenter[1] + Math.sin(angle) * 20,
     );
     if (elapsed < 0.25) camera.position.copy(podiumCameraPosition);
     else camera.position.lerp(podiumCameraPosition, 1 - Math.exp(-dt * 1.8));
@@ -2869,8 +2926,25 @@ const mapBounds = outline.reduce((b, [x, y]) => ({ minX: Math.min(b.minX, x), ma
 const minimap = $('minimap'), map2d = minimap.getContext('2d');
 let minimapLastDraw = 0, lastWorldDetailLodUpdate = 0;
 let nearbyLeaderboardLastUpdate = 0;
+let timingNameLastUpdate = 0;
+let timingName = '';
+function updateTimingDriverName(now) {
+  if (now - timingNameLastUpdate < 250) return;
+  timingNameLastUpdate = now;
+  const sessionId = activeMultiplayerRoom?.sessionId;
+  const name = (sessionId && (networkRaceState?.racePlayers?.get(sessionId)?.name
+    || activeMultiplayerRoom?.state?.players?.get(sessionId)?.name))
+    || gameSettings.driverName
+    || sim.entries[0]?.name;
+  if (name === timingName) return;
+  timingName = name;
+  document.dispatchEvent(new CustomEvent('f1:driver-name', { detail: name }));
+}
 function updateNearbyLeaderboard() {
   const panel = $('nearby-leaderboard'), now = performance.now();
+  panel.setAttribute('aria-label', 'Race leaderboard');
+  panel.querySelector('.label').textContent = 'RACE POSITIONS · GAP';
+  updateTimingDriverName(now);
   if (!opponents || qualifying && qualifying.stage !== 'race') {
     panel.hidden = true;
     return;
@@ -2878,24 +2952,38 @@ function updateNearbyLeaderboard() {
   panel.hidden = false;
   if (now - nearbyLeaderboardLastUpdate < 250) return;
   nearbyLeaderboardLastUpdate = now;
-  const player = sim.entries[0], halfTrack = track.length / 2;
-  const nearby = sim.entries.filter(entry => entry !== player && !entry.retired)
-    .map(entry => {
-      const gap = ((entry.covered - player.covered) % track.length + track.length) % track.length;
-      const ahead = gap <= halfTrack;
-      const distance = ahead ? gap : track.length - gap;
-      const averageSpeed = Math.max(5, (Math.abs(player.car.telemetry.speed) + Math.abs(entry.car.telemetry.speed)) / 2);
-      return { entry, ahead, seconds: distance / averageSpeed };
+  let rows;
+  if (networkRaceActive && networkRaceState?.racePlayers && activeMultiplayerRoom) {
+    const standings = Array.from(networkRaceState.racePlayers.values())
+      .sort((a, b) => a.position - b.position);
+    const player = networkRaceState.racePlayers.get(activeMultiplayerRoom.sessionId);
+    const playerIndex = standings.indexOf(player);
+    if (playerIndex < 0) return;
+    rows = leaderboardWindow(standings, playerIndex).map(entry => {
+      const distance = Math.abs(entry.progress - player.progress);
+      const lapGap = Math.floor(distance / track.length);
+      const averageSpeed = Math.max(5, (Math.abs(entry.speed) + Math.abs(player.speed)) / 2);
+      const gap = entry === player ? 'YOU'
+        : lapGap > 0 ? `+${lapGap} LAP${lapGap === 1 ? '' : 'S'}`
+          : `+${(distance / averageSpeed).toFixed(1)}s`;
+      return { position: entry.position, name: entry.name, isPlayer: entry === player, gap };
     });
-  const behind = nearby.filter(row => !row.ahead).sort((a, b) => a.seconds - b.seconds).slice(0, 3);
-  const ahead = nearby.filter(row => row.ahead).sort((a, b) => a.seconds - b.seconds).slice(0, 1);
-  const rows = [
-    ...ahead.map(row => ({ label: 'Ahead', ...row })),
-    { label: 'You', entry: player, ahead: false, seconds: 0 },
-    ...behind.map(row => ({ label: 'Behind', ...row })),
-  ];
+  } else {
+    const standings = sim.standings();
+    const playerIndex = standings.findIndex(entry => entry.player);
+    if (playerIndex < 0) return;
+    const player = standings[playerIndex];
+    rows = leaderboardWindow(standings, playerIndex).map(entry => {
+      const gap = entry === player ? 'YOU'
+        : `+${Math.abs(entry.gap - player.gap).toFixed(1)}s`;
+      return { position: entry.position, name: entry.name, isPlayer: entry.player, gap };
+    });
+  }
+  const escape = value => String(value).replace(/[&<>"']/g, character => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  })[character]);
   $('nearby-standings').innerHTML = rows.map(row =>
-    `<li class="${row.entry.player ? 'you' : ''}"><span>${row.label}</span><span>${row.entry.name}</span><b>${row.entry.player ? '—' : `${row.ahead ? '+' : '−'}${row.seconds.toFixed(1)} s`}</b></li>`
+    `<li class="${row.isPlayer ? 'you' : ''}"><span>P${row.position}</span><span>${escape(row.name)}</span><b>${row.gap}</b></li>`
   ).join('');
 }
 function drawMinimap() {
@@ -2941,7 +3029,13 @@ function render(dt = 0) {
   const conditions = weather.state;
   const raceDistance = opponents && sim.finish.laps > 0;
   const totalDistance = track.length * (raceDistance ? sim.finish.laps : 3);
-  const raceProgress = raceDistance ? sim.entries[0].covered / totalDistance : c.distance / totalDistance;
+  let raceProgress = raceDistance ? sim.entries[0].covered / totalDistance : c.distance / totalDistance;
+  if (networkRaceActive && networkRaceState?.racePlayers?.size) {
+    const networkTotalDistance = track.length * Math.max(1, networkRaceState.settings.laps);
+    const progress = Array.from(networkRaceState.racePlayers.values())
+      .reduce((sum, player) => sum + THREE.MathUtils.clamp(player.progress / networkTotalDistance, 0, 1), 0);
+    raceProgress = progress / networkRaceState.racePlayers.size;
+  }
   const daylight = daylightForRace(circuitKey, raceProgress);
   if (Math.abs(daylight - (world.userData.lastDaylight ?? -1)) > 0.002) {
     updateWorldDaylight(world, daylight);
@@ -2951,7 +3045,10 @@ function render(dt = 0) {
     updateWorldWeather(world, conditions.wetness);
     world.userData.lastWetness = conditions.wetness;
   }
-  if (world.userData.clouds) world.userData.clouds.rotation.y += dt * 0.0007;
+  if (world.userData.clouds) {
+    if (networkRaceActive) world.userData.clouds.rotation.y = (networkRaceState?.raceTime ?? 0) * 0.0007;
+    else world.userData.clouds.rotation.y += dt * 0.0007;
+  }
   const solarProgress = THREE.MathUtils.clamp((daylight - 0.05) / 0.85, 0, 1);
   const solarStrength = solarProgress * solarProgress * (3 - 2 * solarProgress);
   const solarElevation = (daylight - 0.5) * Math.PI * 0.9;
@@ -3030,7 +3127,7 @@ function render(dt = 0) {
     const temp = c.tireTemp[i], band = c.config.tireWindow / 2;
     $(`temp-${name}`).textContent = `${temp.surface.toFixed(0)}° / ${temp.carcass.toFixed(0)}° · ${((wheel?.tempGrip ?? 1) * 100).toFixed(0)}%`;
     $(`temp-${name}`).style.color = temp.surface < c.config.tireOptimalTemp - band ? '#7fb8ff' : temp.surface > c.config.tireOptimalTemp + band ? '#ff8e86' : '#6fffc3';
-    const wear = c.tireWear[i];
+    const wear = safeFraction(c.tireWear[i]);
     $(`wear-${name}`).textContent = `Wear ${(wear * 100).toFixed(1)}% · ${((wheel?.wearGrip ?? 1) * 100).toFixed(1)}%`;
     $(`wear-${name}`).style.color = wear > c.config.tireCliffWear ? '#ff8e86' : wear > c.config.tireCliffWear / 2 ? '#ffc86f' : '#b8c8d5';
   });
@@ -3082,7 +3179,7 @@ function render(dt = 0) {
   const start = sim.start, me = sim.entries[0];
   // Tyres and pit stop: compound, most worn tire, request, stop in progress.
   const lane = sim.inPitLane(c), service = me.pit?.phase === 'service' ? me.pit : null;
-  const worn = Math.max(...c.tireWear);
+  const worn = Math.max(...c.tireWear.map(safeFraction));
   const serviceProgress = service && Number.isFinite(service.begin) && Number.isFinite(service.end) && service.end > service.begin
     ? Math.min(1, Math.max(0, (sim.time - service.begin) / (service.end - service.begin))) : null;
   const pitCompound = service?.compound ?? me.pitRequest ?? c.compound;
@@ -3114,7 +3211,9 @@ function render(dt = 0) {
     : onFoot ? avatarLoadError ? 'Driver model failed to load · reload the page' : !avatarLoaded ? 'Loading the on-foot driver model…' : qualifying && qualifying.stage !== 'race' ? `On foot · ${qualifying.stage} qualifying · enter the car to set your lap` : 'On foot · WASD walk · double-tap W run · Space jump · E emotes · M suit menu · L enter' : c.gear < 0 ? 'Reverse · hold S to reverse · Space brakes only' : qualifying && qualifying.stage !== 'race' ? `${qualifying.stage} qualifying · complete a clean lap` : startNote ? startNote : flagNote ? flagNote : pitNote ? pitNote : impact ? `Wall impact · ${Math.round(impact.speed * 3.6)} km/h into the barrier · R to reset` : contact ? `Contact · ${Math.round(contact.speed * 3.6)} km/h closing speed` : !['asphalt', 'pit'].includes(surface) ? `On the ${surface} · reduced grip · R to reset` : autopilot ? 'Auto-pit assist · control returns after pit exit · press I to take control' : c.telemetry.speed < 0.5 ? 'Ready · W or ↑ to accelerate' : `${circuitKey ? track.name : 'Test circuit'} · ${driver.source} input`;
   // ── Compact tire health widget update ──
   ['FL','FR','RL','RR'].forEach((nm, i) => {
-    const w = c.tireWear[i], damage = c.tireDamage[i] ?? 0, hp = Math.max(0, 1 - w) * (1 - 0.5 * damage);
+    const w = safeFraction(c.tireWear[i]);
+    const damage = safeFraction(c.tireDamage[i]);
+    const hp = Math.max(0, Math.min(1, 1 - w)) * (1 - 0.5 * damage);
     const el = $('ct-' + nm);
     if (!el) return;
     const fill = el.querySelector('.ct-fill'), pct = el.querySelector('.ct-pct');
@@ -3484,18 +3583,107 @@ function showMenu(screen) {
   }
   if (screen === 'settings') populateSettingsForm();
 }
+function clearMultiplayerEntryUrl() {
+  if (location.search || location.hash) history.replaceState(null, '', location.pathname);
+}
 let activeMultiplayerRoom = null;
 let multiplayerSdk = null;
 let multiplayerClient = null;
 let leavingMultiplayerLobby = false;
 let multiplayerLeaveMessage = '';
 const multiplayerServerFromQuery = new URLSearchParams(location.search).get('multiplayerServer');
+const multiplayerServerStorageKey = 'f1-multiplayer-servers';
+function newMultiplayerServerId() {
+  return crypto.randomUUID?.() ?? `server-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+function readMultiplayerServerStore() {
+  try {
+    const saved = localStorage.getItem(multiplayerServerStorageKey);
+    if (saved) return normalizeMultiplayerServerStore(JSON.parse(saved));
+  } catch (error) {
+    console.error('Could not read saved multiplayer servers', error);
+  }
+  const legacyUrl = (() => {
+    try { return sessionStorage.getItem('f1-multiplayer-server-url'); }
+    catch (error) {
+      console.error('Could not read the previous multiplayer server setting', error);
+      return null;
+    }
+  })();
+  const configuredUrl = multiplayerServerFromQuery || window.CURSOR_RACING_MULTIPLAYER_URL
+    || legacyUrl || (['localhost', '127.0.0.1'].includes(location.hostname) ? 'ws://localhost:2567' : '');
+  if (!configuredUrl) return { servers: [], selectedId: '' };
+  try {
+    const server = normalizeMultiplayerServer(
+      multiplayerServerFromQuery ? 'Invite server' : 'Default server',
+      configuredUrl,
+    );
+    return { servers: [{ id: 'default', ...server }], selectedId: 'default' };
+  } catch (error) {
+    console.error('The configured multiplayer server URL is invalid', error);
+    return { servers: [], selectedId: '' };
+  }
+}
+let multiplayerServerStore = readMultiplayerServerStore();
+function persistMultiplayerServerStore(next) {
+  try {
+    const normalized = normalizeMultiplayerServerStore(next);
+    localStorage.setItem(multiplayerServerStorageKey, JSON.stringify(normalized));
+    multiplayerServerStore = normalized;
+    multiplayerClient = null;
+    renderMultiplayerServerSettings();
+    return true;
+  } catch (error) {
+    console.error('Could not save multiplayer server settings', error);
+    $('multiplayer-server-status').textContent = error.message || 'Multiplayer server settings could not be saved.';
+    return false;
+  }
+}
+function selectedMultiplayerServer() {
+  return multiplayerServerStore.servers.find(server => server.id === multiplayerServerStore.selectedId) ?? null;
+}
+function importInviteServer() {
+  if (!multiplayerServerFromQuery) return;
+  try {
+    const inviteServer = normalizeMultiplayerServer('Invite server', multiplayerServerFromQuery);
+    const existing = multiplayerServerStore.servers.find(server => server.url === inviteServer.url);
+    const servers = existing
+      ? multiplayerServerStore.servers
+      : [...multiplayerServerStore.servers, { id: newMultiplayerServerId(), ...inviteServer }];
+    const selected = existing ?? servers[servers.length - 1];
+    persistMultiplayerServerStore({ servers, selectedId: selected.id });
+  } catch (error) {
+    console.error('Could not import the multiplayer server from the invite URL', error);
+  }
+}
+function renderMultiplayerServerSettings() {
+  const select = $('multiplayer-server-select');
+  if (!select) return;
+  select.replaceChildren();
+  if (!multiplayerServerStore.servers.length) {
+    const option = document.createElement('option');
+    option.value = '';
+    option.textContent = 'No servers configured';
+    select.append(option);
+  } else {
+    for (const server of multiplayerServerStore.servers) {
+      const option = document.createElement('option');
+      option.value = server.id;
+      option.textContent = `${server.name} · ${server.url}`;
+      select.append(option);
+    }
+  }
+  select.value = multiplayerServerStore.selectedId;
+  $('multiplayer-server-edit').disabled = !multiplayerServerStore.selectedId;
+  $('multiplayer-server-delete').disabled = !multiplayerServerStore.selectedId;
+}
+importInviteServer();
 function multiplayerServerUrl() {
-  const configuredUrl = window.CURSOR_RACING_MULTIPLAYER_URL || multiplayerServerFromQuery;
+  const configuredUrl = selectedMultiplayerServer()?.url;
   const isLocalPage = ['localhost', '127.0.0.1'].includes(location.hostname);
-  if (!configuredUrl && !isLocalPage)
-    throw new Error('Multiplayer is not configured for this website. Set its multiplayer server URL to a public wss:// address.');
-  const value = configuredUrl || 'ws://localhost:2567';
+  if (!configuredUrl)
+    throw new Error('No multiplayer server is selected. Open Settings → Multiplayer and add or select a public wss:// server.');
+  const value = configuredUrl;
   let url;
   try {
     url = new URL(value);
@@ -3532,7 +3720,8 @@ function withMultiplayerTimeout(promise, serverUrl, action) {
 function populateMultiplayerTracks() {
   const select = $('multiplayer-track-select');
   if (select.options.length) return;
-  select.innerHTML = `<option value="">Stadium test track</option>${Object.entries(CIRCUITS).map(([key, circuit]) => `<option value="${key}">${circuit.name}</option>`).join('')}`;
+  select.innerHTML = Object.entries(CIRCUITS)
+    .map(([key, circuit]) => `<option value="${key}">${circuit.name}</option>`).join('');
 }
 function drawCircuitPreview(canvasId, descriptionId, key, label) {
   const canvas = $(canvasId);
@@ -3656,6 +3845,8 @@ async function getMultiplayerSdk() {
             disqualified: schema.t.boolean(),
             engineRpm: schema.t.number(),
             engineLimiter: schema.t.boolean(),
+            ax: schema.t.number(),
+            ay: schema.t.number(),
             downforce: schema.t.number(),
             tireWear0: schema.t.number(),
             tireWear1: schema.t.number(),
@@ -3678,6 +3869,7 @@ async function getMultiplayerSdk() {
             tireSlipPower1: schema.t.number(),
             tireSlipPower2: schema.t.number(),
             tireSlipPower3: schema.t.number(),
+            tireUtilization: schema.t.array('number'),
             ersDeployedLap: schema.t.number(),
             ersHarvestedLap: schema.t.number(),
             fuel: schema.t.number(),
@@ -3704,10 +3896,33 @@ function getMultiplayerClient() {
 function setMultiplayerStatus(id, message) {
   $(id).textContent = message;
 }
+function restoreMultiplayerLobbyUrl(room) {
+  const query = new URLSearchParams();
+  const circuit = room.state?.settings?.circuit;
+  const code = room.state?.code;
+  if (circuit) query.set('track', circuit);
+  if (code) query.set('lobby', code);
+  const serverUrl = selectedMultiplayerServer()?.url;
+  if (serverUrl) query.set('multiplayerServer', serverUrl);
+  history.replaceState(null, '', `${location.pathname}${query.toString() ? `?${query}` : ''}`);
+}
 let multiplayerTrackRedirecting = false;
 function alignMultiplayerTrack(room, state) {
   const serverCircuit = state?.settings?.circuit;
   if (multiplayerTrackRedirecting || !state.settingsReady || typeof serverCircuit !== 'string') return false;
+  if (!Object.hasOwn(CIRCUITS, serverCircuit)) {
+    multiplayerTrackRedirecting = true;
+    sessionStorage.removeItem('pendingMultiplayerJoin');
+    void room.leave().then(() => {
+      showMenu('multiplayer');
+      setMultiplayerStatus('multiplayer-service-status', 'This lobby uses an unsupported track. Stadium track is not available in multiplayer.');
+    }).catch(error => {
+      console.error('Could not leave a lobby with an unsupported track', error);
+      multiplayerTrackRedirecting = false;
+      setMultiplayerStatus('lobby-status', 'This lobby uses an unsupported track. Leave and create a new lobby on a circuit.');
+    });
+    return false;
+  }
   if (serverCircuit === (circuitKey ?? '')) {
     sessionStorage.removeItem('pendingMultiplayerJoin');
     return true;
@@ -3735,11 +3950,19 @@ function alignMultiplayerTrack(room, state) {
 }
 function bindMultiplayerRoom(room) {
   activeMultiplayerRoom = room;
+  room.reconnection.minUptime = 1000;
+  let lobbyUrlRestored = false;
+  const restoreLobbyUrl = () => {
+    if (lobbyUrlRestored || !room.state?.settingsReady || !room.state?.code) return;
+    restoreMultiplayerLobbyUrl(room);
+    lobbyUrlRestored = true;
+  };
   $('loading-screen').hidden = true;
   leavingMultiplayerLobby = false;
   multiplayerLeaveMessage = '';
   room.onStateChange(state => {
     if (!alignMultiplayerTrack(room, state)) return;
+    restoreLobbyUrl();
     if (state.status === 'lobby') renderMultiplayerLobby(state);
     updateNetworkRaceState(state);
   });
@@ -3754,6 +3977,33 @@ function bindMultiplayerRoom(room) {
       || typeof sample.suit !== 'number' || typeof sample.emote !== 'string'
       || typeof sample.moving !== 'boolean' || typeof sample.onFoot !== 'boolean') return;
     recordNetworkAvatarSample(sample.sessionId, sample);
+  });
+  room.onMessage('race:livery', message => {
+    if (typeof message?.sessionId !== 'string'
+      || typeof message.customLivery !== 'string'
+      || typeof message.originalLivery !== 'boolean'
+      || typeof message.driverName !== 'string') return;
+    const livery = {
+      customLivery: message.customLivery,
+      originalLivery: message.originalLivery,
+      driverName: message.driverName,
+    };
+    const version = (networkLiveryVersions.get(message.sessionId) ?? 0) + 1;
+    networkLiveryVersions.set(message.sessionId, version);
+    networkLiveryPending.set(message.sessionId, livery);
+    if (networkRaceActive) {
+      void applyNetworkLivery(message.sessionId, livery, version)
+        .catch(error => console.error('Could not apply a multiplayer car livery', error));
+    }
+  });
+  room.onMessage('race:collision', message => {
+    if (activeMultiplayerRoom !== room || !networkRaceActive || !sim?.car
+        || !['impact', 'contact'].includes(message?.type)
+        || !Number.isFinite(message.speed) || message.speed <= 0
+        || !Number.isFinite(message.time)) return;
+    const event = { speed: message.speed, time: message.time };
+    if (message.type === 'impact') sim.car.impact = event;
+    else sim.car.contact = event;
   });
   room.onMessage('race:safety-car-pass', message => {
     networkPendingSafetyCarPass = {
@@ -3779,19 +4029,31 @@ function bindMultiplayerRoom(room) {
     networkRacePhase = 'countdown';
     setMultiplayerStatus('lobby-status', `Qualifying complete. Lights out in ${message.seconds}…`);
   });
-  room.onLeave(() => {
+  room.onDrop((code, reason) => {
+    if (activeMultiplayerRoom !== room) return;
+    const detail = reason ? `: ${reason}` : '';
+    setMultiplayerStatus('lobby-status', `Connection interrupted (${code}${detail}); reconnecting…`);
+  });
+  room.onReconnect(() => {
+    if (activeMultiplayerRoom === room) setMultiplayerStatus('lobby-status', 'Reconnected. Race resumed.');
+  });
+  room.onLeave((code, reason) => {
     if (activeMultiplayerRoom !== room) return;
     activeMultiplayerRoom = null;
     endNetworkRacePresentation();
     if (!leavingMultiplayerLobby) {
       showMenu('multiplayer');
-      setMultiplayerStatus('multiplayer-service-status', multiplayerLeaveMessage || 'Disconnected from the lobby.');
+      const disconnect = `Disconnected from the lobby (code ${code}${reason ? `: ${reason}` : ''}).`;
+      setMultiplayerStatus('multiplayer-service-status', multiplayerLeaveMessage || disconnect);
     }
     leavingMultiplayerLobby = false;
     multiplayerLeaveMessage = '';
   });
   showMenu('multiplayer-lobby');
-  if (alignMultiplayerTrack(room, room.state)) renderMultiplayerLobby(room.state);
+  if (alignMultiplayerTrack(room, room.state)) {
+    restoreLobbyUrl();
+    renderMultiplayerLobby(room.state);
+  }
 }
 function renderMultiplayerLobby(state) {
   if (!state?.players || !state?.settings) return;
@@ -3859,10 +4121,16 @@ let networkRaceState = null;
 let networkPendingSafetyCarPass = null;
 let lastNetworkNeutralizationMode = null;
 let networkEntryIndices = new Map();
+const networkLiveryPending = new Map();
+const networkLiveryVersions = new Map();
+const networkLiveryTextures = new Map();
 let networkOnFootByIndex = new Map();
 let networkInputSequence = 0;
 let networkInputSentAt = 0;
 let networkSnapshotBuffers = new Map();
+const NETWORK_TIRE_SURFACE_FIELDS = ['tireSurfaceTemp0', 'tireSurfaceTemp1', 'tireSurfaceTemp2', 'tireSurfaceTemp3'];
+const NETWORK_TIRE_CARCASS_FIELDS = ['tireCarcassTemp0', 'tireCarcassTemp1', 'tireCarcassTemp2', 'tireCarcassTemp3'];
+const NETWORK_TIRE_SLIP_FIELDS = ['tireSlipPower0', 'tireSlipPower1', 'tireSlipPower2', 'tireSlipPower3'];
 let networkHudUpdatedAt = 0;
 let networkAvatarSentAt = 0;
 let networkAvatarSignature = '';
@@ -3885,6 +4153,41 @@ function sendNetworkAvatar(now = performance.now(), force = false) {
     onFoot,
   });
 }
+async function applyNetworkLivery(sessionId, livery, version) {
+  if (sessionId === activeMultiplayerRoom?.sessionId) return;
+  const entryIndex = networkEntryIndices.get(sessionId);
+  if (entryIndex === undefined) return;
+  const carModel = cars[skins[entryIndex]]?.model;
+  if (!carModel) return;
+  let texture = null;
+  if (livery.customLivery) {
+    const image = new Image();
+    await new Promise((resolve, reject) => {
+      image.onload = resolve;
+      image.onerror = () => reject(new Error('The other driver’s custom livery could not be loaded.'));
+      image.src = livery.customLivery;
+    });
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 256;
+    const context = canvas.getContext('2d');
+    if (!context) throw new Error('Could not prepare the other driver’s custom livery.');
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.anisotropy = 8;
+  }
+  if (networkLiveryVersions.get(sessionId) !== version) {
+    texture?.dispose();
+    return;
+  }
+  networkLiveryTextures.get(sessionId)?.texture?.dispose();
+  carModel.setCustomLivery?.(texture);
+  carModel.setDriverName?.(livery.driverName || null);
+  carModel.setOriginalLivery?.(livery.originalLivery);
+  networkLiveryTextures.set(sessionId, { carModel, texture });
+  networkLiveryPending.delete(sessionId);
+}
 function startMultiplayerRace(state) {
   if (networkRaceActive || !state?.racePlayers?.size) return;
   const rows = Array.from(state.racePlayers.entries());
@@ -3893,7 +4196,11 @@ function startMultiplayerRace(state) {
   if (!own) return;
   networkPendingSafetyCarPass = null;
   lastNetworkNeutralizationMode = !state.yellowFlag ? 'green' : state.safetyCarProgress < 0 ? 'vsc' : 'safety-car';
-  const liveryBySession = new Map(rows.map(([sessionId], index) => [sessionId, index]));
+  const liveryBySession = new Map(
+    rows.map(([sessionId]) => sessionId)
+      .sort((a, b) => a < b ? -1 : a > b ? 1 : 0)
+      .map((sessionId, index) => [sessionId, index]),
+  );
   const others = rows.filter(([sessionId]) => sessionId !== ownSessionId);
   const grid = others.map(([, player], index) => ({
     ...DEFAULT_GRID[index % DEFAULT_GRID.length],
@@ -3917,6 +4224,7 @@ function startMultiplayerRace(state) {
   others.forEach(([sessionId], index) => networkEntryIndices.set(sessionId, index + 1));
   const raceSkins = [liveryBySession.get(ownSessionId), ...others.map(([sessionId]) => liveryBySession.get(sessionId))];
   networkRaceActive = true;
+  resize();
   networkRaceState = state;
   networkRacePhase = state.phase;
   networkInputSequence = 0;
@@ -3954,6 +4262,15 @@ function startMultiplayerRace(state) {
   playerAvatarEmoteName = '';
   setPlayerDriverVisible(false);
   wearSkins(raceSkins);
+  activeMultiplayerRoom.send('race:livery', {
+    customLivery: gameSettings.customLivery || '',
+    originalLivery: originalCar,
+    driverName: gameSettings.nameLivery ? gameSettings.driverName : '',
+  });
+  for (const [sessionId, livery] of networkLiveryPending) {
+    void applyNetworkLivery(sessionId, livery, networkLiveryVersions.get(sessionId))
+      .catch(error => console.error('Could not apply a multiplayer car livery', error));
+  }
   const usedSkins = new Set(raceSkins);
   cars.forEach((car, index) => { car.model.group.visible = usedSkins.has(index); });
   handlingBaseline = captureHandlingBaseline(sim.entries);
@@ -4015,7 +4332,7 @@ function syncNetworkRaceState(state, record = true) {
       x: player.x, y: player.y, heading: player.heading,
       vx: player.vx, vy: player.vy, yawRate: player.yawRate,
       speed: player.speed, progress: player.progress, airborneHeight: player.airborneHeight,
-      gear: player.gear, steer: player.steer,
+      gear: player.gear, steer: player.steer, drs: player.drs,
     };
     const buffer = networkSnapshotBuffers.get(sessionId) ?? [];
     if (record && (!buffer.length || receivedAt > buffer[buffer.length - 1].at)) {
@@ -4031,17 +4348,32 @@ function syncNetworkRaceState(state, record = true) {
     } : null;
     entry.car.compound = player.compound;
     entry.car.fuel = player.fuel;
-    entry.car.tireWear.splice(0, 4, player.tireWear0, player.tireWear1, player.tireWear2, player.tireWear3);
+    entry.car.tireWear.splice(0, 4,
+      safeFraction(player.tireWear0), safeFraction(player.tireWear1),
+      safeFraction(player.tireWear2), safeFraction(player.tireWear3));
     entry.car.chassisDamage = player.chassisDamage;
-    entry.car.tireDamage.splice(0, 4, player.tireDamage0, player.tireDamage1, player.tireDamage2, player.tireDamage3);
-    entry.car.tireTemp.forEach((tire, wheel) => {
-      tire.surface = [player.tireSurfaceTemp0, player.tireSurfaceTemp1, player.tireSurfaceTemp2, player.tireSurfaceTemp3][wheel];
-      tire.carcass = [player.tireCarcassTemp0, player.tireCarcassTemp1, player.tireCarcassTemp2, player.tireCarcassTemp3][wheel];
-    });
+    entry.car.tireDamage.splice(0, 4,
+      safeFraction(player.tireDamage0), safeFraction(player.tireDamage1),
+      safeFraction(player.tireDamage2), safeFraction(player.tireDamage3));
+    for (let wheel = 0; wheel < entry.car.tireTemp.length; wheel++) {
+      const tire = entry.car.tireTemp[wheel];
+      tire.surface = player[NETWORK_TIRE_SURFACE_FIELDS[wheel]];
+      tire.carcass = player[NETWORK_TIRE_CARCASS_FIELDS[wheel]];
+    }
     entry.car.telemetry.downforce = player.downforce;
-    entry.car.telemetry.wheels.forEach((wheel, index) => {
-      wheel.slipPower = [player.tireSlipPower0, player.tireSlipPower1, player.tireSlipPower2, player.tireSlipPower3][index];
-    });
+    for (let wheel = 0; wheel < 4; wheel++) {
+      let telemetry = entry.car.telemetry.wheels[wheel];
+      if (!telemetry) {
+        telemetry = {
+          load: 0, utilization: 0, locked: false, slipRatio: 0, omega: 0, capacity: 0,
+          sliding: false, slipAngle: 0, kinematicSlipAngle: 0, tempGrip: 1, wearGrip: 1,
+          slipPower: 0,
+        };
+        entry.car.telemetry.wheels[wheel] = telemetry;
+      }
+      telemetry.slipPower = player[NETWORK_TIRE_SLIP_FIELDS[wheel]];
+      telemetry.utilization = player.tireUtilization[wheel] ?? 0;
+    }
     const powertrain = entry.car.telemetry.powertrain ?? {};
     powertrain.rpm = player.engineRpm;
     powertrain.limiter = player.engineLimiter;
@@ -4133,6 +4465,7 @@ function interpolateNetworkCars(now = performance.now()) {
     car.airborneHeight = before.airborneHeight + (after.airborneHeight - before.airborneHeight) * blend;
     car.gear = blend < 0.5 ? before.gear : after.gear;
     car.steer = before.steer + (after.steer - before.steer) * blend;
+    car.drs = before.drs + (after.drs - before.drs) * blend;
     car.wheelOmega.fill((car.vx * Math.cos(car.heading) + car.vy * Math.sin(car.heading)) / car.config.wheelRadius);
     car.telemetry.speed = before.speed + (after.speed - before.speed) * blend;
     car.distance = before.progress + (after.progress - before.progress) * blend;
@@ -4199,11 +4532,18 @@ function updateNetworkRaceHud() {
     `<li class="${sessionId === activeMultiplayerRoom?.sessionId ? 'you' : ''}"><span>${player.position}</span>${player.name}<b>${player.disqualified ? 'DSQ' : player.retired ? 'DNF' : player.finished ? `Finished · +${player.penaltySeconds}s` : `Lap ${player.lap}${player.penaltySeconds ? ` · +${player.penaltySeconds}s` : ''}${player.trackLimitWarnings ? ` · warnings ${player.trackLimitWarnings}` : ''}`}</b></li>`).join('');
   if ($('standings').innerHTML !== standings) $('standings').innerHTML = standings;
 }
-function reloadForMultiplayerTrack(circuit) {
+function reloadForMultiplayerTrack(circuit, lobbyCode = null, playerName = '') {
   const query = new URLSearchParams(location.search);
   if (circuit) query.set('track', circuit);
   else query.delete('track');
   query.delete('start');
+  if (lobbyCode) {
+    query.set('lobby', lobbyCode);
+    sessionStorage.setItem('pendingMultiplayerJoin', JSON.stringify({
+      code: lobbyCode,
+      name: playerName,
+    }));
+  }
   location.replace(`${location.pathname}${query.toString() ? `?${query}` : ''}${location.hash}`);
 }
 async function createMultiplayerLobby() {
@@ -4263,10 +4603,27 @@ async function joinMultiplayerLobby(code = $('multiplayer-code').value.trim()) {
   try {
     serverAddress = multiplayerServerUrl();
     setMultiplayerStatus(statusId, `Connecting to ${serverAddress}…`);
+    const serverUrl = new URL(serverAddress);
+    serverUrl.protocol = serverUrl.protocol === 'wss:' ? 'https:' : 'http:';
+    const infoResponse = await withMultiplayerTimeout(
+      fetch(new URL('/api/lobbies/info', serverUrl), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      }),
+      serverAddress,
+      'checking the lobby track',
+    );
+    const info = await infoResponse.json();
+    if (!infoResponse.ok) throw new Error(info.message || 'Could not find that lobby.');
+    if (typeof info.circuit !== 'string' || (info.circuit && !Object.hasOwn(CIRCUITS, info.circuit)))
+      throw new Error('This lobby uses an unsupported track.');
+    if (info.circuit !== (circuitKey ?? '')) {
+      reloadForMultiplayerTrack(info.circuit, code, name);
+      return;
+    }
     const room = await withMultiplayerTimeout((async () => {
       const [client, sdk] = await Promise.all([getMultiplayerClient(), getMultiplayerSdk()]);
-      const serverUrl = new URL(serverAddress);
-      serverUrl.protocol = serverUrl.protocol === 'wss:' ? 'https:' : 'http:';
       const joinWithIdentity = async identity => {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 12000);
@@ -4316,9 +4673,20 @@ async function leaveMultiplayerLobby() {
   endNetworkRacePresentation();
   showMenu('multiplayer');
   setMultiplayerStatus('multiplayer-service-status', '');
+  leavingMultiplayerLobby = false;
 }
 function endNetworkRacePresentation() {
+  for (const { carModel, texture } of networkLiveryTextures.values()) {
+    texture?.dispose();
+    carModel.setCustomLivery?.(null);
+    carModel.setDriverName?.(null);
+    carModel.setOriginalLivery?.(false);
+  }
+  networkLiveryTextures.clear();
+  networkLiveryPending.clear();
+  networkLiveryVersions.clear();
   networkRaceActive = false;
+  resize();
   networkRacePhase = 'lobby';
   networkRaceState = null;
   networkPendingSafetyCarPass = null;
@@ -4460,9 +4828,18 @@ function saveSettings() {
   showMenu('home');
 }
 $('menu-settings').onclick = () => showMenu('settings');
-$('menu-multiplayer').onclick = () => showMenu('multiplayer');
-$('multiplayer-create').onclick = () => showMenu('multiplayer-create');
-$('multiplayer-join').onclick = () => showMenu('multiplayer-join');
+$('menu-multiplayer').onclick = () => {
+  clearMultiplayerEntryUrl();
+  showMenu('multiplayer');
+};
+$('multiplayer-create').onclick = () => {
+  clearMultiplayerEntryUrl();
+  showMenu('multiplayer-create');
+};
+$('multiplayer-join').onclick = () => {
+  clearMultiplayerEntryUrl();
+  showMenu('multiplayer-join');
+};
 $('multiplayer-track-select').onchange = updateMultiplayerMapPreview;
 $('multiplayer-laps').oninput = updateMultiplayerMapPreview;
 $('multiplayer-create-submit').onclick = createMultiplayerLobby;
@@ -4477,21 +4854,25 @@ $('lobby-copy-invite').onclick = () => {
   invite.search = '';
   invite.searchParams.set('lobby', $('lobby-code').textContent);
   if (activeMultiplayerRoom?.state?.settings?.circuit) invite.searchParams.set('track', activeMultiplayerRoom.state.settings.circuit);
+  const serverUrl = selectedMultiplayerServer()?.url;
+  if (serverUrl) invite.searchParams.set('multiplayerServer', serverUrl);
   copyLobbyText(invite.toString(), 'Invite link copied.');
 };
 $('lobby-start').onclick = () => activeMultiplayerRoom?.send('lobby:start');
 $('pause-leave-lobby').onclick = () => { void leaveMultiplayerLobby(); };
 $('menu-singleplayer').onclick = () => {
+  const entryQuery = new URLSearchParams(location.search);
   $('menu-track-select').innerHTML = `<option value="">Stadium test track</option>${Object.entries(CIRCUITS).map(([key, circuit]) => `<option value="${key}">${circuit.name}</option>`).join('')}`;
   $('menu-track-select').value = circuitKey ?? '';
-  $('menu-laps').value = new URLSearchParams(location.search).get('laps') ?? (circuitKey ? 3 : 10);
+  $('menu-laps').value = entryQuery.get('laps') ?? (circuitKey ? 3 : 10);
   $('menu-opponents').checked = opponents;
-  $('menu-qualifying').checked = !new URLSearchParams(location.search).has('noqual');
-  $('menu-retirements').checked = !new URLSearchParams(location.search).has('noretire');
-  $('menu-penalties').checked = !new URLSearchParams(location.search).has('nopenalties');
+  $('menu-qualifying').checked = !entryQuery.has('noqual');
+  $('menu-retirements').checked = !entryQuery.has('noretire');
+  $('menu-penalties').checked = !entryQuery.has('nopenalties');
   updateOpponentOptions();
   updateMenuMapPreview();
   showMenu('singleplayer');
+  clearMultiplayerEntryUrl();
 };
 function updateOpponentOptions() {
   const enabled = $('menu-opponents').checked;
@@ -4509,8 +4890,72 @@ document.querySelectorAll('[data-settings-tab]').forEach(button => {
     document.querySelectorAll('[data-settings-pane]').forEach(pane => { pane.hidden = pane.dataset.settingsPane !== button.dataset.settingsTab; });
   };
 });
+renderMultiplayerServerSettings();
+$('multiplayer-server-select').addEventListener('change', event => {
+  const next = { ...multiplayerServerStore, selectedId: event.target.value };
+  if (persistMultiplayerServerStore(next)) {
+    $('multiplayer-server-status').textContent = `Selected ${selectedMultiplayerServer()?.name}. New lobbies and matches will use this server.`;
+  }
+});
+function closeMultiplayerServerEditor() {
+  $('multiplayer-server-editor').hidden = true;
+  $('multiplayer-server-editor').dataset.serverId = '';
+}
+function openMultiplayerServerEditor(server = null) {
+  const editor = $('multiplayer-server-editor');
+  editor.dataset.serverId = server?.id ?? '';
+  $('multiplayer-server-name').value = server?.name ?? '';
+  $('multiplayer-server-url').value = server?.url ?? '';
+  $('multiplayer-server-status').textContent = '';
+  editor.hidden = false;
+  $('multiplayer-server-name').focus();
+}
+$('multiplayer-server-add').addEventListener('click', () => openMultiplayerServerEditor());
+$('multiplayer-server-edit').addEventListener('click', () => {
+  const server = selectedMultiplayerServer();
+  if (server) openMultiplayerServerEditor(server);
+});
+$('multiplayer-server-cancel').addEventListener('click', closeMultiplayerServerEditor);
+$('multiplayer-server-editor').addEventListener('submit', event => {
+  event.preventDefault();
+  const editor = event.currentTarget;
+  try {
+    const server = normalizeMultiplayerServer(
+      $('multiplayer-server-name').value,
+      $('multiplayer-server-url').value,
+    );
+    const editingId = editor.dataset.serverId;
+    const duplicate = multiplayerServerStore.servers.find(item =>
+      item.url === server.url && item.id !== editingId,
+    );
+    if (duplicate) throw new TypeError(`That URL is already saved as “${duplicate.name}”.`);
+    const id = editingId || newMultiplayerServerId();
+    const servers = editingId
+      ? multiplayerServerStore.servers.map(item => item.id === editingId ? { id, ...server } : item)
+      : [...multiplayerServerStore.servers, { id, ...server }];
+    if (persistMultiplayerServerStore({ servers, selectedId: id })) {
+      closeMultiplayerServerEditor();
+      $('multiplayer-server-status').textContent = `Saved ${server.name}. New lobbies and matches will use the selected server.`;
+    }
+  } catch (error) {
+    $('multiplayer-server-status').textContent = error.message || 'Could not save this server.';
+  }
+});
+$('multiplayer-server-delete').addEventListener('click', () => {
+  const selected = selectedMultiplayerServer();
+  if (!selected || !window.confirm(`Delete multiplayer server “${selected.name}”?`)) return;
+  const servers = multiplayerServerStore.servers.filter(server => server.id !== selected.id);
+  const selectedId = servers[0]?.id ?? '';
+  if (persistMultiplayerServerStore({ servers, selectedId })) {
+    closeMultiplayerServerEditor();
+    $('multiplayer-server-status').textContent = servers.length
+      ? `Deleted ${selected.name}. ${selectedMultiplayerServer().name} is now selected.`
+      : `Deleted ${selected.name}. Add a server before creating or joining a lobby.`;
+  }
+});
 document.querySelectorAll('#settings-screen select,#settings-screen input').forEach(field => {
   field.addEventListener('change', () => {
+    if (field.closest('[data-settings-pane="multiplayer"]')) return;
     if (field.id === 'setting-original-car' && field.checked) $('setting-name-livery').checked = false;
     if (field.id === 'setting-name-livery' && field.checked) $('setting-original-car').checked = false;
     if (field.id === 'setting-original-car') updateLiveryControls();
@@ -4609,9 +5054,7 @@ const inviteCode = startupQuery.get('lobby');
 const pendingMultiplayerCreate = sessionStorage.getItem('pendingMultiplayerCreate');
 const pendingMultiplayerJoin = sessionStorage.getItem('pendingMultiplayerJoin');
 if (pendingMultiplayerCreate || inviteCode) $('loading-screen').hidden = true;
-if (inviteCode && (startupQuery.get('track') ?? '') !== (circuitKey ?? '')) {
-  reloadForMultiplayerTrack(startupQuery.get('track') ?? '');
-} else if (pendingMultiplayerCreate) {
+if (pendingMultiplayerCreate) {
   try {
     const pending = JSON.parse(pendingMultiplayerCreate);
     sessionStorage.removeItem('pendingMultiplayerCreate');
@@ -4710,12 +5153,23 @@ window.f1Lab = {
   put($('f1-circuit'), scene.querySelector('.tag'));
   put(tower, 'nearby-leaderboard');
   const nameInput = $('setting-driver-name');
-  const paintDriver = () => {
-    const parts = (nameInput?.value || 'Driver').trim().split(/\s+/);
-    const last = parts.length > 1 ? parts.pop() : parts[0], first = parts.length ? parts.join(' ') : '';
-    $('f1-driver').innerHTML = first ? `<small>${first.replace(/</g, '&lt;')}</small><b>${last.replace(/</g, '&lt;')}</b>` : `<b>${last.replace(/</g, '&lt;')}</b>`;
+  const paintDriver = name => {
+    const parts = String(name ?? nameInput?.value ?? 'Driver').trim().split(/\s+/).filter(Boolean);
+    const last = parts.pop() || 'Driver', first = parts.join(' ');
+    const driver = $('f1-driver');
+    driver.replaceChildren();
+    if (first) {
+      const small = document.createElement('small');
+      small.textContent = first;
+      driver.append(small);
+    }
+    const bold = document.createElement('b');
+    bold.textContent = last;
+    driver.append(bold);
   };
-  nameInput?.addEventListener('input', paintDriver); paintDriver();
+  nameInput?.addEventListener('input', () => paintDriver());
+  document.addEventListener('f1:driver-name', event => paintDriver(event.detail));
+  paintDriver();
   const paintTower = () => {
     const pos = text('race-pos'), lapText = text('lap-label');
     const m = pos.match(/P\s*(\d+)\s*\/\s*(\d+)(?:\s*·\s*Lap\s*(\d+)\s*\/\s*(\d+))?/i), p = pos.match(/P\s*(\d+)/i);

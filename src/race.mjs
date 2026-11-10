@@ -5,7 +5,7 @@
 // telemetry: a close follower loses up to towDragLoss of its drag and
 // dirtyAirLoss of its downforce, decaying over wakeLength metres behind the
 // leader and wakeWidth metres either side of its centreline.
-import { step, createCar, carMass, fitTires, newErsLap, tireTempGrip, tireWearGrip, applyCollisionDamage, isCarCriticallyDamaged, airDensityAtAltitude, localContactLongitudinal, TIRE_COMPOUNDS, FIXED_DT, clamp } from './physics.mjs?v=20261108-1';
+import { step, createCar, carMass, fitTires, newErsLap, tireTempGrip, tireWearGrip, applyCollisionDamage, isCarCriticallyDamaged, airDensityAtAltitude, localContactLongitudinal, TIRE_COMPOUNDS, FIXED_DT, clamp } from './physics.mjs?v=20261109-3';
 import { createAutopilot, createCircuitAutopilot } from './autopilot.mjs';
 
 export const RACE_DEFAULTS = Object.freeze({

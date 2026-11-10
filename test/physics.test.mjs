@@ -701,6 +701,7 @@ test('wear grip falls linearly, then off a cliff, and is clamped at both ends', 
   near(g(0), 1); near(g(-1), 1);
   near(g(c.tireCliffWear), 1 - c.tireWearGripLoss * c.tireCliffWear);
   near(g(1), 1 - c.tireWearGripLoss - c.tireCliffGripLoss); near(g(2), g(1));
+  near(g(Number.NaN), g(1)); near(g(Number.POSITIVE_INFINITY), g(1));
   // Steeper per unit of wear past the cliff than before it.
   assert.ok(g(0.9) - g(1) > 2 * (g(0.4) - g(0.5)), `${g(0.4)} ${g(0.5)} ${g(0.9)} ${g(1)}`);
 });
@@ -715,7 +716,10 @@ test('wear accumulates sliding energy, is timestep independent, faster when hot 
   const hot = updateTireWear(0, c, P, c.tireOptimalTemp + c.tireWearTempScale, 1);
   near(hot, Math.E * updateTireWear(0, c, P, c.tireOptimalTemp, 1), 1e-12);
   near(updateTireWear(0.99, c, 1e9, 150, 1), 1);
+  near(updateTireWear(-31.92, c, 0, c.tireOptimalTemp, 1), 0);
   assert.equal(updateTireWear(0.3, c, 0, 150, 1), 0.3);
+  assert.equal(updateTireWear(Number.NaN, c, 0, c.tireOptimalTemp, 1), 1);
+  assert.equal(updateTireWear(0.3, c, Number.NaN, c.tireOptimalTemp, 1), 0.3);
 });
 test('a lockup wears the sliding tires, free rolling does not, and worn tires stop longer', () => {
   const rolling = rollingCar(50), locked = rollingCar(50);
@@ -741,9 +745,11 @@ test('softer compounds stop shorter and wear faster; fitTires fits a fresh set a
   assert.ok(soft.x < medium.x && medium.x < hard.x, `${soft.x.toFixed(2)} ${medium.x.toFixed(2)} ${hard.x.toFixed(2)} m`);
   assert.ok(soft.tireWear[0] > 1.5 * medium.tireWear[0] && hard.tireWear[0] < 0.7 * medium.tireWear[0]);
   near(soft.telemetry.wheels[0].compoundGrip ?? TIRE_COMPOUNDS.soft.grip, TIRE_COMPOUNDS.soft.grip);
+  soft.tireDamage[0] = 1;
   fitTires(soft, 'hard');
   assert.equal(soft.compound, 'hard');
   assert.deepEqual(soft.tireWear, [0, 0, 0, 0]);
+  assert.deepEqual(soft.tireDamage, [0, 0, 0, 0]);
   for (const t of soft.tireTemp) assert.deepEqual(t, { surface: 100, carcass: 100 });
   assert.throws(() => fitTires(soft, 'unknown'), RangeError);
   fitTires(soft, 'wet');
