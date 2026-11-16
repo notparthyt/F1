@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: f1-multiplayer
+    runtime: node
+    plan: free
+    buildCommand: npm --prefix server ci --include=dev && npm --prefix server run build
+    startCommand: npm --prefix server run start:prod
+    envVars:
+      - key: NODE_VERSION
+        value: 24.22.1
+      - key: NODE_ENV
+        value: production
+      - key: CLIENT_ORIGINS
+        value: https://notparthyt.github.io,https://f1.gokart.games

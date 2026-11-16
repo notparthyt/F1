@@ -56,7 +56,29 @@ Configure `CLIENT_ORIGINS` with the exact origins allowed to use the server's
 HTTP matchmaking endpoints. Lobby codes and bans are held in memory and
 disappear when a room closes or the server restarts.
 
-## Deploy on a Node host
+## Deploy on Render Free
+
+The repository root contains a Render Blueprint in `render.yaml`. In the
+Render Dashboard, choose **New → Blueprint**, connect `notparthyt/F1`, and
+apply the `f1-multiplayer` service. Keep the repository root as the root
+directory: the server build imports simulation modules from the root `src/`
+folder. The Blueprint uses Node.js 24, builds with the server's dev
+dependencies, and starts the compiled Colyseus server. Once linked, pushes to
+the connected branch can trigger automatic deployments.
+
+Render provides the service's public HTTPS hostname and managed TLS; use the
+same hostname with `wss://` in **Settings → Multiplayer**. The server handles
+Render's assigned `PORT` automatically. The configured `CLIENT_ORIGINS` value
+uses the HTTPS origins (no `/F1/` path).
+
+Render Free supports WebSockets, but spins down a web service after 15 minutes
+without inbound traffic. Active WebSocket message traffic counts as activity;
+when the service has spun down, the next request or connection can take about
+a minute to wake it. In-memory lobbies are lost on process restarts or
+spin-down, so this plan is for testing and low-usage play rather than
+uninterrupted hosting.
+
+## Deploy on another Node host
 
 Use a Node.js 22-or-newer runtime and upload or clone the full repository:
 the server imports shared simulation modules from the root `src/` directory.
