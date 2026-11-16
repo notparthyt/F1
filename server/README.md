@@ -67,9 +67,10 @@ dependencies, and starts the compiled Colyseus server. Once linked, pushes to
 the connected branch can trigger automatic deployments.
 
 Render provides the service's public HTTPS hostname and managed TLS; use the
-same hostname with `wss://` in **Settings → Multiplayer**. The server handles
-Render's assigned `PORT` automatically. The configured `CLIENT_ORIGINS` value
-uses the HTTPS origins (no `/F1/` path).
+same hostname with `wss://` in **Settings → Multiplayer**. The GitHub Pages
+frontend defaults to this Render server, and the server can be changed later
+in settings. The server handles Render's assigned `PORT` automatically. The
+configured `CLIENT_ORIGINS` value uses HTTPS origins (no `/F1/` path).
 
 Render Free supports WebSockets, but spins down a web service after 15 minutes
 without inbound traffic. Active WebSocket message traffic counts as activity;

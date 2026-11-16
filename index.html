@@ -3612,12 +3612,13 @@ function readMultiplayerServerStore() {
       return null;
     }
   })();
+  const isLocalPage = ['localhost', '127.0.0.1'].includes(location.hostname);
   const configuredUrl = multiplayerServerFromQuery || window.CURSOR_RACING_MULTIPLAYER_URL
-    || legacyUrl || (['localhost', '127.0.0.1'].includes(location.hostname) ? 'ws://localhost:2567' : '');
+    || legacyUrl || (isLocalPage ? 'ws://localhost:2567' : 'wss://f1-multiplayer.onrender.com');
   if (!configuredUrl) return { servers: [], selectedId: '' };
   try {
     const server = normalizeMultiplayerServer(
-      multiplayerServerFromQuery ? 'Invite server' : 'Default server',
+      multiplayerServerFromQuery ? 'Invite server' : isLocalPage ? 'Local server' : 'Render multiplayer',
       configuredUrl,
     );
     return { servers: [{ id: 'default', ...server }], selectedId: 'default' };
