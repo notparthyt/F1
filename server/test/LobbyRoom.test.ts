@@ -260,9 +260,12 @@ describe("multiplayer lobby", () => {
     const room = await colyseus.createRoom<LobbyRoom>("race_lobby", { settings });
     const host = await colyseus.connectTo(room, { identity: "identity-host-0002", name: "Host" });
     const guest = await colyseus.connectTo(room, { identity: "identity-guest-002", name: "Guest" });
+    const predictionSnapshots: Array<{ inputAck: number; predictionAllowed: boolean; x: number; wheelOmega: number[] }> = [];
+    host.onMessage("race:prediction", message => predictionSnapshots.push(message));
     host.onMessage("lobby:started", () => {});
     guest.onMessage("lobby:error", () => {});
     guest.onMessage("lobby:started", () => {});
+    guest.onMessage("race:prediction", () => {});
 
     guest.send("lobby:start");
     await new Promise(resolve => setTimeout(resolve, 20));
@@ -287,9 +290,13 @@ describe("multiplayer lobby", () => {
     assert.equal(room.state.phase, "qualifying");
     host.send("race:input", { sequence: 1, throttle: 1, brake: 0, steer: 0, handlingMode: "arcade" });
     await waitFor(
-      () => (room.state.racePlayers.get(host.sessionId)?.speed ?? 0) > 0,
+      () => (room.state.racePlayers.get(host.sessionId)?.speed ?? 0) > 0
+        && predictionSnapshots.some(snapshot => snapshot.inputAck === 1),
       "The server did not simulate the player's driving input.",
     );
+    assert.ok(predictionSnapshots.some(snapshot => snapshot.inputAck === 1
+      && snapshot.predictionAllowed && Number.isFinite(snapshot.x) && snapshot.wheelOmega.length === 4),
+    "The server did not acknowledge the input with a full prediction snapshot.");
     const internals = room as unknown as {
       drivers: Map<string, {
         car: {

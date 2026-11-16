@@ -1,5 +1,6 @@
 import { Client, CloseCode, Room } from "colyseus";
 import { airDensityAtAltitude, createCar, fitTires, FIXED_DT, isCarCriticallyDamaged, newErsLap, step, TIRE_COMPOUNDS } from "../../../src/physics.mjs";
+import { captureNetworkCarState } from "../../../src/network-prediction.mjs";
 import { captureHandlingBaseline, applyHandlingMode as applyCarHandlingMode } from "../../../src/handling.mjs";
 import { RACE_DEFAULTS, resolveCarContact, wakeStrength } from "../../../src/race.mjs";
 import { ON_FOOT_EMOTES, onFootSpawn } from "../../../src/onfoot.mjs";
@@ -1213,6 +1214,12 @@ export class LobbyRoom extends Room<{ state: LobbyState }> {
     player.ersDeployedLap = driver.car.telemetry.powertrain?.ers?.deployed ?? 0;
     player.ersHarvestedLap = driver.car.telemetry.powertrain?.ers?.harvested ?? 0;
     player.fuel = driver.car.fuel ?? 0;
+    this.clients.find(client => client.sessionId === driver.sessionId)?.send("race:prediction", {
+      ...captureNetworkCarState(driver.car, driver.sequence),
+      predictionAllowed: ["qualifying", "racing"].includes(this.state.phase)
+        && !this.state.yellowFlag && !driver.pitRequest && !driver.pitPhase
+        && !driver.onFoot && !driver.finished && !driver.retired,
+    });
   }
 
   private beginCountdown(qualifyingComplete: boolean): void {

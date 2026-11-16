@@ -646,7 +646,8 @@ main:not(.hud-off) #f1-center{width:min(30em,calc(100vw - 80em))}
 <script type="module">
 import * as THREE from './vendor/three.module.js';
 import { RoomEnvironment } from './vendor/RoomEnvironment.js';
-import { DEFAULT_CAR, TIRE_COMPOUNDS, isCarCriticallyDamaged, shift } from './src/physics.mjs?v=20261109-3';
+import { airDensityAtAltitude, DEFAULT_CAR, FIXED_DT, TIRE_COMPOUNDS, isCarCriticallyDamaged, shift } from './src/physics.mjs?v=20261109-3';
+import { replayNetworkInputs, restoreNetworkCarState, stepNetworkCar } from './src/network-prediction.mjs?v=20261116-1';
 import { createRace, DEFAULT_GRID } from './src/race.mjs?v=20261109-3';
 import { buildF1Car } from './src/car3d.mjs';
 import { loadGLTFAsset, loadRB22Template, buildRB22Car, cloneSkinnedModel, STEERING_RATIO, DRIVER_SUIT_STYLES, createDriverSuitTexture } from './src/rb22.mjs?v=20261105';
@@ -2590,6 +2591,15 @@ function placeScene(dt) {
       if (remote && animateDriver) car.group.userData.lastDriverPose = poseNow;
       poseCar(car, e.car, cars[skins[i]].wheelAngle, dt, sim.yellowFlag.active || sim.vsc.active,
         !!(e.pit || e.pitVisit), animateDriver, true);
+      if (i === 0 && networkPredictionReady && networkPredictionAllowed) {
+        car.group.position.x += networkVisualCorrection.x;
+        car.group.position.z -= networkVisualCorrection.y;
+        car.group.rotation.y += networkVisualCorrection.heading;
+        const decay = Math.exp(-Math.max(0, dt) / 0.18);
+        networkVisualCorrection.x *= decay;
+        networkVisualCorrection.y *= decay;
+        networkVisualCorrection.heading *= decay;
+      }
     });
   }
   if (podiumActive) {
@@ -3209,7 +3219,8 @@ function render(dt = 0) {
     ? networkRacePhase === 'countdown' ? `Race starts in ${Math.ceil(networkRaceState?.countdown ?? 0)}…`
       : networkRacePhase === 'boarding' ? onFoot ? 'On foot · L enter car · waiting for the host' : 'Ready · waiting for the host to start'
       : networkRacePhase === 'qualifying' ? `Qualifying · ${Math.ceil(networkRaceState?.countdown ?? 0)} seconds remaining`
-        : networkRacePhase === 'finished' ? 'Race complete · Escape to leave the lobby' : 'Online race · server-authoritative physics'
+        : networkRacePhase === 'finished' ? 'Race complete · Escape to leave the lobby'
+          : `Online race · ${networkPredictionReady && networkPredictionAllowed ? 'local prediction' : 'synchronizing'} · server-authoritative results`
     : onFoot ? avatarLoadError ? 'Driver model failed to load · reload the page' : !avatarLoaded ? 'Loading the on-foot driver model…' : qualifying && qualifying.stage !== 'race' ? `On foot · ${qualifying.stage} qualifying · enter the car to set your lap` : 'On foot · WASD walk · double-tap W run · Space jump · E emotes · M suit menu · L enter' : c.gear < 0 ? 'Reverse · hold S to reverse · Space brakes only' : qualifying && qualifying.stage !== 'race' ? `${qualifying.stage} qualifying · complete a clean lap` : startNote ? startNote : flagNote ? flagNote : pitNote ? pitNote : impact ? `Wall impact · ${Math.round(impact.speed * 3.6)} km/h into the barrier · R to reset` : contact ? `Contact · ${Math.round(contact.speed * 3.6)} km/h closing speed` : !['asphalt', 'pit'].includes(surface) ? `On the ${surface} · reduced grip · R to reset` : autopilot ? 'Auto-pit assist · control returns after pit exit · press I to take control' : c.telemetry.speed < 0.5 ? 'Ready · W or ↑ to accelerate' : `${circuitKey ? track.name : 'Test circuit'} · ${driver.source} input`;
   // ── Compact tire health widget update ──
   ['FL','FR','RL','RR'].forEach((nm, i) => {
@@ -3509,6 +3520,7 @@ function frame(now) {
       const inQualifying = qualifying && qualifying.stage !== 'race';
       if (networkRaceActive) {
         sendNetworkInput(now);
+        advanceNetworkPrediction(elapsed);
         interpolateNetworkCars(now);
       } else {
         sim.advance(elapsed, command,
@@ -3969,6 +3981,20 @@ function bindMultiplayerRoom(room) {
     if (state.status === 'lobby') renderMultiplayerLobby(state);
     updateNetworkRaceState(state);
   });
+  room.onMessage('race:prediction', snapshot => {
+    if (activeMultiplayerRoom !== room) return;
+    try {
+      if (!Number.isSafeInteger(snapshot?.inputAck) || typeof snapshot.predictionAllowed !== 'boolean')
+        throw new TypeError('The multiplayer server sent an invalid prediction snapshot.');
+      networkPendingPredictionSnapshot = snapshot;
+      if (networkRaceActive) applyNetworkPredictionSnapshot(snapshot);
+    } catch (error) {
+      networkPredictionReady = false;
+      networkPredictionAllowed = false;
+      networkInputHistory = [];
+      console.error('Could not reconcile the multiplayer car prediction', error);
+    }
+  });
   room.onMessage('lobby:error', message => {
     forceGridPending = false;
     forceGridButton.disabled = false;
@@ -4131,9 +4157,99 @@ let networkOnFootByIndex = new Map();
 let networkInputSequence = 0;
 let networkInputSentAt = 0;
 let networkSnapshotBuffers = new Map();
+let networkSnapshotJitter = new Map();
+let networkInputHistory = [];
+let networkLastInputAck = -1;
+let networkPredictionAccumulator = 0;
+let networkPredictionReady = false;
+let networkPredictionAllowed = false;
+let networkPendingPredictionSnapshot = null;
+let networkVisualCorrection = { x: 0, y: 0, heading: 0 };
 const NETWORK_TIRE_SURFACE_FIELDS = ['tireSurfaceTemp0', 'tireSurfaceTemp1', 'tireSurfaceTemp2', 'tireSurfaceTemp3'];
 const NETWORK_TIRE_CARCASS_FIELDS = ['tireCarcassTemp0', 'tireCarcassTemp1', 'tireCarcassTemp2', 'tireCarcassTemp3'];
 const NETWORK_TIRE_SLIP_FIELDS = ['tireSlipPower0', 'tireSlipPower1', 'tireSlipPower2', 'tireSlipPower3'];
+function networkPredictionInput() {
+  const input = command ?? { throttle: 0, brake: 1, steer: 0 };
+  return {
+    throttle: input.throttle ?? 0,
+    brake: input.brake ?? 0,
+    steer: input.steer ?? 0,
+    reverse: input.reverse ?? (sim.car.gear < 0),
+    drs: input.drs === true,
+    ers: input.ers === true,
+    ersMode: input.ersMode ?? 'off',
+  };
+}
+function networkPredictionSurfaceAt(x, y) {
+  const grip = surfaceAt(x, y);
+  return networkRacePhase === 'qualifying' ? grip : weather.surfaceGrip(grip, sim.car.compound);
+}
+function applyNetworkPredictionSnapshot(snapshot) {
+  if (!networkRaceActive || !sim?.car) {
+    networkPendingPredictionSnapshot = snapshot;
+    return;
+  }
+  if (!Number.isSafeInteger(snapshot?.inputAck) || typeof snapshot.predictionAllowed !== 'boolean')
+    throw new TypeError('The multiplayer server sent an invalid prediction snapshot.');
+  if (snapshot.inputAck < networkLastInputAck) return;
+  if (snapshot.inputAck > networkInputSequence)
+    throw new RangeError('The multiplayer server acknowledged an input that was never sent.');
+
+  const playerModel = cars[skins[0]]?.model;
+  const canSmooth = networkPredictionReady && !!playerModel?.group;
+  const displayedX = canSmooth ? playerModel.group.position.x : 0;
+  const displayedY = canSmooth ? -playerModel.group.position.z : 0;
+  const displayedHeading = canSmooth ? playerModel.group.rotation.y : 0;
+  const inputAck = restoreNetworkCarState(sim.car, snapshot);
+
+  if (snapshot.predictionAllowed && !onFoot) {
+    networkInputHistory = replayNetworkInputs(
+      sim.car, networkInputHistory, inputAck, networkPredictionSurfaceAt, barrierAt,
+    );
+    networkPredictionReady = true;
+    networkPredictionAllowed = true;
+    if (canSmooth) {
+      const correction = {
+        x: displayedX - sim.car.x,
+        y: displayedY - sim.car.y,
+        heading: Math.atan2(
+          Math.sin(displayedHeading - sim.car.heading),
+          Math.cos(displayedHeading - sim.car.heading),
+        ),
+      };
+      networkVisualCorrection = Math.hypot(correction.x, correction.y) <= 12
+        && Math.abs(correction.heading) <= Math.PI * 0.75
+        ? correction : { x: 0, y: 0, heading: 0 };
+    } else {
+      networkVisualCorrection = { x: 0, y: 0, heading: 0 };
+    }
+  } else {
+    networkInputHistory = [];
+    networkPredictionReady = false;
+    networkPredictionAllowed = false;
+    networkVisualCorrection = { x: 0, y: 0, heading: 0 };
+  }
+  networkLastInputAck = inputAck;
+  // Keep the client frame's unstepped fraction across reconciliation.
+  networkPendingPredictionSnapshot = null;
+}
+function advanceNetworkPrediction(elapsed) {
+  if (!networkRaceActive || !networkPredictionReady || !networkPredictionAllowed || onFoot) return;
+  networkPredictionAccumulator = Math.min(networkPredictionAccumulator + Math.max(0, Math.min(elapsed, 0.1)), 0.1);
+  const input = networkPredictionInput();
+  while (networkPredictionAccumulator + 1e-12 >= FIXED_DT) {
+    if (track.kind === 'circuit' && track.heightAt) {
+      const progress = track.progress(sim.car.x, sim.car.y);
+      sim.car.config.airDensity = airDensityAtAltitude(
+        Math.max(0, (track.altitudeMetres ?? 0) + track.heightAt(progress)),
+      );
+    }
+    stepNetworkCar(sim.car, input, networkPredictionSurfaceAt, barrierAt);
+    networkInputHistory.push({ sequence: networkInputSequence, input: { ...input } });
+    if (networkInputHistory.length > 600) networkInputHistory.shift();
+    networkPredictionAccumulator -= FIXED_DT;
+  }
+}
 let networkHudUpdatedAt = 0;
 let networkAvatarSentAt = 0;
 let networkAvatarSignature = '';
@@ -4233,6 +4349,14 @@ function startMultiplayerRace(state) {
   networkInputSequence = 0;
   networkInputSentAt = 0;
   networkSnapshotBuffers = new Map();
+  networkSnapshotJitter = new Map();
+  networkInputHistory = [];
+  networkLastInputAck = -1;
+  networkPredictionAccumulator = 0;
+  networkPredictionReady = false;
+  networkPredictionAllowed = false;
+  networkPendingPredictionSnapshot = null;
+  networkVisualCorrection = { x: 0, y: 0, heading: 0 };
   networkOnFootByIndex = new Map();
   forceGridPending = false;
   networkAvatarSentAt = 0;
@@ -4330,6 +4454,8 @@ function syncNetworkRaceState(state, record = true) {
     if (index === undefined) continue;
     const entry = sim.entries[index];
     if (!entry) continue;
+    const isLocalPlayer = sessionId === activeMultiplayerRoom?.sessionId;
+    const predictionOwnsCar = isLocalPlayer && networkPredictionReady && networkPredictionAllowed;
     networkOnFootByIndex.set(index, player.onFoot);
     const sample = {
       x: player.x, y: player.y, heading: player.heading,
@@ -4339,62 +4465,71 @@ function syncNetworkRaceState(state, record = true) {
     };
     const buffer = networkSnapshotBuffers.get(sessionId) ?? [];
     if (record && (!buffer.length || receivedAt > buffer[buffer.length - 1].at)) {
+      const previous = buffer[buffer.length - 1];
+      if (previous) {
+        const intervalJitter = Math.abs(receivedAt - previous.at - 1000 / 30);
+        const previousJitter = networkSnapshotJitter.get(sessionId) ?? 0;
+        networkSnapshotJitter.set(sessionId, previousJitter + (intervalJitter - previousJitter) * 0.12);
+      }
       buffer.push({ ...sample, at: receivedAt });
       while (buffer.length > 5) buffer.shift();
       networkSnapshotBuffers.set(sessionId, buffer);
     }
-    const isLocalPlayer = sessionId === activeMultiplayerRoom?.sessionId;
     entry.pitRequest = player.pitRequest || null;
     entry.pit = player.pitPhase ? {
       phase: player.pitPhase,
       compound: player.pitRequest || player.compound || entry.car.compound,
     } : null;
     entry.car.compound = player.compound;
-    entry.car.fuel = player.fuel;
-    entry.car.tireWear.splice(0, 4,
-      safeFraction(player.tireWear0), safeFraction(player.tireWear1),
-      safeFraction(player.tireWear2), safeFraction(player.tireWear3));
-    entry.car.chassisDamage = player.chassisDamage;
-    entry.car.tireDamage.splice(0, 4,
-      safeFraction(player.tireDamage0), safeFraction(player.tireDamage1),
-      safeFraction(player.tireDamage2), safeFraction(player.tireDamage3));
-    for (let wheel = 0; wheel < entry.car.tireTemp.length; wheel++) {
-      const tire = entry.car.tireTemp[wheel];
-      tire.surface = player[NETWORK_TIRE_SURFACE_FIELDS[wheel]];
-      tire.carcass = player[NETWORK_TIRE_CARCASS_FIELDS[wheel]];
-    }
-    entry.car.telemetry.downforce = player.downforce;
-    for (let wheel = 0; wheel < 4; wheel++) {
-      let telemetry = entry.car.telemetry.wheels[wheel];
-      if (!telemetry) {
-        telemetry = {
-          load: 0, utilization: 0, locked: false, slipRatio: 0, omega: 0, capacity: 0,
-          sliding: false, slipAngle: 0, kinematicSlipAngle: 0, tempGrip: 1, wearGrip: 1,
-          slipPower: 0,
-        };
-        entry.car.telemetry.wheels[wheel] = telemetry;
+    if (!predictionOwnsCar) {
+      entry.car.fuel = player.fuel;
+      entry.car.tireWear.splice(0, 4,
+        safeFraction(player.tireWear0), safeFraction(player.tireWear1),
+        safeFraction(player.tireWear2), safeFraction(player.tireWear3));
+      entry.car.chassisDamage = player.chassisDamage;
+      entry.car.tireDamage.splice(0, 4,
+        safeFraction(player.tireDamage0), safeFraction(player.tireDamage1),
+        safeFraction(player.tireDamage2), safeFraction(player.tireDamage3));
+      for (let wheel = 0; wheel < entry.car.tireTemp.length; wheel++) {
+        const tire = entry.car.tireTemp[wheel];
+        tire.surface = player[NETWORK_TIRE_SURFACE_FIELDS[wheel]];
+        tire.carcass = player[NETWORK_TIRE_CARCASS_FIELDS[wheel]];
       }
-      telemetry.slipPower = player[NETWORK_TIRE_SLIP_FIELDS[wheel]];
-      telemetry.utilization = player.tireUtilization[wheel] ?? 0;
+      entry.car.telemetry.downforce = player.downforce;
+      for (let wheel = 0; wheel < 4; wheel++) {
+        let telemetry = entry.car.telemetry.wheels[wheel];
+        if (!telemetry) {
+          telemetry = {
+            load: 0, utilization: 0, locked: false, slipRatio: 0, omega: 0, capacity: 0,
+            sliding: false, slipAngle: 0, kinematicSlipAngle: 0, tempGrip: 1, wearGrip: 1,
+            slipPower: 0,
+          };
+          entry.car.telemetry.wheels[wheel] = telemetry;
+        }
+        telemetry.slipPower = player[NETWORK_TIRE_SLIP_FIELDS[wheel]];
+        telemetry.utilization = player.tireUtilization[wheel] ?? 0;
+      }
+      const powertrain = entry.car.telemetry.powertrain ?? {};
+      powertrain.rpm = player.engineRpm;
+      powertrain.limiter = player.engineLimiter;
+      powertrain.ers = {
+        charge: player.ersCharge,
+        deploy: player.ersDeploy,
+        deployed: player.ersDeployedLap,
+        harvested: player.ersHarvestedLap,
+      };
+      entry.car.telemetry.powertrain = powertrain;
     }
-    const powertrain = entry.car.telemetry.powertrain ?? {};
-    powertrain.rpm = player.engineRpm;
-    powertrain.limiter = player.engineLimiter;
-    powertrain.ers = {
-      charge: player.ersCharge,
-      deploy: player.ersDeploy,
-      deployed: player.ersDeployedLap,
-      harvested: player.ersHarvestedLap,
-    };
-    entry.car.telemetry.powertrain = powertrain;
     if (isLocalPlayer) {
       if (networkAutoPitOverride && !player.pitPhase && !player.pitRequest) {
         networkAutoPitOverride = false;
         $('autopilot').textContent = gameSettings.autoPit ? 'Auto-pit: on' : 'Auto-pit: off';
         $('autopilot').setAttribute('aria-pressed', String(gameSettings.autoPit));
       }
-      if (entry.car.ers) entry.car.ers.charge = player.ersCharge;
-      entry.car.drs = player.drs;
+      if (!predictionOwnsCar) {
+        if (entry.car.ers) entry.car.ers.charge = player.ersCharge;
+        entry.car.drs = player.drs;
+      }
       if (!player.onFoot && onFoot && state.phase !== 'boarding') enterVehicle(true);
       if (placeLocalCar) {
         const car = entry.car;
@@ -4442,11 +4577,13 @@ function syncNetworkRaceState(state, record = true) {
 }
 function interpolateNetworkCars(now = performance.now()) {
   if (!networkRaceActive) return;
-  const targetTime = now - 80;
   for (const [sessionId, buffer] of networkSnapshotBuffers) {
+    if (sessionId === activeMultiplayerRoom?.sessionId && networkPredictionReady && networkPredictionAllowed) continue;
     const index = networkEntryIndices.get(sessionId);
     const entry = index === undefined ? null : sim.entries[index];
     if (!entry || !buffer.length) continue;
+    const jitter = networkSnapshotJitter.get(sessionId) ?? 0;
+    const targetTime = now - Math.max(60, Math.min(120, 60 + jitter * 2));
     let before = buffer[0], after = buffer[buffer.length - 1];
     for (let cursor = 1; cursor < buffer.length; cursor++) {
       if (buffer[cursor].at >= targetTime) {
@@ -4477,7 +4614,7 @@ function interpolateNetworkCars(now = performance.now()) {
 }
 function sendNetworkInput(now) {
   if (!networkRaceActive || !activeMultiplayerRoom || ['boarding', 'countdown', 'finished'].includes(networkRacePhase)
-    || now - networkInputSentAt < 1000 / 30) return;
+    || now - networkInputSentAt < 1000 / 60) return;
   networkInputSentAt = now;
   activeMultiplayerRoom.send('race:input', {
     sequence: ++networkInputSequence,
@@ -4526,7 +4663,7 @@ function updateNetworkRaceHud() {
       ? `${onFoot ? 'On foot · WASD walk · L enter car · ' : ''}Qualifying · ${Math.ceil(networkRaceState.countdown)} seconds remaining`
       : networkRacePhase === 'finished' ? 'Race complete · Escape to leave the lobby'
         : onFoot ? `On foot · WASD walk · L enter car · M outfit · E emote${pitStatus}`
-          : `Online race · full vehicle physics · server-authoritative rules${pitStatus}`;
+            : `Online race · local prediction · server-authoritative results${pitStatus}`;
   for (const [id, value] of [['race-label', label], ['race-pos', position], ['lap-label', lapLabel], ['time', time], ['status', status]]) {
     const element = $(id);
     if (element.textContent !== value) element.textContent = value;
@@ -4690,6 +4827,17 @@ function endNetworkRacePresentation() {
   networkLiveryVersions.clear();
   networkRaceActive = false;
   resize();
+  networkSnapshotBuffers = new Map();
+  networkSnapshotJitter = new Map();
+  networkInputHistory = [];
+  networkInputSequence = 0;
+  networkInputSentAt = 0;
+  networkLastInputAck = -1;
+  networkPredictionAccumulator = 0;
+  networkPredictionReady = false;
+  networkPredictionAllowed = false;
+  networkPendingPredictionSnapshot = null;
+  networkVisualCorrection = { x: 0, y: 0, heading: 0 };
   networkRacePhase = 'lobby';
   networkRaceState = null;
   networkPendingSafetyCarPass = null;
