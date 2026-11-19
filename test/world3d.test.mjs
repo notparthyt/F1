@@ -84,9 +84,14 @@ test('scenery collision shapes block foot movement without blocking distant loca
 });
 
 test('wet weather makes asphalt less rough and slightly reflective', () => {
-  const road = { roughness: 1, metalness: 0 };
+  const road = new THREE.MeshPhysicalMaterial({ roughness: 1, metalness: 0 });
   updateWorldWeather({ userData: { roadMaterials: [road] } }, 0.75);
   assert.ok(road.roughness < 1);
-  assert.ok(road.metalness > 0);
+  assert.equal(road.metalness, 0);
+  assert.ok(road.clearcoat > 0 && road.clearcoat < 0.65);
+  assert.ok(road.clearcoatRoughness < 0.63);
+  updateWorldWeather({ userData: { roadMaterials: [road] } }, 0);
+  assert.equal(road.clearcoat, 0);
+  assert.equal(road.roughness, 1);
   assert.throws(() => updateWorldWeather({ userData: { roadMaterials: [road] } }, NaN), RangeError);
 });

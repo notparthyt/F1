@@ -159,6 +159,29 @@ test('tire rubber retains its authored material', () => {
   }
 });
 
+test('imported RB22 wheels select the correct procedural wet tread', () => {
+  const car = buildRB22Car(template, DEFAULT_CAR);
+  const treads = [];
+  car.group.traverse(object => { if (object.name.startsWith('tire-tread-')) treads.push(object); });
+  assert.equal(treads.length, 4);
+  for (const wheel of car.wheels) {
+    const outlines = [];
+    wheel.spin.traverse(object => { if (object.name.startsWith('tire-outline-')) outlines.push(object); });
+    assert.equal(outlines.length, 2);
+    assert.deepEqual(outlines.map(outline => Math.sign(outline.position.z)).sort(), [-1, 1]);
+  }
+  assert.ok(treads.every(tread => !tread.visible && tread.geometry.drawRange.count === 0));
+
+  car.setTireCompound('intermediate');
+  assert.ok(treads.every(tread => tread.visible));
+  const intermediateCount = treads[0].geometry.drawRange.count;
+  assert.ok(intermediateCount > 0);
+  car.setTireCompound('wet');
+  assert.ok(treads.every(tread => tread.geometry.drawRange.count > intermediateCount));
+  car.setTireCompound('hard');
+  assert.ok(treads.every(tread => !tread.visible && tread.geometry.drawRange.count === 0));
+});
+
 test('the sponsor names are current and the car builds with its animated assemblies', () => {
   assert.deepEqual(SPONSORS, ['CursorRacing', 'notparthyt', 'CR', 'C1']);
   const car = buildRB22Car(template, DEFAULT_CAR, { paint: 0xc8102e, accent: 0xf4f4f4, index: 1 });

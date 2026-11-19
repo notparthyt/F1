@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import * as THREE from '../vendor/three.module.js';
 import { buildF1Car, loft } from '../src/car3d.mjs';
 import { DEFAULT_CAR } from '../src/physics.mjs';
+import { createTreadGrooveGeometry, setTreadCompound } from '../src/tire-visuals.mjs';
 
 const { group, wheels } = buildF1Car(DEFAULT_CAR);
 group.updateMatrixWorld(true);
@@ -25,6 +26,36 @@ test('wheel hubs sit exactly where the physics model puts its contact patches', 
     const tire = new THREE.Box3().setFromObject(w.spin);
     assert.ok(Math.abs(tire.min.y) < 1e-3, `tire ${i} touches the ground (${tire.min.y})`);
   });
+});
+
+test('procedural tire outlines are applied to both sidewalls of all four wheels', () => {
+  for (const wheel of wheels) {
+    const outlines = [];
+    wheel.spin.traverse(object => { if (object.name.startsWith('tire-outline-')) outlines.push(object); });
+    assert.equal(outlines.length, 2);
+    assert.deepEqual(outlines.map(outline => Math.sign(outline.position.z)).sort(), [-1, 1]);
+  }
+});
+
+test('procedural tire tread is finite and only visible for wet compounds', () => {
+  const geometry = createTreadGrooveGeometry(0.34, 0.11);
+  const positions = geometry.attributes.position.array;
+  assert.ok([...positions].every(Number.isFinite));
+  assert.equal(geometry.index.count % 3, 0);
+  assert.deepEqual(geometry.userData.compoundRanges.soft, { start: 0, count: 0 });
+
+  const tread = new THREE.Mesh(geometry);
+  setTreadCompound([tread], 'intermediate');
+  assert.equal(tread.visible, true);
+  const intermediate = { ...geometry.drawRange };
+  assert.ok(intermediate.count > 0);
+  setTreadCompound([tread], 'wet');
+  assert.ok(geometry.drawRange.count > intermediate.count);
+  setTreadCompound([tread], 'hard');
+  assert.equal(tread.visible, false);
+  assert.equal(geometry.drawRange.count, 0);
+  assert.throws(() => setTreadCompound([tread], 'unknown'), RangeError);
+  assert.throws(() => createTreadGrooveGeometry(0, 0.1), RangeError);
 });
 
 test('nothing but tires and plank reaches below 25 mm ride height', () => {

@@ -29,7 +29,10 @@ function asphaltMaterial(width, vScale = 30) {
     if (m === 'diff') t.colorSpace = THREE.SRGBColorSpace;
     return t;
   });
-  return new THREE.MeshStandardMaterial({ side: THREE.DoubleSide, map, normalMap, roughnessMap, roughness: 1 });
+  return new THREE.MeshPhysicalMaterial({
+    side: THREE.DoubleSide, map, normalMap, roughnessMap, roughness: 1,
+    clearcoat: 0, clearcoatRoughness: 0.63,
+  });
 }
 
 function makeCloudTexture() {
@@ -168,8 +171,12 @@ export function updateWorldWeather(world, wetness) {
   if (!Number.isFinite(wetness)) throw new RangeError('Wetness must be finite');
   const amount = THREE.MathUtils.clamp(wetness, 0, 1);
   for (const material of world?.userData?.roadMaterials ?? []) {
-    material.roughness = 1 - amount * 0.68;
-    material.metalness = amount * 0.12;
+    material.roughness = 1 - amount * 0.55;
+    material.metalness = 0;
+    if (material.isMeshPhysicalMaterial) {
+      material.clearcoat = amount * 0.65;
+      material.clearcoatRoughness = 0.63 - amount * 0.45;
+    }
   }
 }
 
@@ -964,7 +971,7 @@ export function buildCircuitWorld(track, { boxColors = [], night = false, urban 
   // pits, centreline offset = side × that): asphalt from the road edge out to
   // the apron's far side between entry and exit, a white line along the fast
   // lane's inner edge, the speed-limit lines, the box marks (the field's
-  // boxes, the player's first) and a garage behind the wall at each box.
+  // boxes, the player's first) and a garage behind the pit lane at each box.
   if (pit) {
     const strip = (a, b) => Array.from({ length: Math.round((b - a) / 2) + 1 }, (_, k) => {
       const s = a + (b - a) * k / Math.round((b - a) / 2), [x, y] = track.point(s), h = track.heading(s);
@@ -1055,38 +1062,6 @@ export function buildCircuitWorld(track, { boxColors = [], night = false, urban 
         lintel.position.y = track.heightAt(s) - 0.12 - 0.5;
         lintel.rotation.y = heading; lintel.castShadow = lintel.receiveShadow = true; world.add(lintel);
       }
-    }
-    // Catch fence behind the outer (garage-side) edge of the pit lane, from the speed-limit line
-    // to the end of the pit lane. On a circuit with an underpass it stops at the open ramps, where the
-    // trench walls take over, and resumes once the lane is back on the surface.
-    {
-      const fenceBottom = p => track.pitHeightAt(p.progress) - track.heightAt(p.progress) + 0.04;
-      const fenceOffsetOf = s => -Math.sign(pit.corridorAt(s)) * (outerFromLane + 0.9);
-      const addPitFence = (a0, b0, heightAt) => {
-        const fencePath = pitRouteStrip(a0, b0, pit.boundaryOffsetAt);
-        const offset = fenceOffsetOf((a0 + b0) / 2);
-        const railTop = p => Math.min(1.1, heightAt(p));
-        const fenceRail = ribbon(fencePath, offset, offset, fenceBottom, tunnelConcrete, 8, p => fenceBottom(p) + railTop(p));
-        const pitFence = ribbon(fencePath, offset, offset, p => fenceBottom(p) + railTop(p), fenceMat, 0.16, p => fenceBottom(p) + heightAt(p));
-        fenceRail.castShadow = true; world.add(fenceRail, pitFence);
-        const fencePosts = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.06, 0.06, 1, 6), steel, Math.ceil(fencePath.length / 4) + 1);
-        let postIndex = 0;
-        fencePath.forEach((p, i) => {
-          const height = heightAt(p);
-          if (i % 4 !== 0 || height < 0.15) return;
-          const x = p.x + p.nx * offset, y = p.y + p.ny * offset;
-          fencePosts.setMatrixAt(postIndex++, new THREE.Matrix4().compose(
-            new THREE.Vector3(x, track.pitHeightAt(p.progress) + height / 2, -y), new THREE.Quaternion(), new THREE.Vector3(1, height, 1)));
-        });
-        fencePosts.count = postIndex;
-        world.add(fencePosts);
-      };
-      // 4.2 m catch fence, tapering to nothing across the merge zone back onto the circuit.
-      const fenceHeight = p => 4.2 * (1 - smooth01((p.progress - pit.mergeStart) / (pit.exit - pit.mergeStart) * 1.35));
-      if (pit.tunnel) {
-        addPitFence(pit.limitStart, pit.tunnel.start, fenceHeight);
-        addPitFence(pit.tunnel.end, pit.exit, fenceHeight);
-      } else addPitFence(pit.limitStart, pit.exit, fenceHeight);
     }
     const linePath = strip(pit.limitStart, pit.limitEnd), linePositions = [], lineUvs = [], lineIndices = [];
     linePath.forEach(p => {

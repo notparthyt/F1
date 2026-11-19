@@ -61,9 +61,9 @@ export const RACE_DEFAULTS = Object.freeze({
   // rejoins over at least mergeSlope m per metre across to the racing line.
   pitCornerAccel: 12, pitPreview: 150, pitLimitMargin: 1.5, mergeSlope: 6,
   pitDecel: 14, boxDecel: 5, stopTimeMin: 2.1, stopTimeMax: 3.2, boxWindow: 4, pitSpeedingPenalty: 5, pitWear: 0.6, pitGap: 5, pitHeadway: 0.3, queueDistance: 200,
-  // Retained for visualization and track metadata; DRS is driver-requested
-  // anywhere on track and no longer requires a detection gap or zone.
-  drsGap: 1, drsEnableLaps: 1, drsZoneDelay: 60, drsDetection: 150, drsZones: 2, drsMinStraight: 450, drsCurvature: 1 / 200,
+  // Active aero is available in marked straight zones on every lap; it has no
+  // detection-gap requirement.
+  drsZoneDelay: 60, drsDetection: 150, drsZones: 2, drsMinStraight: 450, drsCurvature: 1 / 200,
 });
 
 // Smooth 0..1 blend of s across [a, b] (cosine, zero lateral rate at both ends).
@@ -327,8 +327,7 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
       // Pit stops: own box, compounds used, completed stops, the stop in
       // progress (phase in/service/out), this pit-lane visit, player request.
       tyres, box: pit ? pit.boxStart + pit.boxSpacing * i : null, compounds: [tyres[0]], stops: [], pit: null, pitVisit: null, pitRequest: null, penaltyEvents: [], servedPenalty: 0, safetyCarPassed: new Set(), drive,
-      // DRS: zones this car may open its flap in, its latest detection gap (s).
-      drsArmed: new Set(), drsGap: null,
+      drsGap: null,
       // AI variation: lap the form was drawn for, form, pending mistake (covered m), mistake end (s).
       formLap: null, form: 1, mistakeAt: null, mistakeUntil: -Infinity };
   });
@@ -415,18 +414,12 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
     for (let d = toCorner; d <= toCorner + 60; d += 4) { const v = k[Math.floor(ahead_(s + d) / st) % n]; if (Math.abs(v) > Math.abs(m)) m = v; }
     return -Math.sign(m);
   };
-  // DRS zones in lap order; last: the latest detection time of a car in the
-  // race (not pitting, retired or finished).
-  const drsZones = !drs ? [] : findDrsZones(track, o).map(z => ({ ...z, last: -Infinity }));
-  // Fraction of the last step at which covered distance passed lap point `point` (null if it did not).
-  const crossing = (before, after, point) => Math.floor((after - point) / length) > Math.floor((before - point) / length)
-    ? (after - (Math.floor((after - point) / length) * length + point)) / (after - before) : null;
+  // Marked Active Aero straight zones for this session.
+  const drsZones = !drs ? [] : findDrsZones(track, o);
   const solo = entries.length === 1 && drs;
   const drsEnabled = () => drs && !safetyCarActive() && !vscActive() && (solo || flagTime === null && time >= lightsOut);
-  const aiDrsEnabled = () => drsEnabled()
-    && (solo || Math.max(...entries.map(e => e.covered)) >= o.drsEnableLaps * length);
   const drsAllowed = e => drsEnabled() && !e.finish && !e.pit && !e.retired
-    && (e.player || solo || aiDrsEnabled() && [...e.drsArmed].some(z => inDrsZone(track, z, progressOf(e.car))));
+    && drsZones.some(z => inDrsZone(track, z, progressOf(e.car)));
   function corners(car) {
     const s = progressOf(car);
     if (bends) { const i = Math.floor(s / bends.step) % bends.n; return { toCorner: bends.to[i], fromCorner: bends.since[i] }; }
@@ -952,11 +945,10 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
         : time < lightsOut + (start ? e.reactionTime : 0) ? hold : recoveryCommand(e, barrierAt) ?? aiCommand(i);
       // Pit limiter: no drive above the speed limit in the pit lane.
       if (command.throttle > 0 && pit && e.car.telemetry.speed > pit.speedLimit && inPitLane(e.car)) command = { ...command, throttle: 0 };
-      // DRS is available anywhere during a green-flag race; braking closes it
-      // in the physics step, and safety-car/pit states disable it here.
+      // Active aero is available on every lap in marked straight zones;
+      // safety-car and pit states disable it here.
       e.drsAllowed = drsAllowed(e);
-      const autoDrsAllowed = e.drsAllowed;
-      command = { ...command, drs: e.manual ? e.drsAllowed && command.drs === true : autoDrsAllowed };
+      command = { ...command, drs: e.drsAllowed && (e.manual ? command.drs === true : true) };
       const safetySpeed = safetyCarSpeedLimit(e);
       if (e.manual && Number.isFinite(safetySpeed)) {
         const overspeed = Math.max(0, e.car.telemetry.speed - safetySpeed);
@@ -1018,16 +1010,6 @@ export function createRace(track, { grid = DEFAULT_GRID, options = {}, player = 
           flagTime ??= t;
           e.finish = { laps: Math.round(line / length), time: t - lightsOut };
         }
-      }
-      // DRS detection (gap to whichever car crossed last) and zone ends.
-      for (const z of drsZones) {
-        if (crossing(before, e.covered, z.end) !== null) e.drsArmed.delete(z);
-        const f = crossing(before, e.covered, z.detection);
-        if (f === null || e.pit || e.retired || e.finish) continue;
-        const t = time - FIXED_DT * f;
-        e.drsGap = t - z.last;
-        if (drsEnabled() && e.drsGap <= o.drsGap) e.drsArmed.add(z); else e.drsArmed.delete(z);
-        z.last = t;
       }
       updatePit(e);
       e.stuck = !e.player && !e.pit && !e.recovery && !e.finish && !e.retired && time > lightsOut + 2 && e.car.telemetry.speed < 1 ? (e.stuck ?? 0) + FIXED_DT : 0;

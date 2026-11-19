@@ -4,6 +4,7 @@
 // Proportions are illustrative, not a CAD model of any real car.
 import * as THREE from '../vendor/three.module.js';
 import { TIRE_COMPOUNDS } from './physics.mjs';
+import { createTreadGrooveGeometry, setTreadCompound } from './tire-visuals.mjs';
 
 const hasDOM = typeof document !== 'undefined';
 
@@ -109,6 +110,10 @@ function materials({ paint: body = 0x0d2340, accent = 0x39e0ae, helmet = 0xf2bf5
     paint: paint(body), accent: paint(accent), white: paint(0xe9f0f6),
     carbon: new THREE.MeshPhysicalMaterial({ color: weave ? 0xffffff : 0x1a1c20, map: weave, metalness: 0.25, roughness: 0.38, clearcoat: 0.9, clearcoatRoughness: 0.12 }),
     rubber: new THREE.MeshStandardMaterial({ color: 0x1b1b1c, roughness: 0.93, side: THREE.DoubleSide }),
+    tread: new THREE.MeshStandardMaterial({
+      color: 0x080a0c, roughness: 1, side: THREE.DoubleSide,
+      polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1,
+    }),
     black: new THREE.MeshStandardMaterial({ color: 0x050607, roughness: 0.55, side: THREE.DoubleSide }),
     metal: new THREE.MeshStandardMaterial({ color: 0x9aa1a8, metalness: 1, roughness: 0.28 }),
     rim: new THREE.MeshStandardMaterial({ color: 0x24282d, metalness: 0.9, roughness: 0.35, side: THREE.DoubleSide }),
@@ -215,6 +220,7 @@ export function buildF1Car(config, livery) {
 
   // Wheels, uprights and wishbones.
   const wheels = [], tireMarkings = [];
+  const treadGeometries = new Map();
   const positions = [[F, -T], [F, T], [R, -T], [R, T]]; // FL, FR, RL, RR (left = -z)
   positions.forEach(([x, z], i) => {
     const front = i < 2, side = Math.sign(z), W = (front ? 0.305 : 0.395) / 2;
@@ -224,19 +230,22 @@ export function buildF1Car(config, livery) {
       [rad, W * 0.72], [rad - 0.006, W * 0.88], [rad - 0.02, W * 0.97], [rad - 0.05, W], [0.226, W * 0.82]];
     add(new THREE.LatheGeometry(profile.map(([r, y]) => new THREE.Vector2(r, y)), 64).rotateX(Math.PI / 2), M.rubber, spin);
     for (const f of [-1, 1]) add(new THREE.RingGeometry(0.268, 0.282, 64).translate(0, 0, f * W * 0.99), M.soft, spin);
-    const sidewall = new THREE.Mesh(new THREE.TorusGeometry(rad - 0.055, 0.012, 5, 48),
-      new THREE.MeshStandardMaterial({ color: 0xff3b30, roughness: 0.75 }));
-    sidewall.position.z = side * W * 0.92;
-    spin.add(sidewall);
-    const grooves = [-0.42, 0, 0.42].map(offset => {
-      const groove = new THREE.Mesh(new THREE.TorusGeometry(rad - 0.012, 0.005, 4, 48),
-        new THREE.MeshStandardMaterial({ color: 0x17191b, roughness: 0.9 }));
-      groove.position.z = offset * W;
-      groove.visible = false;
-      spin.add(groove);
-      return groove;
+    const sidewallMaterial = new THREE.MeshStandardMaterial({ color: 0xff3b30, roughness: 0.75 });
+    const sidewalls = [-1, 1].map(face => {
+      const sidewall = new THREE.Mesh(new THREE.TorusGeometry(rad - 0.055, 0.012, 5, 48), sidewallMaterial);
+      sidewall.name = `tire-outline-${i}`;
+      sidewall.position.z = face * W * 0.92;
+      spin.add(sidewall);
+      return sidewall;
     });
-    tireMarkings.push({ sidewall, grooves });
+    const treadHalfWidth = W * 0.68;
+    const treadKey = `${rad}:${treadHalfWidth}`;
+    if (!treadGeometries.has(treadKey))
+      treadGeometries.set(treadKey, createTreadGrooveGeometry(rad, treadHalfWidth));
+    const tread = new THREE.Mesh(treadGeometries.get(treadKey), M.tread);
+    tread.name = `tire-tread-${i}`;
+    spin.add(tread);
+    tireMarkings.push({ sidewalls, tread });
     add(new THREE.CylinderGeometry(0.228, 0.228, W * 1.65, 48, 1, true).rotateX(Math.PI / 2), M.rim, spin);
     const cover = add(new THREE.CircleGeometry(0.226, 48), M.cover, spin);
     cover.position.z = side * W * 0.8; if (side < 0) cover.rotation.y = Math.PI;
@@ -269,9 +278,9 @@ export function buildF1Car(config, livery) {
     const color = compound === 'wet' ? 0x258bff : compound === 'intermediate' ? 0x38d66b
       : compound === 'soft' ? 0xff3b30 : compound === 'medium' ? 0xffd60a : 0xf2f2f2;
     for (const marking of tireMarkings) {
-      marking.sidewall.material.color.setHex(color);
-      marking.grooves.forEach(groove => { groove.visible = compound === 'wet' || compound === 'intermediate'; });
+      marking.sidewalls[0].material.color.setHex(color);
     }
+    setTreadCompound(tireMarkings.map(marking => marking.tread), compound);
     return compound;
   };
   setTireCompound('medium');

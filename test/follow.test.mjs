@@ -36,11 +36,11 @@ test('a passing lane has its own speed plan: slower than the racing line where i
   }
 });
 
-test('a faster car closes up behind on Monza into DRS range and passes, without contact', () => {
+test('a faster car uses active aero in Monza zones and passes, without contact', () => {
   // cornerSpeed 44 against the player's 43: since tireMu went to 2.1 (cycle 33)
   // Kovač's 43.6 closes to 0.3-0.5 s but no longer gets by in four laps.
   const race = createRace(monza, { grid: [{ ...DEFAULT_GRID[0], cornerSpeed: 44 }], laps: 4 });
-  const follower = race.entries[1], gaps = [];
+  const follower = race.entries[1];
   // Keep the faster opponent behind for this overtaking scenario.
   for (const k of ['x', 'y', 'heading']) [race.car[k], follower.car[k]] = [follower.car[k], race.car[k]];
   for (const k of ['last', 'covered', 'grid', 'offset']) [race.entries[0][k], follower[k]] = [follower[k], race.entries[0][k]];
@@ -49,15 +49,9 @@ test('a faster car closes up behind on Monza into DRS range and passes, without 
     race.advance(1 / 60, null, monza.surfaceAt, monza.barrierAt);
     if (follower.car.drs > 0.5) drs += 1 / 60;
     if (follower.car.contact) contact = Math.max(contact, follower.car.contact.speed);
-    // Detection gaps to the car ahead (once in front there is none to time).
-    if (follower.drsGap !== null && follower.drsGap !== gaps.at(-1) && follower.drsGap < 5) gaps.push(follower.drsGap);
   }
   const [first] = race.classification();
-  // It closes at least 0.3 s at the detection points (it then hovers at
-  // 0.25-0.4 s until the pass, which comes late in the race).
-  assert.ok(Math.min(...gaps) <= gaps[0] - 0.3, `detection gaps ${gaps.map(g => g.toFixed(2)).join(' ')}`);
-  // In DRS range at a detection point (it now passes on lap 2, before DRS is enabled).
-  assert.ok(Math.min(...gaps) <= race.options.drsGap, `detection gaps ${gaps.map(g => g.toFixed(2)).join(' ')}, DRS open ${drs.toFixed(1)} s`);
+  assert.ok(drs > 0, 'the follower opens active aero in a marked straight zone');
   assert.equal(first.index, 1, 'the faster car wins');
   assert.equal(contact, 0);
 });

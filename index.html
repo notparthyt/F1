@@ -160,6 +160,8 @@ header{position:absolute;top:0;left:0;right:0;z-index:20}main{height:100vh}.tag,
 #nearby-standings li.you{color:#6fffc3;background:#1b293799;border-radius:4px}
 #ers-status{margin-top:7px;color:#c77dff;font-size:12px;font-weight:750}
 #ers-status[data-mode="harvest"]{color:#ff6470}#ers-status[data-mode="standby"]{color:#ffd447}
+#drs-status{left:50%;bottom:108px;color:#6fffc3;background:#0a0d12d9;border:1px solid #ffffff26;border-left:4px solid #6fffc3;border-radius:3px 8px 8px 3px;padding:7px 12px;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;transform:translateX(-50%)}
+#drs-status[hidden]{display:none!important}
 #pause-menu{position:fixed;inset:0;z-index:90;display:grid;place-items:center;background:#03070bd9;backdrop-filter:blur(9px)}
 #pause-menu[hidden]{display:none}
 .pause-card{display:grid;gap:14px;width:min(390px,calc(100vw - 32px));padding:26px;border:1px solid #ffffff30;border-radius:12px;background:#0c1620}
@@ -208,6 +210,7 @@ header{position:absolute;top:0;left:0;right:0;z-index:20}main{height:100vh}.tag,
 #hud-speed{left:50%!important;right:auto!important;top:auto!important;bottom:26px!important;transform:translateX(-50%);display:flex;align-items:baseline;gap:8px;padding:0!important;font-size:clamp(46px,9vw,84px)!important;font-weight:900;font-style:italic;letter-spacing:-.03em;color:#fff;line-height:1}
 #hud-speed .unit{font-size:.26em;font-weight:800;letter-spacing:.14em;color:#ffffffb3;text-transform:uppercase;font-style:italic}
 #ers-status{left:16px;bottom:24px;font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#d9b3ff;background:var(--f1-panel);border:1px solid var(--f1-line);border-left:4px solid #c77dff;border-radius:3px 8px 8px 3px;padding:6px 12px;margin:0!important}
+#drs-status{z-index:7}
 #pit-info{left:16px;bottom:62px;font-size:12px!important;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#e7edf3!important;background:var(--f1-panel);border:1px solid var(--f1-line);border-radius:3px 8px 8px 3px;padding:5px 12px;margin:0!important}
 #pit-info:empty{display:none}
 #hud-left{top:104px;right:14px;bottom:auto;left:auto;width:clamp(130px,19vw,200px);align-items:stretch}
@@ -414,6 +417,12 @@ main:not(.hud-off){--aside:306px}
 #f1-left #status{display:block;margin-top:.4em;padding:.35em .7em!important;border:0!important;border-left:.3em solid var(--f1-red,#e10600)!important;border-radius:.2em!important;background:var(--navy)!important;font-size:.72em!important;font-weight:700;letter-spacing:.06em;color:#dfe6ff;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* ---------- bottom-right: pit info & car/tyre status ---------- */
 #f1-right{right:calc(var(--aside) + 1.2em);bottom:1.2em;width:min(21em,calc(100vw - 2.4em));display:flex;flex-direction:column;gap:.4em}
+#f1-right #weather-status{display:flex;align-items:center;gap:.55em;padding:.5em .75em;border-left:.3em solid #38d99b;background:#070b14e6;color:#e7edf5;font-size:.78em;font-weight:800;letter-spacing:.04em;text-shadow:0 1px 3px #000;white-space:nowrap}
+#f1-right #weather-status::before{content:"";width:.55em;height:.55em;border-radius:50%;background:#38d99b;box-shadow:0 0 .8em currentColor;flex:none}
+#f1-right #weather-status[data-surface="damp"]{border-left-color:#71c5ff}
+#f1-right #weather-status[data-surface="damp"]::before{background:#71c5ff}
+#f1-right #weather-status[data-surface="wet"]{border-left-color:#6e9dff}
+#f1-right #weather-status[data-surface="wet"]::before{background:#6e9dff}
 #f1-right #pit-info{position:static!important;margin:0!important;padding:.45em .8em!important;border:0!important;border-left:.3em solid #ffd24a!important;border-radius:.2em!important;background:var(--navy)!important;font-size:.78em!important;font-weight:700!important;letter-spacing:.05em!important;color:#fff!important;text-transform:uppercase;line-height:1.35}
 #f1-right #pit-info:empty{display:none}
 #f1-right #compact-tires{position:static!important;display:grid;grid-template-columns:auto 1fr;align-items:center;gap:.6em 1em;padding:.7em .9em!important;border:0!important;border-top:3px solid var(--f1-red,#e10600)!important;border-radius:.3em .3em .6em .6em!important;background:#070b14e6!important;box-shadow:0 .5em 1.6em #0009;text-shadow:none}
@@ -465,10 +474,14 @@ main:not(.hud-off) #f1-center{width:min(30em,calc(100vw - 80em))}
   #f1-lapbox{width:19em}
   #f1-left{width:11em}#f1-left #minimap{height:9em!important}
   #f1-right{width:16em}
+  #f1-right{bottom:calc(1.2em + 9em)}
+  #f1-right #weather-status{font-size:.9em}
   #f1-right .ct-wheel{width:3.2em;height:3.2em}
   #f1-dash{gap:.7em;padding:.5em .8em}#f1-dash .d-ers{min-width:6em}
   #onboarding-hints{bottom:calc(1.2em + 8.6em)!important}
 }
+.menu-field select:focus-visible,.menu-field input:focus-visible,.menu-switch input:focus-visible,
+#settings-screen .menu-tabs button:focus-visible{outline:2px solid #ff6b5f;outline-offset:3px}
 </style>
 </head>
 <body>
@@ -505,11 +518,13 @@ main:not(.hud-off) #f1-center{width:min(30em,calc(100vw - 80em))}
       <button type="button" role="tab" data-settings-tab="multiplayer" aria-selected="false">Multiplayer</button>
     </div>
     <section class="settings-pane" data-settings-pane="controls">
-      <label class="menu-field">Handling<select id="setting-handling"><option value="arcade">Arcade</option><option value="sim">Sim</option></select></label>
+      <label class="menu-field">Handling<select id="setting-handling"><option value="arcade">Easy</option><option value="sim">Sim</option></select></label>
       <label class="menu-field">Default camera<select id="setting-camera"><option value="tcam">T-Cam</option><option value="chase">Chase Cam</option><option value="cockpit">Visor Cam</option></select></label>
       <label class="menu-switch"><span>Full screen</span><input id="setting-fullscreen" type="checkbox"></label>
       <label class="menu-switch"><span>Auto-pit <small>When a tyre is requested, assist through the pit lane and return control after exit</small></span><input id="setting-autopit" type="checkbox"></label>
       <label class="menu-switch"><span>Lights-out assist <small>Disable WASD until the start lights go out</small></span><input id="setting-lights-assist" type="checkbox" checked></label>
+      <label class="menu-switch"><span>DRS Assist <small>Automatically activate Active Aero in designated straight zones</small></span><input id="setting-drs-assist" type="checkbox" checked></label>
+      <label class="menu-switch"><span>ERS Assist <small>Automatically use Normal deployment and select Overtake within one second of a car ahead</small></span><input id="setting-ers-assist" type="checkbox" checked></label>
     </section>
     <section class="settings-pane" data-settings-pane="graphics" hidden>
       <label class="menu-field">Graphics quality<select id="setting-graphics"><option value="ultra">Ultra Max Graphics</option><option value="max">Max</option><option value="high">High</option><option value="default">Default</option><option value="mid">Low (Mid Optimized)</option><option value="max-optimized">Max Optimized</option></select></label>
@@ -525,10 +540,10 @@ main:not(.hud-off) #f1-center{width:min(30em,calc(100vw - 80em))}
     <section class="settings-pane" data-settings-pane="keybinds" hidden>
       <div class="keybind-row"><span>Throttle · W (locked)</span><button type="button" disabled>W</button></div>
       <div class="keybind-row"><span>Steer · A / D (locked)</span><button type="button" disabled>A / D</button></div>
-      <div class="keybind-row"><span>DRS · open anywhere, closes on braking</span><button type="button" data-keybind="drs">F</button></div>
+      <div class="keybind-row"><span>Active Aero · manual toggle in a zone (DRS Assist off)</span><button type="button" data-keybind="drs">F</button></div>
       <div class="keybind-row"><span>Reverse / brake · S (locked)</span><button type="button" disabled>S</button></div>
       <div class="keybind-row"><span>Brake only</span><button type="button" data-keybind="brakeOnly">Space</button></div>
-      <div class="keybind-row"><span>ERS · hold for normal boost; press near a car to toggle overtake</span><button type="button" data-keybind="ers">O</button></div>
+      <div class="keybind-row"><span>ERS · toggle Normal / Overtake</span><button type="button" data-keybind="ers">O</button></div>
       <div class="keybind-row"><span>Emote</span><button type="button" data-keybind="emote">E</button></div>
       <div class="keybind-row"><span>Dress</span><button type="button" data-keybind="dress">M</button></div>
       <div class="keybind-row"><span>Camera mode</span><button type="button" data-keybind="camera">C</button></div>
@@ -632,14 +647,14 @@ main:not(.hud-off) #f1-center{width:min(30em,calc(100vw - 80em))}
 </section>
 <header hidden><div><h1><span>Cursor
 </span> RACING</h1><div class="subtitle">F1 DYNAMICS SIMULATOR · 240 Hz PHYSICS</div></div><nav aria-label="Simulation controls"><button id="autopilot" aria-pressed="false">Auto-pit: off</button><button id="pause" aria-pressed="false">Pause</button><button id="camera-mode" aria-label="Camera mode" title="Click to cycle: Cockpit, Chase Cam, T-Cam">Camera: Chase Cam</button><button id="trackside" aria-pressed="false">Trackside TV: off</button><button id="view" aria-pressed="false">Overview</button><button id="sound" aria-pressed="true">Sound: on</button><button id="field" aria-pressed="true">Opponents: on</button><button id="reset">Reset car</button><button id="hud" aria-pressed="false">HUD: off</button><button id="units">Units: km/h</button><button id="fullscreen" aria-pressed="false">Full screen</button><a id="github" class="btn" href="https://github.com/notparthyt/F1" target="_blank" rel="noopener" title="notparthyt/F1 on GitHub">GitHub F1</a><select id="track-select" aria-label="Circuit"><option value="">Stadium test track · race</option></select></nav></header>
-<main class="hud-off"><section class="scene" aria-label="Driving viewport"><canvas id="track" role="img" aria-label="3D view of an open-wheel race car on a stadium-shaped test circuit"></canvas><div class="tag" aria-label="Current circuit"><strong id="track-name"></strong></div><section id="nearby-leaderboard" aria-label="Race leaderboard" hidden><div class="label">Race positions · gap</div><ol id="nearby-standings" aria-label="Race positions"></ol></section><div id="timing" aria-label="Lap timing"><div id="race-pos" aria-label="Race position"></div><div class="label" id="lap-label">Out lap</div><div id="lap-time">–:––.–––</div><div id="lap-delta"></div><div id="hud-speed" aria-label="Speed"><span id="speed-hud">0</span> <span class="unit">km/h</span></div><div id="ers-status" aria-label="ERS deployment status">ERS · Deploying 100%</div><div id="pit-info" aria-label="Tyres and pit stop"></div></div><div id="lights" role="img" aria-label="Start lights" hidden><span></span><span></span><span></span><span></span><span></span></div><div id="yellow-flag" role="status" aria-live="polite" hidden>SAFETY CAR · FOLLOW · NO OVERTAKING</div><div id="on-foot-overlay" aria-live="polite" hidden><div id="on-foot-reticle" aria-hidden="true"></div><div id="on-foot-prompt"></div><section id="on-foot-emote-menu" role="dialog" aria-modal="false" aria-labelledby="on-foot-emote-title" hidden><h2 id="on-foot-emote-title">Choose an emote</h2><div id="on-foot-emote-list"></div><p>Press 1–9 to play · E or Esc to close</p></section><section id="on-foot-wardrobe-menu" role="dialog" aria-modal="false" aria-labelledby="on-foot-wardrobe-title" hidden><h2 id="on-foot-wardrobe-title">Driver suit</h2><div id="on-foot-suit-list"></div><p>Press 1–9 to change suit · M or Esc to close</p></section></div><div id="exit-hint" role="status" hidden></div><div id="hud-left"><canvas id="minimap" role="img" aria-label="Track map with car positions"></canvas><div id="status" role="status">Ready · W or ↑ to accelerate</div></div><div id="compact-tires" aria-label="Tire health"><span class="ct-label">TYRES</span><div class="ct-grid"><div class="ct-wheel" id="ct-FL"><span>FL</span><div class="ct-bar"><div class="ct-fill"></div></div><span class="ct-pct">0%</span></div><div class="ct-wheel" id="ct-FR"><span>FR</span><div class="ct-bar"><div class="ct-fill"></div></div><span class="ct-pct">0%</span></div><div class="ct-wheel" id="ct-RL"><span>RL</span><div class="ct-bar"><div class="ct-fill"></div></div><span class="ct-pct">0%</span></div><div class="ct-wheel" id="ct-RR"><span>RR</span><div class="ct-bar"><div class="ct-fill"></div></div><span class="ct-pct">0%</span></div></div><div class="ct-compound"><span class="tyre" id="ct-compound-badge" style="border-color:#ff3b30;color:#ff3b30">S</span><span class="ct-compound-label">SOFT</span></div></div><div id="onboarding-hints"><span><kbd>H</kbd> Telemetry</span><span><kbd>B</kbd> Request Tyres</span><span><kbd>C</kbd> Camera</span><span><kbd>Esc</kbd> Pause</span></div></section><aside aria-label="Vehicle telemetry">
+<main class="hud-off"><section class="scene" aria-label="Driving viewport"><canvas id="track" role="img" aria-label="3D view of an open-wheel race car on a stadium-shaped test circuit"></canvas><div class="tag" aria-label="Current circuit"><strong id="track-name"></strong></div><section id="nearby-leaderboard" aria-label="Race leaderboard" hidden><div class="label">Race positions · gap</div><ol id="nearby-standings" aria-label="Race positions"></ol></section><div id="timing" aria-label="Lap timing"><div id="race-pos" aria-label="Race position"></div><div class="label" id="lap-label">Out lap</div><div id="lap-time">–:––.–––</div><div id="lap-delta"></div><div id="hud-speed" aria-label="Speed"><span id="speed-hud">0</span> <span class="unit">km/h</span></div><div id="ers-status" aria-label="ERS deployment status">ERS · Deploying 100%</div><div id="weather-status" data-surface="dry" aria-label="Track conditions: Dry, surface wetness 0%">Dry · 0% wet</div><div id="pit-info" aria-label="Tyres and pit stop"></div></div><div id="lights" role="img" aria-label="Start lights" hidden><span></span><span></span><span></span><span></span><span></span></div><div id="yellow-flag" role="status" aria-live="polite" hidden>SAFETY CAR · FOLLOW · NO OVERTAKING</div><div id="on-foot-overlay" aria-live="polite" hidden><div id="on-foot-reticle" aria-hidden="true"></div><div id="on-foot-prompt"></div><section id="on-foot-emote-menu" role="dialog" aria-modal="false" aria-labelledby="on-foot-emote-title" hidden><h2 id="on-foot-emote-title">Choose an emote</h2><div id="on-foot-emote-list"></div><p>Press 1–9 to play · E or Esc to close</p></section><section id="on-foot-wardrobe-menu" role="dialog" aria-modal="false" aria-labelledby="on-foot-wardrobe-title" hidden><h2 id="on-foot-wardrobe-title">Driver suit</h2><div id="on-foot-suit-list"></div><p>Press 1–9 to change suit · M or Esc to close</p></section></div><div id="exit-hint" role="status" hidden></div><div id="hud-left"><canvas id="minimap" role="img" aria-label="Track map with car positions"></canvas><div id="status" role="status">Ready · W or ↑ to accelerate</div></div><div id="compact-tires" aria-label="Tire health"><span class="ct-label">TYRES</span><div class="ct-grid"><div class="ct-wheel" id="ct-FL"><span>FL</span><div class="ct-bar"><div class="ct-fill"></div></div><span class="ct-pct">0%</span></div><div class="ct-wheel" id="ct-FR"><span>FR</span><div class="ct-bar"><div class="ct-fill"></div></div><span class="ct-pct">0%</span></div><div class="ct-wheel" id="ct-RL"><span>RL</span><div class="ct-bar"><div class="ct-fill"></div></div><span class="ct-pct">0%</span></div><div class="ct-wheel" id="ct-RR"><span>RR</span><div class="ct-bar"><div class="ct-fill"></div></div><span class="ct-pct">0%</span></div></div><div class="ct-compound"><span class="tyre" id="ct-compound-badge" style="border-color:#ff3b30;color:#ff3b30">S</span><span class="ct-compound-label">SOFT</span></div></div><div id="onboarding-hints"><span><kbd>H</kbd> Telemetry</span><span><kbd>B</kbd> Request Tyres</span><span><kbd>C</kbd> Camera</span><span><kbd>Esc</kbd> Pause</span></div></section><aside aria-label="Vehicle telemetry">
 <div id="pause-state" role="status"></div><div class="label">Ground speed · Gear <strong id="gear" aria-label="Selected gear">1</strong></div><div><span class="speed" id="speed">0</span> <span class="unit" id="speed-unit">km/h</span></div>
 <div class="section"><div class="stats"><div><div class="label">Last lap</div><div class="number" id="last-lap">–:––.–––</div></div><div><div class="label">Best lap</div><div class="number" id="best-lap">–:––.–––</div></div></div><div class="sectors" id="sectors"></div><p class="note">Sectors: purple = session best, yellow = slower. Track limits: a lap is deleted when all four tires are beyond the road edge.</p></div>
 <div class="section" id="race-section"><div class="label" id="race-label">Race order · interval to leader</div><ol id="standings" aria-label="Race order"></ol><p class="note">Twenty-one AI opponents run the same physics. Random rain wets the circuit, lowers available grip and slows the AI corner-speed plan. Following within ~30 m gives a tow (up to 35% less drag) but dirty air (up to 25% less downforce); cars collide as rigid footprints. Illustrative values.</p></div>
 <div class="section stats"><div><div class="label">Longitudinal</div><div class="number" id="long">0.00 g</div></div><div><div class="label">Lateral</div><div class="number" id="lat">0.00 g</div></div><div><div class="label">Downforce</div><div class="number" id="aero">0.0 kN</div></div><div><div class="label">Distance</div><div class="number" id="distance">0 m</div></div><div><div class="label">Sim time</div><div class="number" id="time">0.0 s</div></div><div><div class="label">Steering</div><div class="number" id="steer">0.0°</div></div><div><div class="label">Roll / pitch</div><div class="number" id="attitude">0.00° / 0.00°</div></div><div><div class="label">Aero squat</div><div class="number" id="heave">0 mm</div></div><div><div class="label">Ride F / R</div><div class="number" id="ride">40 / 80 mm</div></div><div><div class="label">Aero balance</div><div class="number" id="balance">40.0% F</div></div><div><div class="label">ERS store</div><div class="number" id="ers">4.00 MJ</div></div><div><div class="label">ERS deployed / lap</div><div class="number" id="ers-lap">0.00 / 4.0 MJ</div></div></div><div class="section"><p class="note" style="margin-top:0">ERS: the MGU-K adds up to 120 kW on the throttle above 100 km/h, at most 4 MJ a lap from a 4 MJ store; braking harvests up to 120 kW (2 MJ a lap) and the MGU-H recharges the store from the exhaust. Illustrative values.</p></div>
 <div class="section"><div class="label">Driver input · <span id="input-source">keyboard</span></div><div class="stats" style="margin-top:10px"><div><div class="label">Throttle</div><meter id="in-throttle" min="0" max="1" value="0" style="width:100%;accent-color:#6fffc3" aria-label="Throttle command"></meter></div><div><div class="label">Brake</div><meter id="in-brake" min="0" max="1" value="0" style="width:100%;accent-color:#ff8e86" aria-label="Brake command"></meter></div></div><p class="note">Keyboard pedals ramp in ~0.17 s and release in 0.1 s; keyboard steering moves toward lock at 3/s and returns at 5/s. Gamepad (standard layout): triggers are analog pedals, left stick steers with a deadzone and progressive curve. Steering authority falls with speed for both.</p></div>
 <div class="section"><div class="label">Tire force / peak grip</div><div class="wheels" id="wheels"></div><p class="note">FL / FR / RL / RR · normal load in kN.<br>Bars: force / peak capacity, not remaining grip. SLIDE: combined demand beyond the illustrative force peak; force falls toward 75% of peak. Slip: signed longitudinal slip; + is wheelspin when moving forward. LOCK: stopped wheel above 1 m/s. α: force-producing (relaxed) / kinematic slip angle; the carcass catches up over 0.45 m of travel. Temp: tread / carcass °C · thermal grip (blue cold, green near the 100 °C optimum, red hot); sliding heats the tread, airflow cools it. Wear: tread used · wear grip; sliding energy wears the tread (faster above the optimum), grip fades then falls off a cliff past 75% wear (amber above 37.5%, red above 75%); qualifying uses fresh Soft tires with no grip loss; fresh Softs wear and lose grip once the main race starts. Sim handling has no ABS or traction control; Arcade handling adds grip, stronger slide recovery, and reduces braking in turns.</p></div>
-<div class="section controls"><strong>On foot</strong>: spawn beside your car. Click the viewport to capture the mouse; use <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> to walk, double-tap <kbd>W</kbd> to run, press <kbd>Space</kbd> to jump. Aim at your car and press <kbd>L</kbd> to enter. Press <kbd>E</kbd> while standing still to cycle emotes. Q1, Q2, and Q3 run before the race, and qualifying determines the grid. You can exit with <kbd>L</kbd> after finishing a race (or completing a lap in practice).<br><br><strong>In the car</strong><br><kbd>W</kbd> / <kbd>↑</kbd> Throttle · <kbd>S</kbd> / <kbd>↓</kbd> Brake; at a standstill, S selects reverse<br><kbd>Space</kbd> Brake only · configurable in Settings<br><kbd>A</kbd> <kbd>D</kbd> / <kbd>←</kbd> <kbd>→</kbd> Steer · <kbd>X</kbd> / <kbd>Z</kbd> Shift up / down · <kbd>G</kbd> Automatic gears<br><kbd>F</kbd> DRS anywhere on track; braking closes it · <kbd>O</kbd> hold for normal ERS boost; press within 1 s of a car ahead to toggle stronger Overtake mode (press again or brake to return to Normal)<br><kbd>Esc</kbd> Pause · <kbd>R</kbd> Reset · <kbd>V</kbd> Chase / overview · <kbd>H</kbd> Hide / show HUD · <kbd>C</kbd> Cycle cameras · <kbd>U</kbd> 360 Look; drag to orbit and zoom without passing through the car or track boundary<br><kbd>B</kbd> Request tyres: Soft → Medium → Hard → cancel. Auto-pit assistance, when enabled, takes control near pit entry and returns it after pit exit. Otherwise, drive into the pit lane and stop in your box.<br>On the start lights, <kbd>1</kbd>–<kbd>5</kbd> (gamepad LB / RB) changes grid slot. Penalties appear as notices and affect final classification; running order is not immediately changed.<br>Gamepad: RT throttle · LT brake · left stick steer · RB / LB shift · Y pause / resume · Start HUD · B camera · X fullscreen · A units · Back reset</div>
+<div class="section controls"><strong>On foot</strong>: spawn beside your car. Click the viewport to capture the mouse; use <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> to walk, double-tap <kbd>W</kbd> to run, press <kbd>Space</kbd> to jump. Aim at your car and press <kbd>L</kbd> to enter. Press <kbd>E</kbd> while standing still to cycle emotes. Q1, Q2, and Q3 run before the race, and qualifying determines the grid. You can exit with <kbd>L</kbd> after finishing a race (or completing a lap in practice).<br><br><strong>In the car</strong><br><kbd>W</kbd> / <kbd>↑</kbd> Throttle · <kbd>S</kbd> / <kbd>↓</kbd> Brake; at a standstill, S selects reverse<br><kbd>Space</kbd> Brake only · configurable in Settings<br><kbd>A</kbd> <kbd>D</kbd> / <kbd>←</kbd> <kbd>→</kbd> Steer · <kbd>X</kbd> / <kbd>Z</kbd> Shift up / down · <kbd>G</kbd> Automatic gears<br><kbd>F</kbd> Toggle Active Aero inside a designated straight zone when DRS Assist is off · <kbd>O</kbd> Toggle ERS Overtake; ERS Assist selects Overtake within 1 s of a car ahead<br><kbd>Esc</kbd> Pause · <kbd>R</kbd> Reset · <kbd>V</kbd> Chase / overview · <kbd>H</kbd> Hide / show HUD · <kbd>C</kbd> Cycle cameras · <kbd>U</kbd> 360 Look; drag to orbit and zoom without passing through the car or track boundary<br><kbd>B</kbd> Request tyres: Soft → Medium → Hard → cancel. Auto-pit assistance, when enabled, takes control near pit entry and returns it after pit exit. Otherwise, drive into the pit lane and stop in your box.<br>On the start lights, <kbd>1</kbd>–<kbd>5</kbd> (gamepad LB / RB) changes grid slot. Penalties appear as notices and affect final classification; running order is not immediately changed.<br>Gamepad: RT throttle · LT brake · left stick steer · RB / LB shift · Y pause / resume · Start HUD · B camera · X fullscreen · A units · Back reset</div>
 <p class="note">Illustrative, uncalibrated dynamics. Body roll, pitch and aero squat are damped spring modes for display; wheel loads are still quasi-static. Surface grip (assumed): kerb 90%, runoff 70%, grass 35%. Walls are rigid: the body footprint rebounds with 25% restitution and scrubs with friction 0.5; no damage model. Tires start at 70 °C (blanket temperature) and have a two-node thermal model and tread wear; no pressure or camber yet. Compounds (assumed): soft +1.5% grip and 2× wear, hard −1.5% grip and 0.55× wear relative to the medium; a pit stop fits a new set at blanket temperature after a 2.1–3.2 s service. Sound is synthesized from engine rpm, throttle, turbo spool, tire sliding power and speed (V6 firing frequency; no recorded samples). This is a handling testbed, not a validated F1 simulator.</p>
 </aside></main>
 <script type="importmap">{ "imports": { "three": "./vendor/three.module.js", "@colyseus/sdk": "https://esm.sh/@colyseus/sdk@0.18.9?external=@colyseus/schema", "@colyseus/schema": "https://esm.sh/@colyseus/schema@5.0.45", "@colyseus/schema/": "https://esm.sh/@colyseus/schema@5.0.45/" } }</script>
@@ -648,7 +663,7 @@ import * as THREE from './vendor/three.module.js';
 import { RoomEnvironment } from './vendor/RoomEnvironment.js';
 import { airDensityAtAltitude, DEFAULT_CAR, FIXED_DT, TIRE_COMPOUNDS, isCarCriticallyDamaged, shift } from './src/physics.mjs?v=20261109-3';
 import { replayNetworkInputs, restoreNetworkCarState, stepNetworkCar } from './src/network-prediction.mjs?v=20261116-1';
-import { createRace, DEFAULT_GRID } from './src/race.mjs?v=20261109-3';
+import { createRace, DEFAULT_GRID, inDrsZone } from './src/race.mjs?v=20261109-3';
 import { buildF1Car } from './src/car3d.mjs';
 import { loadGLTFAsset, loadRB22Template, buildRB22Car, cloneSkinnedModel, STEERING_RATIO, DRIVER_SUIT_STYLES, createDriverSuitTexture } from './src/rb22.mjs?v=20261105';
 import { carModelForGraphics, driverModelForGraphics } from './src/modelassets.mjs?v=20261109-6';
@@ -683,6 +698,12 @@ import { createCarSpray } from './src/car-spray.mjs?v=20261109-1';
 import { captureHandlingBaseline, applyHandlingMode as applyCarHandlingMode } from './src/handling.mjs';
 import { canExitVehicle, moveOnFootColliding, onFootEmoteAt, onFootSpawn, ON_FOOT_EMOTES, shouldAutoPauseOnBlur, shouldShowSeatedDriver } from './src/onfoot.mjs?v=20261105';
 const $ = id => document.getElementById(id);
+const drsStatus = document.createElement('div');
+drsStatus.id = 'drs-status';
+drsStatus.setAttribute('role', 'status');
+drsStatus.setAttribute('aria-live', 'polite');
+drsStatus.hidden = true;
+$('timing').append(drsStatus);
 const safeFraction = value => Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 1;
 const forceGridButton = document.createElement('button');
 forceGridButton.id = 'force-grid-button';
@@ -763,7 +784,7 @@ const optimizationProfiles = {
   'max-optimized': { label: 'Max Optimized', pixelRatio: 1, maxPixels: 1_350_000, shadows: false, shadowSize: 512, mirrors: false },
 };
 const DEFAULT_GAME_SETTINGS = {
-  handling: 'arcade', camera: 'tcam', fullscreen: false, autoPit: true, lightsAssist: true,
+  handling: 'arcade', camera: 'tcam', fullscreen: false, autoPit: true, lightsAssist: true, drsAssist: true, ersAssist: true,
   graphics: 'default', originalCar: false, nameLivery: false, units: 'kmh', trackside: false, racingLine: true,
   driverName: 'notparthyt', keybinds: { drs: 'KeyF', brakeOnly: 'Space', ers: 'KeyO', emote: 'KeyE', dress: 'KeyM', camera: 'KeyC' },
 };
@@ -776,6 +797,8 @@ function readGameSettings() {
     if (!['tcam', 'chase', 'cockpit'].includes(settings.camera)) settings.camera = DEFAULT_GAME_SETTINGS.camera;
     if (!['kmh', 'mph'].includes(settings.units)) settings.units = DEFAULT_GAME_SETTINGS.units;
     if (typeof settings.racingLine !== 'boolean') settings.racingLine = DEFAULT_GAME_SETTINGS.racingLine;
+    for (const key of ['drsAssist', 'ersAssist'])
+      if (typeof settings[key] !== 'boolean') settings[key] = DEFAULT_GAME_SETTINGS[key];
     settings.driverName = String(settings.driverName ?? DEFAULT_GAME_SETTINGS.driverName).replace(/[^\w -]/g, '').slice(0, 24) || DEFAULT_GAME_SETTINGS.driverName;
     return settings;
   } catch (error) {
@@ -934,13 +957,14 @@ let timer = createLapTimer(track, circuitKey ? { lineProgress: 0 } : undefined);
 const handlingModes = Object.freeze(['sim', 'arcade']);
 const requestedHandling = new URLSearchParams(location.search).get('handling');
 let autopilot = false, autoPitActive = false, autoPitEntered = false, networkAutoPitOverride = false;
-let autoPitStopsAtStart = 0, ersOvertakeActive = false;
+let autoPitStopsAtStart = 0, ersOvertakeActive = false, ersAssistOverridden = false;
+let drsToggleActive = false, drsGamepadWasPressed = false;
 let handlingMode = handlingModes.includes(requestedHandling) ? requestedHandling : gameSettings.handling;
 let handlingBaseline = null, command = { throttle: 0, brake: 0, steer: 0 }, opponents = !new URLSearchParams(location.search).has('solo') && (!circuitKey || new URLSearchParams(location.search).has('race'));
 let qualifying = null, qualifyingBreakTimer = null;
 const driver = createDriverInput();
 function updateHandlingButton() {
-  handlingButton.textContent = `Handling: ${handlingMode}`;
+  handlingButton.textContent = `Handling: ${handlingMode === 'arcade' ? 'Easy' : 'Sim'}`;
   handlingButton.setAttribute('aria-pressed', String(handlingMode !== 'sim'));
 }
 function applyHandlingMode() {
@@ -1036,9 +1060,19 @@ function ersGapToAhead() {
   }
   return gap;
 }
+function playerInDrsZone() {
+  const progress = track.progress(sim.car.x, sim.car.y);
+  return sim.drsZones?.some(zone => inDrsZone(track, zone, progress)) ?? false;
+}
+function ersOvertakeSelected() {
+  return gameSettings.ersAssist && !ersAssistOverridden
+    ? ersGapToAhead() <= 1
+    : ersOvertakeActive;
+}
 function toggleErs() {
-  if (ersOvertakeActive) { ersOvertakeActive = false; return; }
-  if (ersGapToAhead() <= 1) ersOvertakeActive = true;
+  const selected = ersOvertakeSelected();
+  ersAssistOverridden = true;
+  ersOvertakeActive = !selected && ersGapToAhead() <= 1;
 }
 // The first standard gamepad to appear hands control to the player (once; I / the
 // button still work afterwards). Browsers only expose a pad after it is touched.
@@ -1187,7 +1221,7 @@ function reset() {
   podiumActive = false; podiumSequenceAttempted = false; podiumStartedAt = 0; podiumEntries = [];
   clearPodiumDrivers();
   $('podium-overlay').hidden = true; $('podium-overlay').classList.remove('visible');
-  autopilot = autoPitActive = autoPitEntered = ersOvertakeActive = false;
+  autopilot = autoPitActive = autoPitEntered = ersOvertakeActive = ersAssistOverridden = drsToggleActive = drsGamepadWasPressed = false;
   lastYellowFlagNotice = null;
   lastVscNotice = null;
   lastPlayerDsq = false;
@@ -1641,7 +1675,7 @@ window.addEventListener('keydown', e => {
   if (e.repeat) return;
   if (e.code !== gameSettings.keybinds.dress) startAudio();
   if (!onFoot && !paused && e.code === gameSettings.keybinds.drs) {
-    keys.add(e.code);
+    drsToggleActive = !drsToggleActive;
     return;
   }
   if (e.code === 'KeyL') {
@@ -2443,8 +2477,8 @@ function groundHeightAt(x, y, pitVisit = false) {
 }
 // DRS state of an entry for the HUD: open, available in this zone, the last
 // detection gap, or when it is enabled (races only; not in a time trial).
-const drsNote = e => sim.finish.flag ? '' : e.car.drs > 0.5 ? ' · <strong style="color:#6fffc3">DRS OPEN</strong>'
-  : e.drsAllowed ? ` · <strong style="color:#6fffc3">DRS · press ${keyName(gameSettings.keybinds.drs)}</strong>` : '';
+const drsNote = e => sim.finish.flag ? '' : e.car.drs > 0.5 ? ' · <strong style="color:#6fffc3">ACTIVE AERO</strong>'
+  : e.drsAllowed ? ` · <strong style="color:#6fffc3">DRS ZONE · toggle ${keyName(gameSettings.keybinds.drs)}</strong>` : '';
 // Pose a car model from its physics state: ground-plane position and heading,
 // sprung-body roll/pitch/heave, wheel spin and front-wheel steer.
 function poseCar(m, c, angles, dt, yellowFlagActive = false, pitVisit = false, animateDriver = true, animateHead = true) {
@@ -3039,6 +3073,28 @@ function render(dt = 0) {
   const c = sim.car;
   placeScene(dt); placeSafetyCar(); drawMinimap(); updateNearbyLeaderboard(); updateRain(dt);
   const conditions = weather.state;
+  const playerEntry = sim.entries[0];
+  const drsInZone = networkRaceActive
+    ? networkRacePhase === 'race' && !networkRaceState?.yellowFlag && !playerEntry?.pit && playerInDrsZone()
+    : !!playerEntry?.drsAllowed && !sim.finish.flag;
+  drsStatus.hidden = !drsInZone;
+  if (drsInZone) {
+    const activeAero = c.drs > 0.5;
+    drsStatus.textContent = activeAero ? 'DRS ZONE · Active Aero activated'
+      : gameSettings.drsAssist || drsToggleActive ? 'DRS ZONE · Active Aero activating'
+        : `You are in a DRS zone · Toggle ${keyName(gameSettings.keybinds.drs)} to activate Active Aero`;
+    drsStatus.setAttribute('aria-label', drsStatus.textContent);
+    drsStatus.dataset.active = String(activeAero);
+  }
+  const surfaceWetness = Math.round(THREE.MathUtils.clamp(conditions.wetness, 0, 1) * 100);
+  const surfaceState = surfaceWetness > 62 ? 'wet' : surfaceWetness > 2 ? 'damp' : 'dry';
+  const weatherLabel = `${conditions.label} · ${surfaceWetness}% wet`;
+  const weatherStatus = $('weather-status');
+  if (weatherStatus.dataset.surface !== surfaceState || weatherStatus.textContent !== weatherLabel) {
+    weatherStatus.dataset.surface = surfaceState;
+    weatherStatus.textContent = weatherLabel;
+    weatherStatus.setAttribute('aria-label', `Track conditions: ${conditions.label}, surface wetness ${surfaceWetness}%`);
+  }
   const raceDistance = opponents && sim.finish.laps > 0;
   const totalDistance = track.length * (raceDistance ? sim.finish.laps : 3);
   let raceProgress = raceDistance ? sim.entries[0].covered / totalDistance : c.distance / totalDistance;
@@ -3109,9 +3165,10 @@ function render(dt = 0) {
   } else {
     const level = Math.round(ers.charge / c.config.ersCapacity * 100);
     const mode = ers.deploy > 1000 ? 'deploy' : ers.harvest > 1000 ? 'harvest' : 'standby';
-    const action = mode === 'deploy' ? (ersOvertakeActive ? 'Overtake' : 'Normal boost')
-      : mode === 'harvest' ? 'Harvesting' : ersOvertakeActive ? 'Overtake ready'
-        : ersGapToAhead() <= 1 ? `Overtake available · hold ${keyName(gameSettings.keybinds.ers)}` : `Hold ${keyName(gameSettings.keybinds.ers)} for normal boost`;
+    const overtake = ersOvertakeSelected();
+    const action = mode === 'deploy' ? (overtake ? 'Overtake' : 'Normal')
+      : mode === 'harvest' ? 'Harvesting' : overtake ? 'Overtake ready'
+        : gameSettings.ersAssist ? 'Normal · assist on' : `Normal · toggle ${keyName(gameSettings.keybinds.ers)} for Overtake`;
     ersStatus.textContent = `ERS · ${action} · ${level}%`;
     ersStatus.dataset.mode = mode;
   }
@@ -3195,7 +3252,7 @@ function render(dt = 0) {
   const serviceProgress = service && Number.isFinite(service.begin) && Number.isFinite(service.end) && service.end > service.begin
     ? Math.min(1, Math.max(0, (sim.time - service.begin) / (service.end - service.begin))) : null;
   const pitCompound = service?.compound ?? me.pitRequest ?? c.compound;
-  $('pit-info').innerHTML = `${tyreBadge(c.compound)}${title(c.compound)} · ${(worn * 100).toFixed(1)}% worn${me.stops.length ? ` · ${me.stops.length} stop${me.stops.length > 1 ? 's' : ''}` : ''}${me.pitRequest ? ` · Box: ${title(me.pitRequest)}` : ''}${serviceProgress !== null ? ` · Service ${Math.round(serviceProgress * 100)}%` : service ? ' · Service in progress' : ''}${c.fuel != null ? ` · Fuel ${c.fuel.toFixed(1)} kg` : ''} · ${conditions.label}${drsNote(me)}`;
+  $('pit-info').innerHTML = `${tyreBadge(c.compound)}${title(c.compound)} · ${(worn * 100).toFixed(1)}% worn${me.stops.length ? ` · ${me.stops.length} stop${me.stops.length > 1 ? 's' : ''}` : ''}${me.pitRequest ? ` · Box: ${title(me.pitRequest)}` : ''}${serviceProgress !== null ? ` · Service ${Math.round(serviceProgress * 100)}%` : service ? ' · Service in progress' : ''}${c.fuel != null ? ` · Fuel ${c.fuel.toFixed(1)} kg` : ''}${drsNote(me)}`;
   const pitNote = c.fuel === 0 ? 'Out of fuel · engine starved' : service ? `Pit stop · fitting ${title(pitCompound)}${service.penaltyTime ? ` · clearing ${service.penaltyTime}s penalty` : ''}${Number.isFinite(service.end) ? ` · ${Math.max(0, service.end - sim.time).toFixed(1)} s remaining` : ''}`
     : lane ? `Pit lane · ${Math.round(sim.pit.speedLimit * 3.6)} km/h limiter${me.pitVisit?.speeding ? ` · speeding +${sim.options.pitSpeedingPenalty} s` : !me.pitVisit?.served && me.pit?.phase !== 'out' ? ' · stop in your box (green)' : ''}`
     : me.pitRequest && !result ? `Box this lap · ${title(me.pitRequest)}${gameSettings.autoPit ? ' · auto-pit assists near entry' : circuitKey ? ` · pit entry on the ${sim.pit?.side > 0 ? 'left' : 'right'} before the line` : ' · pit entry on the inside of the main straight'}` : null;
@@ -3505,11 +3562,14 @@ function frame(now) {
           command.reverse = stopped && throttle > 0.95 ? false : undefined;
         } else command.reverse = stopped && !lights && has('KeyS', 'ArrowDown') && command.brake > 0.95 && !command.throttle ? true : undefined;
       }
-      if (command) command.drs = has(gameSettings.keybinds.drs) || !!gamepadButton(11);
+      const drsGamepadPressed = !!gamepadButton(11);
+      if (drsGamepadPressed && !drsGamepadWasPressed) drsToggleActive = !drsToggleActive;
+      drsGamepadWasPressed = drsGamepadPressed;
+      if (command) command.drs = gameSettings.drsAssist && playerInDrsZone() || drsToggleActive;
       if (command && ersOvertakeActive && command.brake > 0.05) ersOvertakeActive = false;
       if (command) {
-        command.ersMode = has(gameSettings.keybinds.ers) ? ersOvertakeActive ? 'overtake' : 'normal' : 'off';
-        command.ers = command.ersMode !== 'off';
+        command.ersMode = ersOvertakeSelected() ? 'overtake' : 'normal';
+        command.ers = true;
       }
       const forwardRecovery = autopilot && sim.car.gear < 0;
       if (forwardRecovery) command = { throttle: 0, brake: 1, steer: 0, reverse: false };
@@ -4896,6 +4956,8 @@ function populateSettingsForm(source = gameSettings) {
   $('setting-fullscreen').checked = settingsDraft.fullscreen;
   $('setting-autopit').checked = settingsDraft.autoPit;
   $('setting-lights-assist').checked = settingsDraft.lightsAssist;
+  $('setting-drs-assist').checked = settingsDraft.drsAssist;
+  $('setting-ers-assist').checked = settingsDraft.ersAssist;
   $('setting-graphics').value = settingsDraft.graphics;
   $('setting-original-car').checked = settingsDraft.originalCar;
   $('setting-name-livery').checked = settingsDraft.nameLivery;
@@ -4934,6 +4996,8 @@ function saveSettings() {
   settingsDraft.fullscreen = $('setting-fullscreen').checked;
   settingsDraft.autoPit = $('setting-autopit').checked;
   settingsDraft.lightsAssist = $('setting-lights-assist').checked;
+  settingsDraft.drsAssist = $('setting-drs-assist').checked;
+  settingsDraft.ersAssist = $('setting-ers-assist').checked;
   settingsDraft.graphics = $('setting-graphics').value;
   settingsDraft.originalCar = $('setting-original-car').checked;
   settingsDraft.nameLivery = $('setting-name-livery').checked;
@@ -4950,6 +5014,7 @@ function saveSettings() {
     return;
   }
   gameSettings = { ...settingsDraft, keybinds: { ...settingsDraft.keybinds } };
+  ersOvertakeActive = ersAssistOverridden = false;
   renderSceneShortcuts(gameSettings);
   if (pendingCustomLiveryTexture) {
     customLiveryTexture?.dispose();
@@ -5352,7 +5417,7 @@ window.f1Lab = {
   const left = zone('f1-left'); put(left, 'hud-left');
 
   // ---- bottom-right: pit info + tyres ----
-  const right = zone('f1-right'); put(right, 'pit-info'); put(right, 'compact-tires');
+  const right = zone('f1-right'); put(right, 'weather-status'); put(right, 'pit-info'); put(right, 'compact-tires');
   const ring = wheel => {
     const pct = parseFloat(wheel.querySelector('.ct-pct')?.textContent) || 0, fill = wheel.querySelector('.ct-fill');
     wheel.style.setProperty('--p', Math.max(0, Math.min(100, pct)));

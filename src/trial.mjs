@@ -3,7 +3,7 @@
 // createRace (car, entries[0], advance, start, finish, standings...) so the
 // browser front end drives either. The car starts `runUp` metres before the
 // start/finish line on the racing line, so lap 1 begins with a flying start.
-// DRS can be manually used anywhere, as in practice and qualifying.
+// Active aero is available in marked straight zones on every lap.
 import { Simulation, createCar, fitTires, newErsLap, tireTempGrip, tireWearGrip, TIRE_COMPOUNDS, FIXED_DT } from './physics.mjs?v=20261109-3';
 import { createCircuitAutopilot } from './autopilot.mjs';
 import { findDrsZones, inDrsZone } from './race.mjs';
@@ -46,9 +46,8 @@ export function createTimeTrial(track, { tyre = 'medium', runUp = 150, car: carS
       accumulator += Math.min(elapsed, 0.25);
       let steps = 0;
       while (accumulator + 1e-12 >= FIXED_DT) {
-        entry.drsAllowed = true;
-        const inZone = drsZones.some(z => inDrsZone(track, z, track.progress(car.x, car.y)));
-        const command = input ?? { ...drive(car, { grip: tyreGrip() }), drs: inZone };
+        entry.drsAllowed = drsZones.some(z => inDrsZone(track, z, track.progress(car.x, car.y)));
+        const command = input ?? { ...drive(car, { grip: tyreGrip() }), drs: entry.drsAllowed };
         entry.command = { ...command, drs: entry.drsAllowed && command.drs === true };
         sim.advance(FIXED_DT, entry.command, surfaceAt, barrierAt);
         const p = track.progress(car.x, car.y);

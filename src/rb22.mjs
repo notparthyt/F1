@@ -7,6 +7,7 @@ import { TIRE_COMPOUNDS } from './physics.mjs';
 import { GLTFLoader } from '../vendor/GLTFLoader.js';
 import { DRACOLoader } from '../vendor/DRACOLoader.js';
 import { MeshoptDecoder } from '../vendor/meshopt_decoder.module.js';
+import { createTreadGrooveGeometry, setTreadCompound } from './tire-visuals.mjs';
 
 export const RB22_URL = new URL('../models/redbull22.glb', import.meta.url).href;
 export const DRIVER_SUIT_STYLES = Object.freeze([
@@ -586,6 +587,11 @@ export function buildRB22Car(template, config, { paint = 0x0e1626, accent = 0x39
   // axle: the front wheels are modelled with camber, and spun about the car's lateral
   // axis instead they wobble.
   const tireMarkings = [];
+  const treadGeometries = new Map();
+  const treadMaterial = new THREE.MeshStandardMaterial({
+    color: 0x080a0c, roughness: 1, side: THREE.DoubleSide,
+    polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1,
+  });
   const wheels = CORNERS.map((name, i) => {
     const node = root.getObjectByName(name), hub = box(node).getCenter(new THREE.Vector3());
     const bounds = box(node).getSize(new THREE.Vector3());
@@ -595,19 +601,23 @@ export function buildRB22Car(template, config, { paint = 0x0e1626, accent = 0x39
     spin.attach(node);
     const radius = Math.max(bounds.x, bounds.y) * 0.48;
     const width = Math.max(0.12, bounds.z);
-    const sidewall = new THREE.Mesh(new THREE.TorusGeometry(radius * 0.8, 0.01, 5, 48),
-      new THREE.MeshStandardMaterial({ color: 0xff3b30, roughness: 0.75 }));
-    sidewall.position.z = width * 0.48;
-    spin.add(sidewall);
-    const grooves = [-0.3, 0, 0.3].map(offset => {
-      const groove = new THREE.Mesh(new THREE.TorusGeometry(radius * 0.98, 0.0045, 4, 48),
-        new THREE.MeshStandardMaterial({ color: 0x17191b, roughness: 0.9 }));
-      groove.position.z = offset * width;
-      groove.visible = false;
-      spin.add(groove);
-      return groove;
+    const sidewallMaterial = new THREE.MeshStandardMaterial({ color: 0xff3b30, roughness: 0.75 });
+    const sidewalls = [-1, 1].map(face => {
+      const sidewall = new THREE.Mesh(new THREE.TorusGeometry(radius * 0.8, 0.01, 5, 48), sidewallMaterial);
+      sidewall.name = `tire-outline-${i}`;
+      sidewall.position.z = face * width * 0.48;
+      spin.add(sidewall);
+      return sidewall;
     });
-    tireMarkings.push({ sidewall, grooves });
+    const treadRadius = radius * 1.025;
+    const treadHalfWidth = width * 0.36;
+    const treadKey = `${treadRadius}:${treadHalfWidth}`;
+    if (!treadGeometries.has(treadKey))
+      treadGeometries.set(treadKey, createTreadGrooveGeometry(treadRadius, treadHalfWidth));
+    const tread = new THREE.Mesh(treadGeometries.get(treadKey), treadMaterial);
+    tread.name = `tire-tread-${i}`;
+    spin.add(tread);
+    tireMarkings.push({ sidewalls, tread });
     return { pivot, spin, front: i < 2 };
   });
 
@@ -875,9 +885,9 @@ export function buildRB22Car(template, config, { paint = 0x0e1626, accent = 0x39
     const color = compound === 'wet' ? 0x258bff : compound === 'intermediate' ? 0x38d66b
       : compound === 'soft' ? 0xff3b30 : compound === 'medium' ? 0xffd60a : 0xf2f2f2;
     for (const marking of tireMarkings) {
-      marking.sidewall.material.color.setHex(color);
-      marking.grooves.forEach(groove => { groove.visible = compound === 'wet' || compound === 'intermediate'; });
+      marking.sidewalls[0].material.color.setHex(color);
     }
+    setTreadCompound(tireMarkings.map(marking => marking.tread), compound);
     return compound;
   };
   setTireCompound('medium');

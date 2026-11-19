@@ -8,6 +8,18 @@ import { createRace, DEFAULT_GRID } from '../src/race.mjs';
 import { createTimeTrial } from '../src/trial.mjs';
 
 const track = createStadiumTrack({ halfStraight: 220, radius: 90, roadWidth: 15 });
+function stadiumPoint(progress) {
+  const straight = 2 * track.halfStraight, arc = Math.PI * track.radius;
+  const s = ((progress % track.length) + track.length) % track.length;
+  if (s < straight) return [s - track.halfStraight, -track.radius];
+  if (s < straight + arc) {
+    const angle = (s - straight) / track.radius - Math.PI / 2;
+    return [track.halfStraight + track.radius * Math.cos(angle), track.radius * Math.sin(angle)];
+  }
+  if (s < 2 * straight + arc) return [track.halfStraight - (s - straight - arc), track.radius];
+  const angle = (s - 2 * straight - arc) / track.radius + Math.PI / 2;
+  return [-track.halfStraight + track.radius * Math.cos(angle), track.radius * Math.sin(angle)];
+}
 
 test('an open DRS flap cuts drag and rear downforce and raises top speed', () => {
   const run = drs => { const car = createCar(); for (let i = 0; i < 240 * 60; i++) step(car, { throttle: 1, drs }); return car; };
@@ -46,16 +58,27 @@ function run(race, seconds, input = () => null) {
   return { opened, allowed };
 }
 
-test('race DRS opens anywhere on request without a lap or one-second-gap restriction', () => {
-  const race = behind(), player = race.entries[0];
-  [player.car.x, player.car.y] = [-100, -90];
+test('active aero is available in marked zones on every lap without a one-second-gap restriction', () => {
+  const race = behind(), [player, rival] = race.entries, zone = race.drsZones[0];
+  const playerProgress = zone.start + 10, rivalProgress = zone.start + 260;
+  [player.car.x, player.car.y] = stadiumPoint(playerProgress);
+  [rival.car.x, rival.car.y] = stadiumPoint(rivalProgress);
+  player.last = player.covered = playerProgress;
+  rival.last = rival.covered = rivalProgress;
+  assert.ok(Math.abs(rival.covered - player.covered) / 20 > 1, 'cars are more than one second apart at minimum speed');
   race.advance(1 / 240, { throttle: 1, drs: true }, track.surfaceAt, track.barrierAt);
   assert.equal(player.drsAllowed, true);
+  assert.equal(rival.drsAllowed, true);
   assert.ok(player.car.drs > 0);
+
+  [player.car.x, player.car.y] = stadiumPoint(zone.end + 20);
+  race.advance(1 / 240, { throttle: 1, drs: true }, track.surfaceAt, track.barrierAt);
+  assert.equal(player.drsAllowed, false);
+  assert.equal(player.command.drs, false);
 });
 
 test('DRS is absent when the race turns it off', () => {
-  const off = behind({ drsEnableLaps: 0 }, { drs: false });
+  const off = behind({}, { drs: false });
   assert.equal(off.drsZones.length, 0);
   assert.deepEqual(run(off, 20).opened, [false, false]);
 });
@@ -68,21 +91,16 @@ test('a driving player opens DRS only on request', () => {
   }
 });
 
-test('solo races allow manually requested DRS on any part of the track', () => {
-  const race = createRace(track, { grid: [] });
-  const { opened, allowed } = run(race, 3, () => ({ throttle: 1, drs: true }));
-  assert.deepEqual(allowed, [true, false]);
-  assert.deepEqual(opened, [true, false]);
-});
-
-test('time trials allow manually requested DRS outside marked zones', () => {
+test('time trials allow manually requested active aero only in marked zones', () => {
   const monza = createCircuitTrack(CIRCUITS.monza), trial = createTimeTrial(monza);
-  const awayFromZones = monza.drsZones[0][1] + 30;
-  [trial.car.x, trial.car.y] = monza.point(awayFromZones, monza.lineOffset(awayFromZones));
+  const [zoneStart, zoneEnd] = monza.drsZones[0];
+  trial.placePlayerAt(...monza.point(zoneStart + 10, 0), monza.heading(zoneStart + 10));
   trial.advance(1 / 240, { throttle: 1, drs: true });
   assert.equal(trial.entries[0].drsAllowed, true);
   assert.ok(trial.car.drs > 0);
-  trial.advance(1 / 240, { throttle: 1, drs: false });
+  trial.placePlayerAt(...monza.point(zoneEnd + 30, 0), monza.heading(zoneEnd + 30));
+  trial.advance(1 / 240, { throttle: 1, drs: true });
+  assert.equal(trial.entries[0].drsAllowed, false);
   assert.equal(trial.entries[0].command.drs, false);
 });
 
